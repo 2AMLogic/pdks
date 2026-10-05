@@ -1,0 +1,5 @@
+# ASAP7 PDK r1p7, pinned upstream. Sourced by bootstrap.sh.
+# Fetched with a shallow git fetch of exactly this commit; the files the
+# ngspice setup reads are also checked against pdks/asap7/models.sha256.
+ASAP7_PDK_URL=https://github.com/The-OpenROAD-Project/asap7_pdk_r1p7.git
+ASAP7_PDK_COMMIT=58d72c9d291e186a77468586ab0c43d8a21eda6a

@@ -1,0 +1,21 @@
+# Pinned simulator toolchain. Sourced by bootstrap.sh; one KEY=value per line.
+# Every artifact is fetched from its upstream at bootstrap and verified by
+# SHA-256 (or, for git, by full commit id). Nothing here is re-hosted.
+
+# ngspice 47, source release (built locally with OSDI support)
+NGSPICE_VERSION=47
+NGSPICE_URL=https://downloads.sourceforge.net/project/ngspice/ng-spice-rework/47/ngspice-47.tar.gz
+NGSPICE_SHA256=894e649651f1838a14095e5a5439e7d3aa63e87ede14d283173fda4fcdef675f
+
+# OpenVAF-reloaded v24.0.2mob, upstream binary releases (Verilog-A -> OSDI)
+# https://github.com/OpenVAF/OpenVAF-Reloaded/releases/tag/v24.0.2mob
+OPENVAF_VERSION=v24.0.2mob
+OPENVAF_URL_BASE=https://github.com/OpenVAF/OpenVAF-Reloaded/releases/download/v24.0.2mob
+OPENVAF_SHA256_linux_x86_64=b12b7b1726d103e18c2588c3a1f91f8475cf03df8a3bde14d919797d221e3110
+OPENVAF_SHA256_macos_aarch64=022d5659257239af98f5e8ee59e2fe4403e1b2e694a06461152d5251c0ad0196
+OPENVAF_SHA256_macos_x86_64=25df00f3fbf7478b77eebe11ae2e4bc5c929001a3428e221ef87a6b705e94c0a
+
+# BSIM-CMG 107.0.0 Verilog-A (UC Berkeley), as packaged in CedarEDA/CMC.jl.
+# Per-file SHA-256 in tools/bsimcmg107.sha256.
+BSIMCMG_VERSION=107.0.0
+BSIMCMG_URL_BASE=https://raw.githubusercontent.com/CedarEDA/CMC.jl/548cc7aec3fabcc6765b38eaa8ecef1b2630607a/cmc_models/bsimcmg107
