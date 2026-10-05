@@ -1,0 +1,11 @@
+# IHP SG13CMOS5L, pinned upstream. Sourced by bootstrap.sh.
+# SG13CMOS5L shares its MOS models and Verilog-A with SG13G2 through symlinks
+# into an IHP-Open-PDK checkout on the dev branch (its README requires that
+# layout; v0.3.0 lacks files it links to). So two pins: the SG13CMOS5L
+# repository, checked out inside the IHP-Open-PDK dev commit that was
+# current at the SG13CMOS5L pin's date. Both are sparse, blob-filtered
+# fetches of exactly these commits.
+IHP_CMOS5L_URL=https://github.com/IHP-GmbH/ihp-sg13cmos5l.git
+IHP_CMOS5L_COMMIT=607e18d4bd9214a52575c194b4181ef449f9252f
+IHP_CMOS5L_BASE_URL=https://github.com/IHP-GmbH/IHP-Open-PDK.git
+IHP_CMOS5L_BASE_COMMIT=34fd0c727ad066a7785e19e2f578fc2b324c8592

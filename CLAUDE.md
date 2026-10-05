@@ -15,7 +15,7 @@ Public repo: one-command ngspice setup for open PDKs (README.md).
 - **Sanity references are cited, not fitted.** `sanity/reference.py`
   labels each check published / bound / derived and documents every
   extraction definition.
-- Test with `./bootstrap.sh --pdk asap7 --prefix <scratch dir>`. On the
+- Test with `./bootstrap.sh --pdk <name>[,...] --prefix <scratch dir>`. On the
   operator's machine `~/pdks` already holds a separate hand-made install,
   and bootstrap will (correctly) refuse to write there.
 

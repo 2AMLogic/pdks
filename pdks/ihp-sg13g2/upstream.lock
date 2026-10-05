@@ -1,0 +1,6 @@
+# IHP SG13G2, pinned upstream. Sourced by bootstrap.sh.
+# IHP-Open-PDK release v0.3.0. Only the ngspice models and Verilog-A sources
+# are checked out (a sparse, blob-filtered fetch of this exact commit,
+# about 2.5 MB); the commit id pins their content.
+IHP_SG13G2_URL=https://github.com/IHP-GmbH/IHP-Open-PDK.git
+IHP_SG13G2_COMMIT=5cccb161f7492697cfa52eb14dc03beb00bdca9e

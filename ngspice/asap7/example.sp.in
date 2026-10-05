@@ -10,6 +10,6 @@ Np out in vdd vdd pmos_rvt l=20n nfin=3
 pre_osdi @OSDI@
 dc vin 0 0.7 0.01
 meas dc vm when v(out)=v(in)
-print v(out)[0] v(out)[70]
+echo "RESULT switching_point_V $&vm"
 .endc
 .end
