@@ -11,9 +11,9 @@ results are checked against each foundry's or author's published values.
 | `asap7` | ASAP7 r1p7: 7 nm predictive FinFET (ASU / Arm) | BSIM-CMG 107, compiled to OSDI | 9 MB | 73/73 against the PDK paper |
 | `asap5` | ASAP5 r0p4: 5 nm predictive gate-all-around nanowire FET (ASU) | BSIM-CMG 107, compiled to OSDI | 0.3 MB | 47/47 against the PDK paper, plus 1 known deviation |
 | `sky130` | SkyWater SKY130 (`sky130A`; `sky130B`'s ngspice libraries are identical in this release) | BSIM4, built in | 21 MB | 23/23 against SkyWater's e-test windows and corner tables, plus 5 known deviations |
-| `gf180mcu` | GlobalFoundries GF180MCU | BSIM4, built in | 1.4 MB | 38/38 against GF's slow/typical/fast EP targets and spec limits |
-| `ihp-sg13g2` | IHP SG13G2 SiGe BiCMOS | PSP 103 (OSDI), VBIC HBT | 2.5 MB | 50/50 against IHP's process spec: 1.2 V and 3.3 V MOS, corners and the HBT, plus 1 known deviation |
-| `ihp-sg13cmos5l` | IHP SG13CMOS5L CMOS | PSP 103 (OSDI) | 5 MB | 47/47 against IHP's process spec: 1.2 V and 3.3 V MOS and corners, plus 1 known deviation |
+| `gf180mcu` | GlobalFoundries GF180MCU | BSIM4, built in | 1.4 MB | 54/54 against GF's slow/typical/fast EP targets and spec limits, incl. passives and their temperature coefficients, plus 1 known deviation |
+| `ihp-sg13g2` | IHP SG13G2 SiGe BiCMOS | PSP 103 (OSDI), VBIC HBT | 2.5 MB | 65/65 against IHP's process spec: 1.2 V and 3.3 V MOS, corners, resistors and MIM with their temperature coefficients, and the HBT, plus 1 known deviation |
+| `ihp-sg13cmos5l` | IHP SG13CMOS5L CMOS | PSP 103 (OSDI) | 5 MB | 59/59 against IHP's process spec: 1.2 V and 3.3 V MOS, corners, resistors and their temperature coefficients, plus 1 known deviation |
 | `tr1um` | Tokai Rika TR-1um 1 µm CMOS (OpenSUSI) | BSIM3v3, built in | 30 KB | 16/16 against Tokai Rika's published I-V curves (digitised), plus 1 known deviation |
 
 ## Quick start
@@ -151,6 +151,38 @@ each check is depends on what was published:
   between) for every device.
 - **TR-1um.** No public corners.
 
+### Temperature
+
+No PDK here publishes transistor data at temperatures other than nominal,
+so temperature checks cover passive devices, whose temperature
+coefficients the foundries do publish. Each is swept from −40 to 125 °C.
+
+- **IHP SG13G2 / SG13CMOS5L (published).**
+  - The resistors (Rsil, Rppd, Rhigh) are checked against the spec's own
+    definitions, which state both the structures and the formula:
+    - A.i: sheet resistance and line-width delta, from one W-wide stripe
+      and N parallel W/N stripes.
+    - A.af: R(T) = R(T0)·[1 + TC1·ΔT + TC2·ΔT²], T0 = 27 °C.
+  - SG13G2's MIM capacitor is checked the same way (A.k, A.ad).
+  - The fitted TCs land on IHP's targets: for example Rsil 3100 ppm/K vs
+    3100, Rhigh −2300 vs −2300, MIM 3.60 vs 3.6.
+  - The spec gives TCs as targets without limits, so TC1 is checked
+    within 5 % and TC2 within 10 %.
+  - Rhigh's line-width delta (−79.9 nm) sits 0.1 nm inside its −80 nm
+    limit.
+- **GF180MCU (published windows; method assumed).** The TCs of the
+  high-resistance poly resistors, metals M1–M4 and top metals, and MIM
+  capacitors are checked against GF's MIN–MAX windows, along with their
+  sheet resistance or capacitance.
+  - GF states no fit range or method. We use the linear coefficient of a
+    quadratic fit over −40 to 125 °C, the models' extraction range.
+  - GF's own 1.5 fF/µm² MIM model has TC1 = 40.6 ppm/K, outside GF's
+    9.9–16.6 window. It is reported as a known deviation.
+- **Not checked.**
+  - SKY130, ASAP7 and ASAP5 publish no temperature data.
+  - TR-1um publishes R(T) and C(T) only as plots. Its models follow its
+    plotted simulation, which differs from its plotted measurements.
+
 ## Licences
 
 This repository's own files are **MIT** ([LICENSE](LICENSE)). Each PDK's
@@ -184,8 +216,9 @@ Nothing else upstream is committed here: bootstrap downloads it. Notices:
 - Device simulation only. No DRC, LVS or extraction, and no standard-cell
   libraries are fetched.
 - Corner checks are only as strong as the published corner data (see
-  "Corners"). Temperature is not swept: every check runs at the
-  temperature its source states. TR-1um has only a typical corner.
+  "Corners"). Temperature checks cover passives only (see
+  "Temperature"): no PDK here publishes transistor data at other
+  temperatures. TR-1um has only a typical corner.
 - Platforms: tested on macOS arm64 and Linux x86_64 (Ubuntu 24.04).
   macOS x86_64 should work, since OpenVAF-reloaded publishes a build, but
   it is untested. There is no Linux arm64 build of OpenVAF-reloaded, so the

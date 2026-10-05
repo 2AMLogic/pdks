@@ -50,6 +50,39 @@ CORNERS = {
 
 SS_MAX = 150.0  # mV/dec, [EPS] max for the four 3.3 V and 6 V devices
 
+# Passives and temperature, [EPS] sections 5.7 (metal TC, from
+# 5_General_Specification7.csv), 6.1A/B (high-resistance poly, from
+# 6_Passive_Elements1/2.csv) and 6.2 (MIM, 6_Passive_Elements4/5/6.csv).
+# [EPS] gives TCs as MIN/TYP/MAX with no temperature range or fit stated.
+# We take TC1 as the linear coefficient of a quadratic fit of X(T) about
+# 25 C over -40 to 125 C, the range the models were extracted over
+# (Spice Model Reference Guide 2.1), and check it within [EPS]'s window.
+# Rsheet: R * W / L of a W = 10 um, L = 200 um resistor at 25 C ([EPS]
+# monitors film Rs at W = 10 um). C: per area of a 350 x 50 um capacitor at
+# V = 0 ([EPS]'s structure). Contact and via TCs are not checked: they have
+# no standalone model device.
+TEMPS = (-40, -15, 10, 25, 60, 95, 125)
+# (model, kind, instance geometry, Rsheet or C/area window, TC1 window ppm/K)
+PASSIVES = [
+    ("ppolyf_u_1k", "res", "r_width=10u r_length=200u", (800, 1000, 1200), (-1200, -1000, -800)),
+    ("ppolyf_u_2k", "res", "r_width=10u r_length=200u", (1600, 2000, 2400), (-1900, -1650, -1300)),
+    ("rm1", "metal", "r_width=1u r_length=2000u", None, (2800, 3300, 3800)),
+    ("rm2", "metal", "r_width=1u r_length=2000u", None, (2800, 3300, 3800)),
+    ("rm3", "metal", "r_width=1u r_length=2000u", None, (2800, 3300, 3800)),
+    ("rm4", "metal", "r_width=1u r_length=2000u", None, (2800, 3300, 3800)),
+    ("tm6k", "metal", "r_width=2u r_length=2000u", None, (3000, 3500, 4000)),
+    ("tm9k", "metal", "r_width=2u r_length=2000u", None, (3100, 3700, 4300)),
+    ("tm11k", "metal", "r_width=2u r_length=2000u", None, (3100, 3700, 4300)),
+    ("tm30k", "metal", "r_width=2u r_length=2000u", None, (3300, 3900, 4500)),
+    ("cap_mim_1f5fF", "cap", "c_width=350u c_length=50u", (1.27, 1.5, 1.73), (9.9, 13.3, 16.6)),
+    ("cap_mim_1f0fF", "cap", "c_width=350u c_length=50u", (0.9, 1.0, 1.1), (None, 10, 20)),
+    ("cap_mim_2f0fF", "cap", "c_width=350u c_length=50u", (1.8, 2.0, 2.2), (None, 18.8, None)),
+]
+KNOWN_DEVIATIONS = {
+    ("cap_mim_1f5fF", "tc1"): "the model sets c_tc1 = 40.6 ppm/K, outside GF's own 9.9-16.6 ppm/K "
+                              "window for the 1.5 fF/um2 MIM; the 1.0 and 2.0 fF models are 13 and 15",
+}
+
 TOL = dict(
     idsat=0.02,  # relative; printed to 3 significant figures
     vth0=0.010,  # V; printed to 2 decimals (+-5 mV) plus 5 mV margin

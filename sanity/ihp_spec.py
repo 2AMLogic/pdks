@@ -34,6 +34,18 @@ _pmos, [G2] 2.4-2.5; the [C5L] HV rows have the same values).
   A.ai IC07:  Ic at VBE = 0.7 V, VCB = 0 (one emitter).
   A.s  fT:    |h21| at 40 GHz times 40 GHz (a -20 dB/decade extrapolation),
               VCE = 1.2 V, maximum over VBE (four emitters, Nx = 4).
+
+Passives and temperature ([G2] 2.7-2.9 and 2.12; [C5L] has the same
+resistor rows and no MIM):
+  A.i  Rs, DW: from R1 (one W x L stripe) and RN (N stripes of (W/N) x L in
+              parallel): R1 = Rs L / (W + DW), RN = Rs (L/N) / (W/N + DW),
+              solved for Rs and DW. W = 10 um, L = 100 um, N = 5, 27 C.
+  A.af TC1, TC2 (resistors) and A.ad TCMIM1, TCMIM2 (MIM, V = 0, 100 kHz):
+              X(T) = X(T0) [1 + TC1 (T - T0) + TC2 (T - T0)^2], T0 = 27 C,
+              fitted by least squares over -40 to 125 C, the range the
+              spec measures. The spec gives targets only, so TC1 is checked
+              within 5 % and TC2 within 10 % of target.
+  A.k  CMIMA: capacitance per area at V = 0, 100 kHz, 20 x 20 um.
 """
 
 import math
@@ -115,6 +127,72 @@ CORNER_KNOWN = {
     ("IDSP013", "mos_ss"): "LV pFET ss corner is 5.3 % under the spec minimum (161 vs 170 uA/um); "
                            "the other seven corner limits land within 2 mV or 1 %",
 }
+
+# Passives: (device, Rs min/typ/max ohm/sq, DW min/typ/max nm, TC1 ppm/K, TC2 ppm/K^2)
+RES_ROWS = [
+    ("rsil",  (6.2, 7.0, 7.8),       (-20, 10, 40), 3100, 0.3),
+    ("rppd",  (235, 260, 285),       (-24, 6, 36),  170,  0.4),
+    ("rhigh", (1160, 1360, 1560),    (-80, -40, 0), -2300, 2.1),
+]
+MIM_ROW = ((1.35, 1.5, 1.65), 3.6, 0.002)   # CMIMA fF/um^2, TCMIM1 ppm/K, TCMIM2 ppm/K^2
+TC_TOL = dict(tc1=0.05, tc2=0.10)
+TEMPS = (-40, -15, 10, 27, 60, 95, 125)
+RES_DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks", "ihp_res.sp")
+MIM_DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks", "ihp_mim.sp")
+
+
+def tc_fit(ts, ys, t0=27.0):
+    """Least-squares TC1, TC2 (in ppm/K, ppm/K^2) of y(T) = y0 [1 + a dT + b dT^2]."""
+    y0 = ys[ts.index(t0)]
+    X = [(t - t0, (t - t0) ** 2) for t in ts]
+    Z = [y / y0 - 1 for y in ys]
+    sxx = sum(a * a for a, _ in X); sxy = sum(a * b for a, b in X); syy = sum(b * b for _, b in X)
+    sxz = sum(a * z for (a, _), z in zip(X, Z)); syz = sum(b * z for (_, b), z in zip(X, Z))
+    det = sxx * syy - sxy * sxy
+    return (sxz * syy - syz * sxy) / det * 1e6, (syz * sxx - sxz * sxy) / det * 1e6
+
+
+def tc_checks(rep, name, ts, ys, tc1, tc2):
+    a, b = tc_fit(ts, ys)
+    for label, v, want, tol in (("TC1", a, tc1, TC_TOL["tc1"]), ("TC2", b, tc2, TC_TOL["tc2"])):
+        lo, hi = sorted((want * (1 - tol), want * (1 + tol)))
+        rep.check("%s %s" % (name, label), "published", v, lo, hi,
+                  "ppm/K" if label == "TC1" else "ppm/K2", 1, "(target %g, -40..125 C)" % want)
+    return a, b
+
+
+def passive_checks(rep, ng, work, models, spiceinit, mim):
+    data = {}
+    W, L, N = 10.0, 100.0, 5
+    temps = " ".join(str(t) for t in TEMPS)
+    for res, rs_w, dw_w, tc1, tc2 in RES_ROWS:
+        par = "\n".join("XN%d b 0 0 %s w=%gu l=%gu" % (k, res, W / N, L) for k in range(N))
+        deck = render(RES_DECK, work, "res_" + res, MODELS=models, RES=res, W=W, L=L, PARALLEL=par, TEMPS=temps)
+        log = ngspice(ng, deck, cwd=work, spiceinit=spiceinit)
+        rows = [(float(t), 0.5 / abs(float(i1)), 0.5 / abs(float(i_n)))
+                for t, i1, i_n in re.findall(r"^RESULT_R (\S+) (\S+) (\S+)", log, re.M)]
+        ts = [r[0] for r in rows]
+        r1 = {t: a for t, a, _ in rows}; rn = {t: b for t, _, b in rows}
+        a, b = L / r1[27.0], (L / N) / rn[27.0]        # (W + DW) / Rs and (W/N + DW) / Rs, in um / ohm
+        rs = W * (1 - 1.0 / N) / (a - b)
+        dw = (a * rs - W) * 1000                      # nm
+        rep.check("%s Rs (A.i)" % res, "published", rs, rs_w[0], rs_w[2], "ohm/sq", 1, "(typ %g)" % rs_w[1])
+        rep.check("%s DW (A.i)" % res, "published", dw, dw_w[0], dw_w[2], "nm", 1, "(typ %g)" % dw_w[1])
+        fit = tc_checks(rep, res, ts, [r1[t] for t in ts], tc1, tc2)
+        data[res] = dict(rs=rs, dw_nm=dw, tc1=fit[0], tc2=fit[1])
+    if mim:
+        (c_lo, c_typ, c_hi), tc1, tc2 = MIM_ROW
+        side = 20.0
+        log = ngspice(ng, render(MIM_DECK, work, "mim", MODELS=models, W=side, L=side, TEMPS=temps),
+                      cwd=work, spiceinit=spiceinit)
+        rows = [(float(t), float(c)) for t, c in re.findall(r"^RESULT_C (\S+) (\S+)", log, re.M)]
+        ts = [r[0] for r in rows]; cs = [r[1] for r in rows]
+        cmima = cs[ts.index(27.0)] / (side * side) * 1e15   # fF/um^2
+        rep.check("cap_cmim CMIMA (A.k)", "published", cmima, c_lo, c_hi, "fF/um2", 1, "(typ %g)" % c_typ)
+        fit = tc_checks(rep, "cap_cmim", ts, cs, tc1, tc2)
+        data["cap_cmim"] = dict(cmima=cmima, tc1=fit[0], tc2=fit[1])
+    return data
+
 
 HBT_DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks", "ihp_hbt.sp")
 
@@ -218,6 +296,8 @@ def run(prefix, pdk, models, hbt):
         print("\nCorners: mos_ss / mos_ff against the spec limits\n")
         data["corners_lv"] = corner_checks(rep, ng, work, models, spiceinit, "lv", MOS_ROWS)
         data["corners_hv"] = corner_checks(rep, ng, work, models, spiceinit, "hv", HV_ROWS)
+        print("\nPassives and temperature coefficients (-40 to 125 C)\n")
+        data["passives"] = passive_checks(rep, ng, work, models, spiceinit, mim=hbt)
         if hbt:
             print()
             data["hbt"] = hbt_checks(rep, ng, work, models, spiceinit)
