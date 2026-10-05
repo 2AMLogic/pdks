@@ -26,6 +26,8 @@ repository. Their terms are summarised in README.md, "Licences".
     R3_CMC                ECL-2.0                 pdks/ihp-*/r3_cmc-LICENSE.txt,
                                                   r3_cmc-NOTICE.txt
     MOSVAR                ASU / Si2 terms         in the model file header
+  Tokai Rika TR-1um       Apache-2.0              pdks/tr1um/LICENSE, IP62-LICENSE.txt
+                          https://github.com/OpenSUSI/TR-1um
   BSIM-CMG 107.0.0        UC Berkeley BSIM terms  notice reproduced below
                           via https://github.com/CedarEDA/CMC.jl
   OpenVAF-reloaded        GPL-3.0-only            https://github.com/OpenVAF/OpenVAF-Reloaded
@@ -36,7 +38,8 @@ California, Berkeley. ASAP7 was developed by Arizona State University and
 Arm Research; ASAP5 by Arizona State University. PSP and JUNCAP were developed by NXP Semiconductors, Delft
 University of Technology and CEA (CEA-Leti), with earlier contributions
 from Arizona State University. This project is not affiliated with or
-endorsed by any of them, SkyWater, GlobalFoundries or IHP.
+endorsed by any of them, SkyWater, GlobalFoundries, IHP, Tokai Rika or
+OpenSUSI.
 
 BSIM-CMG 107.0.0 copyright notice, as it appears in the Verilog-A source
 ------------------------------------------------------------------------
