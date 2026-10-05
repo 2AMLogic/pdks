@@ -1,0 +1,6 @@
+# Tokai Rika TR-1um (OpenSUSI), pinned upstream. Sourced by bootstrap.sh.
+# Release v1.2609.0. The SPICE model files are fetched one by one from this
+# commit and checked against pdks/tr1um/files.sha256 (about 30 KB).
+TR1UM_REPO=https://github.com/OpenSUSI/TR-1um
+TR1UM_COMMIT=c5bcc378c1c3d041fef6cc15e70d173bb80dcedb
+TR1UM_RAW=https://raw.githubusercontent.com/OpenSUSI/TR-1um/c5bcc378c1c3d041fef6cc15e70d173bb80dcedb

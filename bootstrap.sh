@@ -3,7 +3,8 @@
 #
 #   ./bootstrap.sh --pdk NAME[,NAME...] [--prefix ~/pdks] [options]
 #
-# PDKs: asap7, asap5, sky130, gf180mcu, ihp-sg13g2, ihp-sg13cmos5l, or "all".
+# PDKs: asap7, asap5, sky130, gf180mcu, ihp-sg13g2, ihp-sg13cmos5l, tr1um,
+# or "all".
 #
 # Fetches every pinned source (tools/versions.lock, pdks/<pdk>/upstream.lock),
 # verifies it by SHA-256 or git commit, builds ngspice and any Verilog-A
@@ -33,7 +34,7 @@
 set -euo pipefail
 
 REPO=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-ALL_PDKS="asap7 asap5 sky130 gf180mcu ihp-sg13g2 ihp-sg13cmos5l"
+ALL_PDKS="asap7 asap5 sky130 gf180mcu ihp-sg13g2 ihp-sg13cmos5l tr1um"
 PDKS=""
 PREFIX="$HOME/pdks"
 JOBS=""

@@ -14,6 +14,7 @@ results are checked against each foundry's or author's published values.
 | `gf180mcu` | GlobalFoundries GF180MCU | BSIM4, built in | 1.4 MB | 18/18 against GF's EP targets and spec limits |
 | `ihp-sg13g2` | IHP SG13G2 SiGe BiCMOS | PSP 103 (OSDI), VBIC HBT | 2.5 MB | 31/31 against IHP's process spec: 1.2 V and 3.3 V MOS, and the HBT |
 | `ihp-sg13cmos5l` | IHP SG13CMOS5L CMOS | PSP 103 (OSDI) | 5 MB | 28/28 against IHP's process spec: 1.2 V and 3.3 V MOS |
+| `tr1um` | Tokai Rika TR-1um 1 µm CMOS (OpenSUSI) | BSIM3v3, built in | 30 KB | 16/16 against Tokai Rika's published I-V curves (digitised), plus 1 known deviation |
 
 ## Quick start
 
@@ -45,7 +46,8 @@ PDK needs ngspice settings, a `spiceinit`. Copy that file to
 | asap5 | `.lib ".../asap5/ngspice/models/asap5.lib" tt` | `Nn1 d g s b nmos_rvt nfin=2` (one "fin" = 2 nanowires) | loads the BSIM-CMG OSDI |
 | sky130 | `.lib ".../sky130/sky130A/libs.tech/ngspice/sky130.lib.spice" tt` | `X1 d g s b sky130_fd_pr__nfet_01v8 w=1 l=0.15` (µm) | `ngbehavior=hsa`, `ng_nomodcheck` |
 | gf180mcu | `.include ".../design.ngspice"` then `.lib ".../sm141064.ngspice" typical` | `M1 d g s b nfet_03v3 w=1u l=0.28u` | none |
-| ihp-* | `.lib ".../libs.tech/ngspice/models/cornerMOSlv.lib" mos_tt` | `X1 d g s b sg13_lv_nmos w=1u l=0.13u ng=1` | loads the PSP/R3/MOSVAR OSDI |
+| ihp-* | `.lib ".../libs.tech/ngspice/models/cornerMOSlv.lib" mos_tt` (3.3 V: `cornerMOShv.lib`) | `X1 d g s b sg13_lv_nmos w=1u l=0.13u ng=1` | loads the PSP/R3/MOSVAR OSDI |
+| tr1um | `.include ".../tr1um/TR-1um/libs.tech/spice/models/ip62_models"` | `X1 d g s b NMOS w=10u l=1u` | none |
 
 ## What `bootstrap.sh` does
 
@@ -114,6 +116,15 @@ definition used is documented next to the reference values.
   extraction definition and is checked within its MIN–MAX window.
   SG13G2 adds the npn13G2 HBT: β 722 (spec 650 typ), Ic 3.69 µA (3.8),
   fT 353 GHz (≥ 300).
+- **TR-1um.** Drain current of the 5 V NMOS and PMOS at 17 bias points,
+  against the simulated curves in Tokai Rika's reference manual (Table
+  I-2-7).
+  - The manual prints no numbers, so we digitised the figures and check
+    within ±5 %.
+  - NMOS matches within 2 %. PMOS runs 1–5 % low, and one point is a
+    known deviation.
+  - The silicon measurements in the same figure are printed for
+    information.
 
 ## Licences
 
@@ -133,6 +144,7 @@ Nothing else upstream is committed here: bootstrap downloads it. Notices:
 | ↳ R3_CMC | `ECL-2.0` | Verilog-A, `.osdi` | `LICENSE.txt` and `NOTICE.txt` kept in `pdks/ihp-*/`. |
 | ↳ MOSVAR | none (ASU / Si2 terms) | Verilog-A, `.osdi` | Terms in the file header; same four conditions as PSP 103.8.2. |
 | ASAP5 r0p4 | `BSD-3-Clause` | the asap5 repository | As ASAP7. Only `LICENSE` and the model cards are fetched; its `docs/` also ship the journal paper. |
+| TR-1um | `Apache-2.0` | model files, docs | Permitted with the licence and notices kept; `LICENSE` and `IP62-LICENSE.txt` are kept verbatim. Corner models are not public, and aren't shipped. |
 | BSIM-CMG 107.0.0 (ASAP7, ASAP5) | none (`LicenseRef-BSIM-CMG`) | Verilog-A and `.osdi` | UC Berkeley grants the right to modify, copy and redistribute, on four conditions: no charge for the UC code itself; acknowledge UC Berkeley; obey US export rules; keep the copyright notice. The header is titled "NONDISCLOSURE STATEMENT", but its text grants these rights. We commit none of it; `prepare.sh` carries only the edits. |
 | OpenVAF-reloaded v24.0.2mob | `GPL-3.0-only` | the compiler binary | Redistributing the binary requires offering the source. We don't redistribute it, and we don't publish compiled `.osdi` files. |
 | ngspice 47 | `BSD-3-Clause` (core) plus `LGPL-2.0-or-later`, `MPL-2.0` (`src/osdi`), `GPL-2.0-or-later` (one XSPICE model) and public-domain parts | the simulator | Built locally from the pinned source; not redistributed. |
@@ -147,11 +159,27 @@ Nothing else upstream is committed here: bootstrap downloads it. Notices:
 - Device simulation only. No DRC, LVS or extraction, and no standard-cell
   libraries are fetched.
 - Sanity checks cover the typical corner. Other corners are installed but
-  not checked.
+  not checked. TR-1um has only a typical corner.
 - Platforms: tested on macOS arm64 and Linux x86_64 (Ubuntu 24.04).
   macOS x86_64 should work, since OpenVAF-reloaded publishes a build, but
   it is untested. There is no Linux arm64 build of OpenVAF-reloaded, so the
   OSDI-based PDKs (`asap7`, `ihp-*`) can't run there.
+
+## Considered and not included
+
+We surveyed the open PDKs available in October 2026. These were left out:
+
+| PDK | Why not |
+|---|---|
+| sky130B | Its ngspice library and device models are byte-identical to sky130A's in the pinned release; use `sky130`. |
+| GF180MCU A–D variants | They differ only in metal stack and share the same device models. |
+| FreePDK3 (NCSU) | Runs with one edit, but there are no published device values to check against, and the authors call the models a preliminary "first glimpse". |
+| FreePDK45 / FreePDK15 (NCSU) | Download behind a registration wall. FreePDK15 is non-commercial and never shipped models. |
+| PTM model cards (ASU / UMN) | No stated licence, Google Drive hosting, no reference values. |
+| ICsprout55 | No SPICE models in the release. |
+| SKY90-FD | Announced in 2022, archived without models. |
+| MOSIS SCMOS | Design rules only; the model cards are no longer published. |
+| Cadence GPDK, Synopsys SAED | Licence agreements required. |
 
 ## Repository layout
 

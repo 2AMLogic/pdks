@@ -96,3 +96,13 @@ No changes to PDK files. Two differences from the PDKs' own setup:
 For SG13CMOS5L, the SG13CMOS5L checkout sits inside an IHP-Open-PDK dev
 checkout. That is the layout its README requires, because its MOS models
 and Verilog-A are symlinks into `../ihp-sg13g2`.
+
+## TR-1um (`pdks/tr1um/setup.sh`)
+
+No changes. The MOSFETs are BSIM3v3 subcircuits that ngspice reads as they
+are. The HSPICE/Spectre-isms it tolerates without edits are the
+`* simulator lang=spectre` comment line, `.parameters`, `//` comments and a
+mismatched `.ends` name. The capacitor model CSIO is not usable in ngspice:
+its voltage-dependent `C ... c='...' m=m` becomes `{m}e9` with a stray space.
+It is left unedited, because fixing it would mean dropping CSIO's
+multiplicity.
