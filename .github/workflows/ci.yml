@@ -21,7 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-24.04, macos-14]
-        pdk: [asap7, sky130, gf180mcu, ihp-sg13g2, ihp-sg13cmos5l]
+        pdk: [asap7, asap5, sky130, gf180mcu, ihp-sg13g2, ihp-sg13cmos5l]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -36,7 +36,7 @@ jobs:
           key: ngspice-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('tools/versions.lock', 'bootstrap.sh') }}
 
       - name: Cache BSIM-CMG .osdi
-        if: matrix.pdk == 'asap7'
+        if: matrix.pdk == 'asap7' || matrix.pdk == 'asap5'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/pdks-ci/tools/bsimcmg107

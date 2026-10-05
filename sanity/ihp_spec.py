@@ -7,9 +7,10 @@ Sources:
         v0.3.0: section 2.1 (LV NMOS, p. 7), 2.2 (LV PMOS, pp. 7-8),
         3.1 (npn13g2, p. 20), Attachment A (measurement conditions, pp. 22-23).
   [C5L] SG13CMOS5L Process Specification, Rev. 0.2,
-        libs.doc/doc/SG13CMOS5L_os_process_spec.pdf in ihp-sg13cmos5l
-        607e18d: sections 2.1.1-2.1.2 (pp. 8-9), conditions p. 22. Its LV MOS
-        rows and conditions are identical to [G2]'s.
+        ihp-sg13cmos5l/libs.doc/doc/SG13CMOS5L_os_process_spec.pdf in
+        IHP-Open-PDK dev 8e07a1f (first read at ihp-sg13cmos5l 607e18d):
+        sections 2.1.1-2.1.2 (pp. 8-9), conditions p. 22. Its LV MOS rows and
+        conditions are identical to [G2]'s.
 
 Every row is checked against the specification's own MIN-MAX window, using
 the specification's own extraction definition (Attachment A), at its

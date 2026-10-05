@@ -6,27 +6,8 @@
 # shellcheck disable=SC2034  # read by bootstrap.sh
 NEED_OPENVAF=1
 GUARD_DIRS+=("$TOOLS/bsimcmg107" "$PREFIX/asap7")
-
-# BSIM-CMG 107 Verilog-A -> .osdi (ASAP7's cards are BSIM-CMG 107)
-build_bsimcmg() {
-  local dir="$TOOLS/bsimcmg107"
-  local id; id="bsimcmg $BSIMCMG_URL_BASE $(sha256 "$REPO/tools/bsimcmg107.sha256") $(sha256 "$REPO/ngspice/bsimcmg107/prepare.sh") openvaf-r $OPENVAF_VERSION"
-  BSIMCMG_OSDI="$dir/bsimcmg107.osdi"
-  if stamp_ok "$dir" "$id" && [ -f "$BSIMCMG_OSDI" ]; then
-    log "BSIM-CMG $BSIMCMG_VERSION OSDI: already built"
-    return
-  fi
-  log "BSIM-CMG $BSIMCMG_VERSION: fetching, preparing and compiling to OSDI"
-  claim_dir "$dir"
-  mkdir -p "$dir/src"
-  local f sum
-  while read -r sum f; do
-    fetch "$BSIMCMG_URL_BASE/$f" "$sum" "$dir/src/$f"
-  done < "$REPO/tools/bsimcmg107.sha256"
-  "$REPO/ngspice/bsimcmg107/prepare.sh" "$dir/src" "$dir/osdi-src"
-  compile_va "$dir/osdi-src/bsimcmg.va" "$BSIMCMG_OSDI"
-  stamp "$dir" "$id"
-}
+# shellcheck source=pdks/bsimcmg.sh
+. "$REPO/pdks/bsimcmg.sh"
 
 setup_asap7() {
   build_bsimcmg

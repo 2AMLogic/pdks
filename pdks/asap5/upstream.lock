@@ -1,0 +1,7 @@
+# ASAP5 r0p4, pinned upstream. Sourced by bootstrap.sh.
+# A sparse, blob-filtered fetch of exactly this commit: LICENSE and the
+# nanowire-FET BSIM-CMG cards only (about 0.3 MB). The files used are also
+# checked against pdks/asap5/models.sha256.
+ASAP5_URL=https://github.com/The-OpenROAD-Project/asap5.git
+ASAP5_COMMIT=97962f34ae9754fabd119cfbb88137f9779acbfb
+ASAP5_MODELS=asap5PDK_r0p4/models/hspice/allvt_cgp44_210623a/nwfet

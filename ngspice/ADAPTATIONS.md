@@ -37,6 +37,24 @@ edits, none of the Berkeley source.
 | B1 | Prefix 26 parameters with `(*type="instance"*)`: `L D TFIN FPITCH NF NFIN NGCON ASEO ADEO PSEO PDEO ASEJ ADEJ PSEJ PDEJ COVS COVD CGSP CGDP CDSP NRS NRD LRSD DTEMP DELVTRAND U0MULT`. | OpenVAF makes a parameter an OSDI instance parameter only when it carries this attribute; untagged parameters are model-only. BSIM-CMG 107 predates the convention (110+ tag them through `IPRxx` macros), so without it `l=` and `nfin=` could not be set per device. The list is the set Xyce marks as instance parameters in its BSIM-CMG 107 port, plus NF (finger count) and DTEMP (device temperature offset), which are per-device by nature. Values and ranges are unchanged. |
 | B2 | `EOTACC` lower bound `[0.1n:inf)` → `[1e-10:inf)`. | OpenVAF evaluates `0.1n` as `0.1 × 1e-9 = 1.0000000000000002e-10`, one ulp above `1e-10`. The ASAP7 cards set `eotacc = 1e-10`, which the bound allows. Without this edit, ngspice rejects it ("Parameter EOTACC is out of bounds") and aborts model setup. Writing the bound as the exact literal restores the intended inclusive limit. Fixing it here rather than nudging the card keeps the ASAP7 values untouched. (EOTACC is only used when `CAPMOD ≠ 0`; the ASAP7 cards use `capmod = 0`.) |
 
+## ASAP5 model cards (`asap5/adapt-models.sh`)
+
+Input: the 40 cards `models/hspice/allvt_cgp44_210623a/nwfet/<device>_<corner>_hc_nwfet_asap5_210623a.pm`
+(eight devices, five corners) from the asap5 repository at the pinned
+commit. Output: one file per corner, `asap5/ngspice/models/asap5_{TT,FF,SS,FS,SF}.pm`.
+Hashes: `asap5/adapted.sha256`. The cards are BSIM-CMG 107 like ASAP7's, so
+they use the same compiled model, including edits B1 and B2 above.
+
+| # | Change | Reason |
+|---|---|---|
+| A1 | `.model` header line, as for ASAP7. | The same reason. |
+| A5 | `lrsd = 0` removed, so LRSD takes BSIM-CMG's default (L). | BSIM-CMG 107 bounds LRSD to `(0:inf)`, and ngspice rejects 0 ("Parameter LRSD is out of bounds"). LRSD is only read when `RGEOMOD = 1` (contact resistance) or `CGEOMOD = 2` (fringe capacitance). All 40 cards set both to 0, so the value has no effect. |
+| A6 | `drout = 0.0` → `drout = 1.06`, BSIM-CMG's default. | BSIM-CMG 107 stops with "Fatal: DROUT_i … is non-positive". DROUT only enters `DIBLfactor = 0.5·PDIBL1/(cosh(DROUT·Leff/scl) − 1) + PDIBL2`. All 40 cards set `pdibl1 = 0`, so the factor is PDIBL2 whatever DROUT is. |
+
+Devices are instantiated with `nfin=2`: the paper's "fin" is a stack of two
+nanowires, and BSIM-CMG's cylindrical geometry (`geomod = 3`) counts
+cylinders. `l` is left at the cards' 14 nm.
+
 ## macOS: OpenVAF-reloaded signature
 
 The macOS release binaries of OpenVAF-reloaded v24.0.2mob carry
