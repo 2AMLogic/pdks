@@ -48,10 +48,31 @@ ROWS = [
 ]
 # pFET values are magnitudes; the source prints them negative.
 
+# Corners. The same tables give model values at FF, SS, FS and SF. Because
+# their TT column is already off the released models, corners are checked
+# relative to TT: Idsat as the ratio corner / TT (within 3 %), Vt as the
+# shift corner - TT (within 15 mV), both for the 7/0.15 devices.
+# (row, device, quantity, TT, {corner: value}); pFET values are magnitudes.
+CORNER_ROWS = [
+    ("VTXNS15",  "nfet_01v8", "vt",    0.645,  {"ff": 0.615, "ss": 0.677, "fs": 0.603, "sf": 0.689}),
+    ("IDSNS15",  "nfet_01v8", "idsat", 3.512,  {"ff": 3.945, "ss": 3.078, "fs": 3.041, "sf": 3.983}),
+    ("VTXPS15S", "pfet_01v8", "vt",    0.781,  {"ff": 0.728, "ss": 0.835, "fs": 0.705, "sf": 0.858}),
+    ("IDSPS15S", "pfet_01v8", "idsat", 1.347,  {"ff": 1.742, "ss": 0.952, "fs": 0.917, "sf": 1.777}),
+]
+CORNER_TOL = dict(idsat=0.03, vt=0.015)
+
 # Rows where the released models disagree with the published table itself,
 # reported on every run but not counted as failures.
 KNOWN_DEVIATIONS = {
     "VTXNN42": "narrow 0.42/1 nFET: the released TT model gives about 0.60 V, "
                "above both the table's own TT model value (0.550) and its EDR "
                "max; no single Vt definition puts all eight Vt rows in their windows",
+    # The table's FS and SF columns contradict each other: for the nFET its
+    # Idsat row makes FS the slow corner but its Vt row makes FS fast, and
+    # for the pFET the reverse. The models agree with the nFET Idsat row and
+    # the pFET Vt row, so the other two rows' FS/SF entries are reported here.
+    ("VTXNS15", "fs"): "table's FS/SF Vt columns contradict its own Idsat row; with FS/SF swapped it matches (+0.044)",
+    ("VTXNS15", "sf"): "table's FS/SF Vt columns contradict its own Idsat row; with FS/SF swapped it matches (-0.042)",
+    ("IDSPS15S", "fs"): "table's FS/SF Idsat columns contradict its own Vt row; with FS/SF swapped it matches (1.319)",
+    ("IDSPS15S", "sf"): "table's FS/SF Idsat columns contradict its own Vt row; with FS/SF swapped it matches (0.681)",
 }

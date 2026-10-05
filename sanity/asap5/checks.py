@@ -48,4 +48,24 @@ def run(prefix, ng):
                 rep.info(dev + " Idsat/Idlin", m["idsat_over_idlin"], "", 1,
                          "(paper %.2f, bias unstated)" % ref.IDSAT_OVER_IDLIN[dev])
             print()
+
+        # Corners: [MEJ22] Fig. 16 shows them only as plots, so the check is
+        # derived: Idsat orders ss < slow-mixed < tt < fast-mixed < ff. The
+        # first letter of a corner is the nFET's, so an nFET is fast in fs,
+        # a pFET in sf.
+        print("Corners: ordering (derived; the paper plots corners, no table)\n")
+        for dev in ref.DEVICES:
+            pol = -1 if dev.startswith("p") else 1
+            ids = {}
+            for c in ("ss", "sf", "tt", "fs", "ff"):
+                sw = mos_sweeps(ng, work, "%s_%s" % (dev, c), '.lib "%s" %s' % (models, c),
+                                "N1 d g s 0 %s nfin=2" % dev, pol, ref.VDD, 0.05, 0.05, ref.VDD, ref.TEMP,
+                                pre="pre_osdi " + osdi)
+                ids[c] = at(*sw["vg_sat"], ref.VDD) * 1e6
+            data[dev + "_corners_idsat_uA"] = ids
+            fast, slow = ("fs", "sf") if pol > 0 else ("sf", "fs")
+            order = [ids[c] for c in ("ss", slow, "tt", fast, "ff")]
+            rep.check("%s Idsat ss<%s<tt<%s<ff" % (dev, slow, fast), "derived",
+                      float(all(a < b for a, b in zip(order, order[1:]))), 1, 1, "", 1,
+                      "(%s uA)" % " / ".join("%.1f" % v for v in order))
     return rep.summary(), data, rep.rows
