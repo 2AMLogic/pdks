@@ -11,6 +11,8 @@ repository. Their terms are summarised in README.md, "Licences".
 
   ASAP7 PDK r1p7          BSD-3-Clause            pdks/asap7/LICENSE
                           https://github.com/The-OpenROAD-Project/asap7_pdk_r1p7
+  ASAP5 PDK r0p4          BSD-3-Clause            pdks/asap5/LICENSE
+                          https://github.com/The-OpenROAD-Project/asap5
   SKY130 (sky130_fd_pr,   Apache-2.0              pdks/sky130/LICENSE
     open_pdks build)      https://github.com/google/skywater-pdk-libs-sky130_fd_pr
   GF180MCU (fd_pr)        Apache-2.0              pdks/gf180mcu/LICENSE, AUTHORS
@@ -31,7 +33,7 @@ repository. Their terms are summarised in README.md, "Licences".
 
 Acknowledgements: BSIM-CMG was developed by the BSIM Group, University of
 California, Berkeley. ASAP7 was developed by Arizona State University and
-Arm Research. PSP and JUNCAP were developed by NXP Semiconductors, Delft
+Arm Research; ASAP5 by Arizona State University. PSP and JUNCAP were developed by NXP Semiconductors, Delft
 University of Technology and CEA (CEA-Leti), with earlier contributions
 from Arizona State University. This project is not affiliated with or
 endorsed by any of them, SkyWater, GlobalFoundries or IHP.

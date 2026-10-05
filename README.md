@@ -9,6 +9,7 @@ results are checked against each foundry's or author's published values.
 | `--pdk` | Process | Models | Fetched | Sanity checks |
 |---|---|---|---|---|
 | `asap7` | ASAP7 r1p7: 7 nm predictive FinFET (ASU / Arm) | BSIM-CMG 107, compiled to OSDI | 9 MB | 65/65 against the PDK paper |
+| `asap5` | ASAP5 r0p4: 5 nm predictive gate-all-around nanowire FET (ASU) | BSIM-CMG 107, compiled to OSDI | 0.3 MB | 39/39 against the PDK paper, plus 1 known deviation |
 | `sky130` | SkyWater SKY130 (`sky130A`) | BSIM4, built in | 21 MB | 11/11 against SkyWater's e-test windows, plus 1 known deviation |
 | `gf180mcu` | GlobalFoundries GF180MCU | BSIM4, built in | 1.4 MB | 18/18 against GF's EP targets and spec limits |
 | `ihp-sg13g2` | IHP SG13G2 SiGe BiCMOS | PSP 103 (OSDI), VBIC HBT | 2.5 MB | 17/17 against IHP's process spec, including the HBT |
@@ -41,6 +42,7 @@ PDK needs ngspice settings, a `spiceinit`. Copy that file to
 | PDK | Load models with | Devices | spiceinit |
 |---|---|---|---|
 | asap7 | `.lib ".../asap7/ngspice/models/asap7.lib" tt` | `Nn1 d g s b nmos_rvt l=20n nfin=3` | loads the BSIM-CMG OSDI |
+| asap5 | `.lib ".../asap5/ngspice/models/asap5.lib" tt` | `Nn1 d g s b nmos_rvt nfin=2` (one "fin" = 2 nanowires) | loads the BSIM-CMG OSDI |
 | sky130 | `.lib ".../sky130/sky130A/libs.tech/ngspice/sky130.lib.spice" tt` | `X1 d g s b sky130_fd_pr__nfet_01v8 w=1 l=0.15` (µm) | `ngbehavior=hsa`, `ng_nomodcheck` |
 | gf180mcu | `.include ".../design.ngspice"` then `.lib ".../sm141064.ngspice" typical` | `M1 d g s b nfet_03v3 w=1u l=0.28u` | none |
 | ihp-* | `.lib ".../libs.tech/ngspice/models/cornerMOSlv.lib" mos_tt` | `X1 d g s b sg13_lv_nmos w=1u l=0.13u ng=1` | loads the PSP/R3/MOSVAR OSDI |
@@ -54,14 +56,15 @@ PDK needs ngspice settings, a `spiceinit`. Copy that file to
    |---|---|---|
    | ngspice | 47, source release | SHA-256 (`tools/versions.lock`) |
    | OpenVAF-reloaded | v24.0.2mob release binary | SHA-256 per platform |
-   | BSIM-CMG Verilog-A (ASAP7) | 107.0.0, CedarEDA/CMC.jl @ `548cc7a` | SHA-256 per file |
+   | BSIM-CMG Verilog-A (ASAP7, ASAP5) | 107.0.0, CedarEDA/CMC.jl @ `548cc7a` | SHA-256 per file |
    | each PDK | commit or release asset, see `pdks/<pdk>/README.md` | git commit id or SHA-256 |
 
 3. Builds ngspice with OSDI support and compiles the Verilog-A models the
    PDK needs.
 4. Applies the minimum adaptations. Every one is listed, with its reason, in
-   [`ngspice/ADAPTATIONS.md`](ngspice/ADAPTATIONS.md). ASAP7 needs three;
-   the others need none to PDK files.
+   [`ngspice/ADAPTATIONS.md`](ngspice/ADAPTATIONS.md). ASAP7 and ASAP5
+   need a few, none of which changes a result; the others need none to
+   PDK files.
 5. Runs a smoke test and the sanity checks.
 
 Directories it creates carry a stamp file. It refuses to overwrite a
@@ -86,6 +89,14 @@ definition used is documented next to the reference values.
     current, which excludes GIDL; Vt is taken at 10 nA per fin; SS is the
     10–100 nA decade. DIBL is printed for information only, because ours
     is a uniform 1.32× the paper's column.
+- **ASAP5.** All eight nanowire FETs against Vashishtha and Clark 2022,
+  Tables 8–9:
+  - Idsat and Vtsat match every printed digit. Vtsat uses the paper's
+    stated 50 nA criterion.
+  - Ioff is within 5 %, and DIBL within 0.1 mV/V for seven devices.
+  - SS reads 0.6–0.9 mV/dec low; the paper doesn't state its definition.
+  - nmos_sram's DIBL (22.1 vs 20.06) is a known deviation. The paper
+    says its SRAM models came from an earlier calibration.
 - **SKY130.** Vt, Idsat and leakage of the 1.8 V FETs, against SkyWater's
   e-test MIN–MAX windows ("Device Details" tables):
   - The tables' own TT-model column doesn't match the released models.
@@ -120,14 +131,16 @@ Nothing else upstream is committed here: bootstrap downloads it. Notices:
 | ↳ PSP 103.8.2, JUNCAP 200 (SG13CMOS5L) | none (NXP / TU Delft / CEA terms) | Verilog-A, compiled `.osdi` | Modify, copy and redistribute; no charge for their code itself; acknowledge them in product documentation; keep the notice, disclaimer and conditions, including with binaries. |
 | ↳ R3_CMC | `ECL-2.0` | Verilog-A, `.osdi` | `LICENSE.txt` and `NOTICE.txt` kept in `pdks/ihp-*/`. |
 | ↳ MOSVAR | none (ASU / Si2 terms) | Verilog-A, `.osdi` | Terms in the file header; same four conditions as PSP 103.8.2. |
-| BSIM-CMG 107.0.0 (ASAP7) | none (`LicenseRef-BSIM-CMG`) | Verilog-A and `.osdi` | UC Berkeley grants the right to modify, copy and redistribute, on four conditions: no charge for the UC code itself; acknowledge UC Berkeley; obey US export rules; keep the copyright notice. The header is titled "NONDISCLOSURE STATEMENT", but its text grants these rights. We commit none of it; `prepare.sh` carries only the edits. |
+| ASAP5 r0p4 | `BSD-3-Clause` | the asap5 repository | As ASAP7. Only `LICENSE` and the model cards are fetched; its `docs/` also ship the journal paper. |
+| BSIM-CMG 107.0.0 (ASAP7, ASAP5) | none (`LicenseRef-BSIM-CMG`) | Verilog-A and `.osdi` | UC Berkeley grants the right to modify, copy and redistribute, on four conditions: no charge for the UC code itself; acknowledge UC Berkeley; obey US export rules; keep the copyright notice. The header is titled "NONDISCLOSURE STATEMENT", but its text grants these rights. We commit none of it; `prepare.sh` carries only the edits. |
 | OpenVAF-reloaded v24.0.2mob | `GPL-3.0-only` | the compiler binary | Redistributing the binary requires offering the source. We don't redistribute it, and we don't publish compiled `.osdi` files. |
 | ngspice 47 | `BSD-3-Clause` (core) plus `LGPL-2.0-or-later`, `MPL-2.0` (`src/osdi`), `GPL-2.0-or-later` (one XSPICE model) and public-domain parts | the simulator | Built locally from the pinned source; not redistributed. |
 
 ## Limitations
 
-- **ASAP7 is predictive, not foundry-accurate.** It is an academic model
-  of a plausible 7 nm process; no fab manufactures it. The other four are
+- **ASAP7 and ASAP5 are predictive, not foundry-accurate.** They are
+  academic models of plausible 7 nm and 5 nm processes; no fab
+  manufactures them. The other four are
   real processes, but their open models are what the foundries published,
   not a substitute for a foundry's sign-off flow.
 - Device simulation only. No DRC, LVS or extraction, and no standard-cell
@@ -154,6 +167,9 @@ sanity/                   run.py, shared helpers and decks; sanity/<pdk>/ per PD
 
 If you publish results that use ASAP7, cite: L. T. Clark et al., "ASAP: A
 7-nm finFET predictive process design kit," *Microelectronics Journal*
-53 (2016) 105–115, doi:10.1016/j.mejo.2016.04.006. BSIM-CMG is by the BSIM
+53 (2016) 105–115, doi:10.1016/j.mejo.2016.04.006. For ASAP5: V.
+Vashishtha and L. T. Clark, "ASAP5: A predictive PDK for the 5 nm node,"
+*Microelectronics Journal* 126 (2022) 105481,
+doi:10.1016/j.mejo.2022.105481. BSIM-CMG is by the BSIM
 Group, UC Berkeley. PSP and JUNCAP are by NXP Semiconductors, TU Delft and
 CEA-Leti.
