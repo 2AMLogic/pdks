@@ -10,10 +10,10 @@ results are checked against each foundry's or author's published values.
 |---|---|---|---|---|
 | `asap7` | ASAP7 r1p7: 7 nm predictive FinFET (ASU / Arm) | BSIM-CMG 107, compiled to OSDI | 9 MB | 65/65 against the PDK paper |
 | `asap5` | ASAP5 r0p4: 5 nm predictive gate-all-around nanowire FET (ASU) | BSIM-CMG 107, compiled to OSDI | 0.3 MB | 39/39 against the PDK paper, plus 1 known deviation |
-| `sky130` | SkyWater SKY130 (`sky130A`) | BSIM4, built in | 21 MB | 11/11 against SkyWater's e-test windows, plus 1 known deviation |
+| `sky130` | SkyWater SKY130 (`sky130A`; `sky130B`'s ngspice libraries are identical in this release) | BSIM4, built in | 21 MB | 11/11 against SkyWater's e-test windows, plus 1 known deviation |
 | `gf180mcu` | GlobalFoundries GF180MCU | BSIM4, built in | 1.4 MB | 18/18 against GF's EP targets and spec limits |
-| `ihp-sg13g2` | IHP SG13G2 SiGe BiCMOS | PSP 103 (OSDI), VBIC HBT | 2.5 MB | 17/17 against IHP's process spec, including the HBT |
-| `ihp-sg13cmos5l` | IHP SG13CMOS5L CMOS | PSP 103 (OSDI) | 5 MB | 14/14 against IHP's process spec |
+| `ihp-sg13g2` | IHP SG13G2 SiGe BiCMOS | PSP 103 (OSDI), VBIC HBT | 2.5 MB | 31/31 against IHP's process spec: 1.2 V and 3.3 V MOS, and the HBT |
+| `ihp-sg13cmos5l` | IHP SG13CMOS5L CMOS | PSP 103 (OSDI) | 5 MB | 28/28 against IHP's process spec: 1.2 V and 3.3 V MOS |
 
 ## Quick start
 
@@ -108,9 +108,10 @@ definition used is documented next to the reference values.
   targets. All match to printed precision (e.g. 510.0 vs 510 µA/µm,
   0.630 vs 0.63 V). Ioff and subthreshold slope are checked against the
   electrical-spec limits.
-- **IHP SG13G2 / SG13CMOS5L.** Every LV MOS row of IHP's process
-  specification (Vt at three geometries, Idsat, Ioff, DIBL, SS), using
-  the spec's own extraction definitions, within its MIN–MAX windows.
+- **IHP SG13G2 / SG13CMOS5L.** Every MOS row of IHP's process
+  specification, for both the 1.2 V and the 3.3 V devices: Vt at three
+  geometries, Idsat, Ioff, DIBL and SS. Each uses the spec's own
+  extraction definition and is checked within its MIN–MAX window.
   SG13G2 adds the npn13G2 HBT: β 722 (spec 650 typ), Ic 3.69 µA (3.8),
   fT 353 GHz (≥ 300).
 
