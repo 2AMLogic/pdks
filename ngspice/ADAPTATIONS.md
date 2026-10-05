@@ -53,3 +53,28 @@ OpenMP is off because Apple clang ships no `omp.h`, and it is off on
 Linux too so both platforms build the same way. The sanity decks run
 `ngspice -b -n`, which ignores any `~/.spiceinit`, so a user's
 compatibility mode (for example `ngbehavior=hsa`) cannot change results.
+
+## SKY130 (`pdks/sky130/setup.sh`)
+
+No changes to PDK files. The library needs two ngspice settings, the same
+ones the PDK's own `libs.tech/ngspice/spinit` makes: `set ngbehavior=hsa`
+(HSPICE-compatible parsing for its model files) and `set ng_nomodcheck`.
+Bootstrap writes them to `sky130/ngspice/spiceinit` and to a `.spiceinit` beside
+`example.sp`.
+
+## GF180MCU (`pdks/gf180mcu/setup.sh`)
+
+No changes. The cards are ngspice-native BSIM4 and need no settings.
+
+## IHP SG13G2 and SG13CMOS5L (`pdks/ihp-common.sh`)
+
+No changes to PDK files. Two differences from the PDKs' own setup:
+
+| # | What | Reason |
+|---|---|---|
+| I1 | OSDI models are compiled into `<pdk>/ngspice/osdi/` with the flags of the PDK's `openvaf-compile-va.sh` (`-D__NGSPICE__`), instead of running that script. | The script writes into the PDK's tracked tree. For SG13CMOS5L that tree holds prebuilt `cap_cmom*.osdi`, which are Linux x86-64 binaries and would be overwritten (and don't load on macOS). |
+| I2 | Our spiceinit loads each `.osdi` by absolute path; the PDKs' `.spiceinit` uses `$PDK_ROOT/$PDK`. | Works without setting environment variables, and from any directory. |
+
+For SG13CMOS5L, the SG13CMOS5L checkout sits inside an IHP-Open-PDK dev
+checkout. That is the layout its README requires, because its MOS models
+and Verilog-A are symlinks into `../ihp-sg13g2`.

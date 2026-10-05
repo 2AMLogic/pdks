@@ -1,6 +1,6 @@
 name: ci
 
-# Run the one-command setup from scratch and the ASAP7 sanity checks on
+# Run the one-command setup from scratch and each PDK's sanity checks on
 # Linux and macOS. The ngspice build and the compiled BSIM-CMG .osdi are
 # cached, keyed on the lock files and scripts that produce them. On a cache
 # hit, bootstrap.sh sees a matching .bootstrap-stamp and skips the build.
@@ -15,11 +15,13 @@ permissions:
   contents: read
 
 jobs:
-  asap7:
+  pdk:
+    name: ${{ matrix.pdk }} (${{ matrix.os }})
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-24.04, macos-14]
+        pdk: [asap7, sky130, gf180mcu, ihp-sg13g2, ihp-sg13cmos5l]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -34,21 +36,22 @@ jobs:
           key: ngspice-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('tools/versions.lock', 'bootstrap.sh') }}
 
       - name: Cache BSIM-CMG .osdi
+        if: matrix.pdk == 'asap7'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/pdks-ci/tools/bsimcmg107
           key: bsimcmg107-osdi-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('tools/versions.lock', 'tools/bsimcmg107.sha256', 'ngspice/bsimcmg107/prepare.sh') }}
 
-      - name: Bootstrap ASAP7 and run sanity checks
-        run: ./bootstrap.sh --pdk asap7 --prefix "$PREFIX"
+      - name: Bootstrap and run sanity checks
+        run: ./bootstrap.sh --pdk ${{ matrix.pdk }} --prefix "$PREFIX"
 
       - name: Re-run is a no-op
-        run: ./bootstrap.sh --pdk asap7 --prefix "$PREFIX" --skip-sanity
+        run: ./bootstrap.sh --pdk ${{ matrix.pdk }} --prefix "$PREFIX" --skip-sanity
 
       - name: Upload sanity results
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: sanity-${{ matrix.os }}
-          path: ~/pdks-ci/asap7/sanity-results.json
+          name: sanity-${{ matrix.pdk }}-${{ matrix.os }}
+          path: ~/pdks-ci/${{ matrix.pdk }}/sanity-results.json
           if-no-files-found: ignore
