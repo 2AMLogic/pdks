@@ -13,7 +13,9 @@ published at gf180mcu-pdk.readthedocs.io):
        and 2_Medium_Voltage_Devices6v.csv. Ioff at |Vds| = 1.1 * VDD, 25 C,
        and subthreshold slope, with min/typ/max limits.
 
-Conditions: typical corner, 25 C (the temperature [EPS] states), W = 10 um.
+Conditions: 25 C (the temperature [EPS] states), W = 10 um. [MRG] gives
+targets for the slow, typical and fast models; they are checked at the
+model library's ss, typical and ff corners.
 
 Extraction definitions:
   Vth0: [MRG] says only "max Gm". Taking the tangent at peak gm, its Vgs
@@ -37,6 +39,14 @@ DEVICES = {
     "nfet_06v0_nvt": dict(w=10, l=1.80, vdd=6.0, vlin=0.10, idsat=535, vth0=-0.12, ioff_max=None, voff=6.6),
 }
 # Magnitudes: pFET Idsat and Vth0 are negative in the tables.
+
+# [MRG] slow and fast EP targets: corner -> device -> (Idsat uA/um, Vth0 V)
+CORNERS = {
+    "ss": {"nfet_03v3": (430, 0.73), "pfet_03v3": (210, 0.85), "nfet_06v0": (480, 0.85),
+           "pfet_06v0": (240, 0.98), "nfet_06v0_nvt": (430, 0.08)},
+    "ff": {"nfet_03v3": (590, 0.53), "pfet_03v3": (290, 0.61), "nfet_06v0": (660, 0.61),
+           "pfet_06v0": (340, 0.72), "nfet_06v0_nvt": (640, -0.32)},
+}
 
 SS_MAX = 150.0  # mV/dec, [EPS] max for the four 3.3 V and 6 V devices
 

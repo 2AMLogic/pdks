@@ -46,4 +46,29 @@ def run(prefix, ng):
                 v = math.log10(at(*sw["vg_off"], 0.0))
                 rep.check(label + " Ioff", "bound", v, -99, hi, "log A", 1)
             data[name] = v
+
+        print("\nCorners, relative to TT (7/0.15 devices)\n")
+        base = {}
+        for corner in ("tt", "ff", "ss", "fs", "sf"):
+            for dev in ("nfet_01v8", "pfet_01v8"):
+                pol = -1 if dev.startswith("p") else 1
+                sw = mos_sweeps(ng, work, "%s_%s_corner" % (dev, corner), '.lib "%s" %s' % (lib, corner),
+                                "X1 d g s 0 sky130_fd_pr__%s w=7 l=0.15" % dev, pol, ref.VDD, 0.05, 0.05,
+                                ref.VDD, ref.TEMP, imeas="i(vs)", spiceinit=SPICEINIT)
+                base[(dev, corner)] = dict(vt=vt_max_gm(*sw["vg_lin"], 0.05), idsat=at(*sw["vg_sat"], ref.VDD))
+        t = ref.CORNER_TOL
+        for name, dev, qty, tt, corners in ref.CORNER_ROWS:
+            for corner, val in corners.items():
+                sim_tt, sim_c = base[(dev, "tt")][qty], base[(dev, corner)][qty]
+                if qty == "idsat":
+                    v, want, lo, hi, unit = sim_c / sim_tt, val / tt, val / tt * (1 - t[qty]), val / tt * (1 + t[qty]), "x TT"
+                else:
+                    v, want, unit = sim_c - sim_tt, val - tt, "V vs TT"
+                    lo, hi = want - t[qty], want + t[qty]
+                label = "%s %s %s" % (name, corner, "Idsat/TT" if qty == "idsat" else "Vt-TT")
+                data[label] = v
+                if (name, corner) in ref.KNOWN_DEVIATIONS:
+                    rep.known(label, v, lo, hi, unit, 1, ref.KNOWN_DEVIATIONS[(name, corner)])
+                else:
+                    rep.check(label, "published", v, lo, hi, unit, 1, "(table %+.3f)" % want if qty == "vt" else "(table %.3f)" % want)
     return rep.summary(), data, rep.rows

@@ -37,4 +37,23 @@ def run(prefix, ng):
                 rep.check(dev + " Ioff", "bound", ioff, 0, p["ioff_max"], "pA/um", 1)
                 rep.check(dev + " SS", "bound", ss, 0, ref.SS_MAX, "mV/dec", 1)
             print()
+
+        print("Corners: [MRG] slow / fast EP targets at the ss / ff models\n")
+        for corner, targets in ref.CORNERS.items():
+            hdr = '.include "%s/design.ngspice"\n.lib "%s/sm141064.ngspice" %s' % (models, models, corner)
+            for dev, (idsat_t, vth_t) in targets.items():
+                p = ref.DEVICES[dev]
+                pol = -1 if dev.startswith("p") else 1
+                inst = "M1 d g s 0 %s w=%gu l=%gu" % (dev, p["w"], p["l"])
+                sw = mos_sweeps(ng, work, "%s_%s" % (dev, corner), hdr, inst, pol, p["vdd"], p["vlin"],
+                                p["vlin"], p["voff"], ref.TEMP, vgstart=-0.5 if min(p["vth0"], vth_t) < 0 else 0.0)
+                idsat = at(*sw["vg_sat"], p["vdd"]) / p["w"] * 1e6
+                vth0 = vt_max_gm(*sw["vg_lin"], p["vlin"])
+                data["%s_%s" % (dev, corner)] = dict(idsat_uA_um=idsat, vth0=vth0)
+                t = ref.TOL
+                rep.check("%s %s Idsat" % (dev, corner), "published", idsat,
+                          idsat_t * (1 - t["idsat"]), idsat_t * (1 + t["idsat"]), "uA/um", 1)
+                rep.check("%s %s Vth0" % (dev, corner), "published", vth0,
+                          vth_t - t["vth0"], vth_t + t["vth0"], "V", 1)
+            print()
     return rep.summary(), data, rep.rows

@@ -8,12 +8,12 @@ results are checked against each foundry's or author's published values.
 
 | `--pdk` | Process | Models | Fetched | Sanity checks |
 |---|---|---|---|---|
-| `asap7` | ASAP7 r1p7: 7 nm predictive FinFET (ASU / Arm) | BSIM-CMG 107, compiled to OSDI | 9 MB | 65/65 against the PDK paper |
-| `asap5` | ASAP5 r0p4: 5 nm predictive gate-all-around nanowire FET (ASU) | BSIM-CMG 107, compiled to OSDI | 0.3 MB | 39/39 against the PDK paper, plus 1 known deviation |
-| `sky130` | SkyWater SKY130 (`sky130A`; `sky130B`'s ngspice libraries are identical in this release) | BSIM4, built in | 21 MB | 11/11 against SkyWater's e-test windows, plus 1 known deviation |
-| `gf180mcu` | GlobalFoundries GF180MCU | BSIM4, built in | 1.4 MB | 18/18 against GF's EP targets and spec limits |
-| `ihp-sg13g2` | IHP SG13G2 SiGe BiCMOS | PSP 103 (OSDI), VBIC HBT | 2.5 MB | 31/31 against IHP's process spec: 1.2 V and 3.3 V MOS, and the HBT |
-| `ihp-sg13cmos5l` | IHP SG13CMOS5L CMOS | PSP 103 (OSDI) | 5 MB | 28/28 against IHP's process spec: 1.2 V and 3.3 V MOS |
+| `asap7` | ASAP7 r1p7: 7 nm predictive FinFET (ASU / Arm) | BSIM-CMG 107, compiled to OSDI | 9 MB | 73/73 against the PDK paper |
+| `asap5` | ASAP5 r0p4: 5 nm predictive gate-all-around nanowire FET (ASU) | BSIM-CMG 107, compiled to OSDI | 0.3 MB | 47/47 against the PDK paper, plus 1 known deviation |
+| `sky130` | SkyWater SKY130 (`sky130A`; `sky130B`'s ngspice libraries are identical in this release) | BSIM4, built in | 21 MB | 23/23 against SkyWater's e-test windows and corner tables, plus 5 known deviations |
+| `gf180mcu` | GlobalFoundries GF180MCU | BSIM4, built in | 1.4 MB | 38/38 against GF's slow/typical/fast EP targets and spec limits |
+| `ihp-sg13g2` | IHP SG13G2 SiGe BiCMOS | PSP 103 (OSDI), VBIC HBT | 2.5 MB | 50/50 against IHP's process spec: 1.2 V and 3.3 V MOS, corners and the HBT, plus 1 known deviation |
+| `ihp-sg13cmos5l` | IHP SG13CMOS5L CMOS | PSP 103 (OSDI) | 5 MB | 47/47 against IHP's process spec: 1.2 V and 3.3 V MOS and corners, plus 1 known deviation |
 | `tr1um` | Tokai Rika TR-1um 1 µm CMOS (OpenSUSI) | BSIM3v3, built in | 30 KB | 16/16 against Tokai Rika's published I-V curves (digitised), plus 1 known deviation |
 
 ## Quick start
@@ -126,6 +126,31 @@ definition used is documented next to the reference values.
   - The silicon measurements in the same figure are printed for
     information.
 
+### Corners
+
+Where a PDK publishes corner values, the corners are checked too. How strong
+each check is depends on what was published:
+
+- **GF180MCU (published).** The ss and ff models land on GF's slow and fast
+  EP targets for Idsat and Vth0, for all five FETs, within 2 % / 10 mV.
+- **SKY130 (published, relative to TT).** Each corner's shift from TT
+  matches the table's own shift: Idsat within 3 %, Vt within 15 mV.
+  - FF and SS check out fully.
+  - The table's FS and SF columns contradict each other. In the nFET Vt
+    row and the pFET Idsat row they are swapped relative to the other row.
+  - Those four entries are reported as known deviations, and each matches
+    once FS and SF are swapped.
+- **IHP (published limits).** The specification gives MIN–MAX windows, and
+  the `mos_ss` and `mos_ff` corners are built on their edges.
+  - Each ss/ff corner lands on its limit within 10 mV or 5 %, for the
+    1.2 V and the 3.3 V devices.
+  - The corners also order correctly. The LV pFET ss Idsat is 5 % under
+    its limit and is reported as a known deviation.
+- **ASAP7, ASAP5 (derived).** Their papers show corners only as plots, so
+  the check is the ordering: SS < TT < FF (and the mixed corners in
+  between) for every device.
+- **TR-1um.** No public corners.
+
 ## Licences
 
 This repository's own files are **MIT** ([LICENSE](LICENSE)). Each PDK's
@@ -158,8 +183,9 @@ Nothing else upstream is committed here: bootstrap downloads it. Notices:
   not a substitute for a foundry's sign-off flow.
 - Device simulation only. No DRC, LVS or extraction, and no standard-cell
   libraries are fetched.
-- Sanity checks cover the typical corner. Other corners are installed but
-  not checked. TR-1um has only a typical corner.
+- Corner checks are only as strong as the published corner data (see
+  "Corners"). Temperature is not swept: every check runs at the
+  temperature its source states. TR-1um has only a typical corner.
 - Platforms: tested on macOS arm64 and Linux x86_64 (Ubuntu 24.04).
   macOS x86_64 should work, since OpenVAF-reloaded publishes a build, but
   it is untested. There is no Linux arm64 build of OpenVAF-reloaded, so the

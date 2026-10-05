@@ -98,6 +98,24 @@ HBT_ROWS = [
     ("NPN13G2_FT",   "ft",   300e9, 350e9, None),
 ]
 
+# Corners. The specification gives MIN-MAX windows, not corner values; the
+# models' mos_ss / mos_ff corners are built on those limits: ss at the high
+# |Vt| and low Idsat edge, ff at the low |Vt| and high Idsat edge. Checked:
+# each lands on its limit within 10 mV (Vt) or 5 % (Idsat), at the 10/L
+# test structure of each class; and the order ss < slow-mixed < tt <
+# fast-mixed < ff in Idsat (derived). For an nFET the fast-mixed corner is
+# mos_fs, for a pFET mos_sf.
+CORNER_ROWS = {
+    # class: {polarity: (Vt row, Idsat row)}
+    "lv": {1: ("VTN10x013", "IDSN013"), -1: ("VTP10x013", "IDSP013")},
+    "hv": {1: ("VTNHV10x045", "IDSNHV045"), -1: ("VTPHV10x04", "IDSPHV04")},
+}
+CORNER_TOL = dict(vt=0.010, idsat=0.05)
+CORNER_KNOWN = {
+    ("IDSP013", "mos_ss"): "LV pFET ss corner is 5.3 % under the spec minimum (161 vs 170 uA/um); "
+                           "the other seven corner limits land within 2 mV or 1 %",
+}
+
 HBT_DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks", "ihp_hbt.sp")
 
 
@@ -135,6 +153,39 @@ def mos_checks(rep, ng, work, models, spiceinit, cls, rows):
     return data
 
 
+def corner_checks(rep, ng, work, models, spiceinit, cls, rows):
+    c = CLASSES[cls]
+    byname = {r[0]: r for r in rows}
+    vdd, vt_vds = c["vdd"], c["vt_vds"]
+    data = {}
+    for pol, (vt_row, id_row) in CORNER_ROWS[cls].items():
+        _, _, w, l, _, vt_lo, _, vt_hi = byname[vt_row]
+        _, _, _, _, _, id_lo, _, id_hi = byname[id_row]
+        dev = c["n"] if pol > 0 else c["p"]
+        vals = {}
+        for corner in ("mos_ss", "mos_sf", "mos_tt", "mos_fs", "mos_ff"):
+            sw = mos_sweeps(ng, work, "%s_%s_%s" % (cls, dev, corner), '.lib "%s/%s" %s' % (models, c["lib"], corner),
+                            "X1 d g s 0 %s w=%gu l=%gu ng=1" % (dev, w, l), pol, vdd, vt_vds, 0.1, vdd,
+                            TEMP, vstep=0.002, spiceinit=spiceinit)
+            vals[corner] = (vt_max_gm(*sw["vg_lin"], vt_vds), at(*sw["vg_sat"], vdd) / w * 1e6)
+        data[dev] = vals
+        t = CORNER_TOL
+        for corner, vt_lim, id_lim in (("mos_ss", vt_hi, id_lo), ("mos_ff", vt_lo, id_hi)):
+            vt, idsat = vals[corner]
+            rep.check("%s %s Vt at limit" % (vt_row, corner), "published", vt, vt_lim - t["vt"], vt_lim + t["vt"], "V", 1,
+                      "(spec limit %g)" % vt_lim)
+            name, lo, hi = "%s %s Idsat at limit" % (id_row, corner), id_lim * (1 - t["idsat"]), id_lim * (1 + t["idsat"])
+            if (id_row, corner) in CORNER_KNOWN:
+                rep.known(name, idsat, lo, hi, "uA/um", 1, CORNER_KNOWN[(id_row, corner)])
+            else:
+                rep.check(name, "published", idsat, lo, hi, "uA/um", 1, "(spec limit %g)" % id_lim)
+        fast, slow = ("mos_fs", "mos_sf") if pol > 0 else ("mos_sf", "mos_fs")
+        order = [vals[k][1] for k in ("mos_ss", slow, "mos_tt", fast, "mos_ff")]
+        rep.check("%s corner order ss<%s<tt<%s<ff" % (dev, slow[4:], fast[4:]), "derived",
+                  float(all(a < b for a, b in zip(order, order[1:]))), 1, 1, "", 1)
+    return data
+
+
 def hbt_checks(rep, ng, work, models, spiceinit):
     deck = render(HBT_DECK, work, "hbt", MODELS=models, TEMP=TEMP)
     log = ngspice(ng, deck, cwd=work, spiceinit=spiceinit)
@@ -164,6 +215,9 @@ def run(prefix, pdk, models, hbt):
         data["mos"] = mos_checks(rep, ng, work, models, spiceinit, "lv", MOS_ROWS)
         print()
         data["mos_hv"] = mos_checks(rep, ng, work, models, spiceinit, "hv", HV_ROWS)
+        print("\nCorners: mos_ss / mos_ff against the spec limits\n")
+        data["corners_lv"] = corner_checks(rep, ng, work, models, spiceinit, "lv", MOS_ROWS)
+        data["corners_hv"] = corner_checks(rep, ng, work, models, spiceinit, "hv", HV_ROWS)
         if hbt:
             print()
             data["hbt"] = hbt_checks(rep, ng, work, models, spiceinit)

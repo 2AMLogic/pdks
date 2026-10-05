@@ -16,10 +16,11 @@ def render(deck, out_dir, name, **subs):
     return _render(os.path.join(DECKS, deck), out_dir, name, **subs)
 
 
-def characterise(ng, models, osdi, work, device):
+def characterise(ng, models, osdi, work, device, tag=None):
     pol = -1 if device.startswith("pmos") else 1
-    out = os.path.join(work, device)
-    deck = render("device_iv.sp", work, device, MODELS=models, OSDI=osdi, DEVICE=device,
+    tag = tag or device
+    out = os.path.join(work, tag)
+    deck = render("device_iv.sp", work, tag, MODELS=models, OSDI=osdi, DEVICE=device,
                   OUT=out, VDD=pol * ref.VDD, VHALF=pol * ref.VDD / 2,
                   VLIN=pol * 0.05, VSTEP=pol * 0.005)
     ngspice(ng, deck)
@@ -113,5 +114,18 @@ def run(prefix, ng):
         lo, hi = ref.RO_FO1_OVER_FO4
         rep.check("11-stage RO RVT stage delay / FO4", "derived", r["stage"] / fo4s["rvt"], lo, hi, "", 1,
                   "(f = %.2f GHz, stage %.2f ps)" % (r["freq"] / 1e9, r["stage"] * 1e12))
+        print()
+
+        # Corners: [MEJ16] shows FF/SS only as plots (Figs. 9-10), so the
+        # check is derived: Idsat and Ioff order SS < TT < FF for every device.
+        print("Corners: SS < TT < FF ordering (derived; the paper plots corners, no table)\n")
+        mdir = os.path.dirname(models)
+        for dev in ref.DEVICES:
+            cs = {c: characterise(ng, os.path.join(mdir, "7nm_%s.pm" % c), osdi, work, dev, dev + "_" + c)
+                  if c != "TT" else data[dev] for c in ("SS", "TT", "FF")}
+            data[dev + "_corners"] = {c: dict(idsat=v["idsat"], ioff=v["ioff"]) for c, v in cs.items()}
+            ok = all(cs["SS"][q] < cs["TT"][q] < cs["FF"][q] for q in ("idsat", "ioff"))
+            rep.check("%s SS<TT<FF (Idsat, Ioff)" % dev, "derived", float(ok), 1, 1, "", 1,
+                      "(Idsat %.1f / %.1f / %.1f uA)" % tuple(cs[c]["idsat"] * 1e6 for c in ("SS", "TT", "FF")))
 
     return rep.summary(), data, rep.rows
