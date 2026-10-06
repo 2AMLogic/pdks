@@ -4,3 +4,6 @@ __pycache__/
 
 # Repo Skills machine-local install metadata (absolute source path + timestamp)
 .claude/skills/repo/.install-local.json
+
+# Loom fleet telemetry written into the checkout by a local Loom daemon
+.loom/
