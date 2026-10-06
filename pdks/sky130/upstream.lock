@@ -1,7 +1,8 @@
 # SKY130 (sky130A), pinned upstream. Sourced by bootstrap.sh.
 # Prebuilt open_pdks output for commit c6d73a35 (the fleet's sky130A build),
 # from the volare release assets, verified by SHA-256. Only the ngspice
-# library (libs.tech/ngspice) and the primitive device models
+# library (libs.tech/ngspice, binned models), SkyWater's continuous models
+# (libs.tech/combined) and the primitive device models
 # (libs.ref/sky130_fd_pr/spice, sky130_fd_pr 1232782c) are extracted.
 SKY130_OPEN_PDKS_COMMIT=c6d73a35f524070e85faff4a6a9eef49553ebc2b
 SKY130_URL_BASE=https://github.com/chipfoundry/volare/releases/download/sky130-c6d73a35f524070e85faff4a6a9eef49553ebc2b

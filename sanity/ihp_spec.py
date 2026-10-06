@@ -125,7 +125,7 @@ CORNER_ROWS = {
 CORNER_TOL = dict(vt=0.010, idsat=0.05)
 CORNER_KNOWN = {
     ("IDSP013", "mos_ss"): "LV pFET ss corner is 5.3 % under the spec minimum (161 vs 170 uA/um); "
-                           "the other seven corner limits land within 2 mV or 1 %",
+                           "the pFET runs ~5 % low at all corners (IHP-Open-PDK#1259)",
 }
 
 # Passives: (device, Rs min/typ/max ohm/sq, DW min/typ/max nm, TC1 ppm/K, TC2 ppm/K^2)
@@ -191,6 +191,104 @@ def passive_checks(rep, ng, work, models, spiceinit, mim):
         rep.check("cap_cmim CMIMA (A.k)", "published", cmima, c_lo, c_hi, "fF/um2", 1, "(typ %g)" % c_typ)
         fit = tc_checks(rep, "cap_cmim", ts, cs, tc1, tc2)
         data["cap_cmim"] = dict(cmima=cmima, tc1=fit[0], tc2=fit[1])
+    return data
+
+
+# Measured silicon vs temperature ([G2] only). IHP-Open-PDK ships IC-CAP
+# measurements of the LV MOS at 233, 300, 343 and 398 K
+# (ihp-sg13g2/libs.doc/meas/MOS, W/L = 10/0.13 um, one die). That die sits
+# about 8 % (n) and 10 % (p) below the spec's typical Idsat, so absolute
+# values are printed for information only. What is checked is the
+# temperature behaviour: each quantity's shift from its 300 K value,
+# model vs measured, at Vb = 0.
+#   Idsat (|Vgs| = |Vds| = 1.2 V): ratio to 300 K, within 2 %
+#   log10 Ioff (Vgs = 0, |Vds| = 1.2 V, drain current): shift, within 0.2 dec
+#   Vt lin / sat (constant current 100 nA * W/L at |Vds| = 0.05 / 1.2 V):
+#       shift, within 10 mV
+# Tolerances were fixed before the first comparison.
+MEAS_DIR = "ihp-sg13g2/libs.doc/meas/MOS"
+MEAS_FILES = {
+    1: "SG13_nmosXm1Y3/SG13_nmos~W10u0_L0u13_S540_2~dc_idvg~%dK.mdm",
+    -1: "SG13_pmosXm1Y3/SG13_pmos~W10u0_L0u13_S548_2~dc_idvg~%dK.mdm",
+}
+MEAS_TEMPS_K = (233, 300, 343, 398)
+MEAS_TOL = dict(idsat=0.02, ioff=0.2, vtlin=0.010, vtsat=0.010)
+MEAS_KNOWN = {
+    (1, "idsat", 233): "at 233 K the model's Idsat rises 5.5 % over 300 K, this die's 8.7 %",
+    (1, "ioff", 233): "at 233 K the model's Ioff falls 1.56 decades below 300 K, this die's 1.09",
+    (1, "vtsat", 398): "at 398 K the model's Vtsat falls 87 mV below 300 K, this die's 69 mV",
+    (-1, "ioff", 233): "at 233 K the model's Ioff falls 1.49 decades below 300 K, this die's 1.07",
+    (-1, "idsat", 398): "at 398 K the model's Idsat falls 4.3 % below 300 K, this die's 6.7 %",
+    (-1, "vtlin", 398): "at 398 K the model's Vtlin falls 80 mV below 300 K, this die's 69 mV",
+}
+
+
+def read_mdm(path):
+    """IC-CAP .mdm -> {(vb, vd): (vg list, id list)}."""
+    out, cur, rows = {}, None, []
+    with open(path) as f:
+        for line in f:
+            s = line.split()
+            if not s:
+                continue
+            if s[0] == "BEGIN_DB":
+                cur, rows = {}, []
+            elif s[0] == "ICCAP_VAR" and cur is not None:
+                cur[s[1]] = float(s[2])
+            elif s[0] == "END_DB" and cur is not None:
+                out[(cur["vb"], cur["vd"])] = ([r[0] for r in rows], [r[1] for r in rows])
+                cur = None
+            elif cur is not None and s[0][0] in "-+0123456789.":
+                try:
+                    rows.append((float(s[0]), float(s[1])))
+                except ValueError:
+                    pass
+    return out
+
+
+def _device_terms(vg, i, pol):
+    pts = sorted(zip((pol * v for v in vg), (abs(x) for x in i)))
+    return [p[0] for p in pts], [p[1] for p in pts]
+
+
+def _quantities(lin, sat, w, icc):
+    return dict(idsat=at(*sat, VDD) / w * 1e6, ioff=math.log10(at(*sat, 0.0) / w),
+                vtlin=vt_cc(*lin, icc), vtsat=vt_cc(*sat, icc))
+
+
+def measured_checks(rep, ng, work, models, spiceinit, src):
+    w, l = 10.0, 0.13
+    icc = 100e-9 * w / l
+    header = '.lib "%s/cornerMOSlv.lib" mos_tt' % models
+    data = {}
+    for pol, pattern in MEAS_FILES.items():
+        dev = "sg13_lv_nmos" if pol > 0 else "sg13_lv_pmos"
+        meas, sim = {}, {}
+        for tk in MEAS_TEMPS_K:
+            db = read_mdm(os.path.join(src, MEAS_DIR, pattern % tk))
+            pick = lambda vd: next(v for k, v in db.items() if k[0] == 0 and abs(abs(k[1]) - vd) < 1e-6)  # noqa: E731
+            meas[tk] = _quantities(_device_terms(*pick(0.05), pol), _device_terms(*pick(1.2), pol), w, icc)
+            sw = mos_sweeps(ng, work, "meas_%s_%d" % (dev, tk), header,
+                            "X1 d g s 0 %s w=%gu l=%gu ng=1" % (dev, w, l), pol, VDD, 0.05, 0.6, VDD,
+                            tk - 273.15, vstep=0.002, spiceinit=spiceinit)
+            sim[tk] = _quantities(sw["vg_lin"], sw["vg_sat"], w, icc)
+        data[dev] = dict(measured=meas, model=sim)
+        m0, s0 = meas[300], sim[300]
+        rep.info("%s 300 K Idsat" % dev, s0["idsat"], "uA/um", 1, "(this die %.1f)" % m0["idsat"])
+        for tk in (233, 343, 398):
+            for q, unit, scale in (("idsat", "x 300K", 1), ("ioff", "dec", 1),
+                                   ("vtlin", "mV", 1000), ("vtsat", "mV", 1000)):
+                if q == "idsat":
+                    mv, sv = meas[tk][q] / m0[q], sim[tk][q] / s0[q]
+                    lo, hi = mv * (1 - MEAS_TOL[q]), mv * (1 + MEAS_TOL[q])
+                else:
+                    mv, sv = meas[tk][q] - m0[q], sim[tk][q] - s0[q]
+                    lo, hi = mv - MEAS_TOL[q], mv + MEAS_TOL[q]
+                name = "%s %s %d K vs 300 K" % (dev, q, tk)
+                if (pol, q, tk) in MEAS_KNOWN:
+                    rep.known(name, sv, lo, hi, unit, scale, MEAS_KNOWN[(pol, q, tk)])
+                else:
+                    rep.check(name, "measured", sv, lo, hi, unit, scale)
     return data
 
 
@@ -279,7 +377,7 @@ def hbt_checks(rep, ng, work, models, spiceinit):
     return vals
 
 
-def run(prefix, pdk, models, hbt):
+def run(prefix, pdk, models, hbt, meas_src=None):
     osdi = os.path.join(prefix, pdk, "ngspice", "spiceinit")
     if not os.path.exists(osdi):
         raise SystemExit("not found: %s (run bootstrap.sh --pdk %s)" % (osdi, pdk))
@@ -298,6 +396,9 @@ def run(prefix, pdk, models, hbt):
         data["corners_hv"] = corner_checks(rep, ng, work, models, spiceinit, "hv", HV_ROWS)
         print("\nPassives and temperature coefficients (-40 to 125 C)\n")
         data["passives"] = passive_checks(rep, ng, work, models, spiceinit, mim=hbt)
+        if meas_src:
+            print("\nMeasured silicon vs temperature: shifts from 300 K, model vs one measured die\n")
+            data["measured"] = measured_checks(rep, ng, work, models, spiceinit, meas_src)
         if hbt:
             print()
             data["hbt"] = hbt_checks(rep, ng, work, models, spiceinit)

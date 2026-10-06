@@ -7,7 +7,7 @@ GUARD_DIRS+=("$PREFIX/gf180mcu")
 
 setup_gf180mcu() {
   local root="$PREFIX/gf180mcu" ng="$PREFIX/gf180mcu/ngspice"
-  local id; id="gf180mcu $GF180_FDPR_COMMIT $(files_id "$REPO/pdks/gf180mcu/files.sha256" "$REPO"/ngspice/gf180mcu/*.in)"
+  local id; id="gf180mcu $GF180_FDPR_COMMIT $(files_id "$REPO/pdks/gf180mcu/setup.sh" "$REPO/pdks/gf180mcu/files.sha256" "$REPO"/ngspice/gf180mcu/*.in)"
   if stamp_ok "$root" "$id"; then
     log "GF180MCU: already set up"
     return

@@ -12,7 +12,7 @@ GUARD_DIRS+=("$TOOLS/bsimcmg107" "$PREFIX/asap7")
 setup_asap7() {
   build_bsimcmg
   local root="$PREFIX/asap7" pdk="$PREFIX/asap7/asap7_pdk_r1p7" ng="$PREFIX/asap7/ngspice"
-  local id; id="asap7 $ASAP7_PDK_COMMIT $(files_id "$REPO/pdks/asap7/models.sha256" "$REPO/ngspice/asap7/adapted.sha256" "$REPO"/ngspice/asap7/*.in)"
+  local id; id="asap7 $ASAP7_PDK_COMMIT $(files_id "$REPO/pdks/asap7/setup.sh" "$REPO/pdks/asap7/models.sha256" "$REPO/ngspice/asap7/adapted.sha256" "$REPO"/ngspice/asap7/*.in)"
   if stamp_ok "$root" "$id" && [ "$(git -C "$pdk" rev-parse HEAD 2>/dev/null)" = "$ASAP7_PDK_COMMIT" ]; then
     log "ASAP7 r1p7: already set up"
     return

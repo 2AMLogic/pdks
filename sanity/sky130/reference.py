@@ -61,6 +61,17 @@ CORNER_ROWS = [
 ]
 CORNER_TOL = dict(idsat=0.03, vt=0.015)
 
+# The tables' TT column matches SkyWater's continuous ("combined") models,
+# which ship in the same open_pdks build (libs.tech/combined, added to
+# sky130_fd_pr in be6d00ed, 2023), rather than the binned models that
+# libs.tech/ngspice loads by default. The default models' Idsat is 5-8 %
+# above the TT column; the continuous models' is within 0.5 %. So the TT
+# Idsat rows are also checked against the continuous models, within 1 %
+# (the column prints 4 significant figures). Vt is not: its extraction
+# method is unstated, and neither model set matches the TT Vt column.
+COMBINED_IDSAT = [("IDSNS15", "nfet_01v8", 3.512e-3), ("IDSPS15S", "pfet_01v8", 1.347e-3)]
+COMBINED_TOL = 0.01
+
 # Rows where the released models disagree with the published table itself,
 # reported on every run but not counted as failures.
 KNOWN_DEVIATIONS = {
@@ -71,8 +82,8 @@ KNOWN_DEVIATIONS = {
     # Idsat row makes FS the slow corner but its Vt row makes FS fast, and
     # for the pFET the reverse. The models agree with the nFET Idsat row and
     # the pFET Vt row, so the other two rows' FS/SF entries are reported here.
-    ("VTXNS15", "fs"): "table's FS/SF Vt columns contradict its own Idsat row; with FS/SF swapped it matches (+0.044)",
-    ("VTXNS15", "sf"): "table's FS/SF Vt columns contradict its own Idsat row; with FS/SF swapped it matches (-0.042)",
-    ("IDSPS15S", "fs"): "table's FS/SF Idsat columns contradict its own Vt row; with FS/SF swapped it matches (1.319)",
-    ("IDSPS15S", "sf"): "table's FS/SF Idsat columns contradict its own Vt row; with FS/SF swapped it matches (0.681)",
+    ("VTXNS15", "fs"): "table's FS/SF Vt columns contradict its own Idsat row; with FS/SF swapped it matches (+0.044); skywater-pdk#450",
+    ("VTXNS15", "sf"): "table's FS/SF Vt columns contradict its own Idsat row; with FS/SF swapped it matches (-0.042); skywater-pdk#450",
+    ("IDSPS15S", "fs"): "table's FS/SF Idsat columns contradict its own Vt row; with FS/SF swapped it matches (1.319); skywater-pdk#450",
+    ("IDSPS15S", "sf"): "table's FS/SF Idsat columns contradict its own Vt row; with FS/SF swapped it matches (0.681); skywater-pdk#450",
 }

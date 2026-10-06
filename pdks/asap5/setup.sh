@@ -12,7 +12,7 @@ GUARD_DIRS+=("$TOOLS/bsimcmg107" "$PREFIX/asap5")
 setup_asap5() {
   build_bsimcmg
   local root="$PREFIX/asap5" pdk="$PREFIX/asap5/asap5" ng="$PREFIX/asap5/ngspice"
-  local id; id="asap5 $ASAP5_COMMIT $(files_id "$REPO/pdks/asap5/models.sha256" "$REPO/ngspice/asap5/adapted.sha256" "$REPO"/ngspice/asap5/*.in)"
+  local id; id="asap5 $ASAP5_COMMIT $(files_id "$REPO/pdks/asap5/setup.sh" "$REPO/pdks/asap5/models.sha256" "$REPO/ngspice/asap5/adapted.sha256" "$REPO"/ngspice/asap5/*.in)"
   if stamp_ok "$root" "$id"; then
     log "ASAP5 r0p4: already set up"
     return
