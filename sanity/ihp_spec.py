@@ -125,7 +125,7 @@ CORNER_ROWS = {
 CORNER_TOL = dict(vt=0.010, idsat=0.05)
 CORNER_KNOWN = {
     ("IDSP013", "mos_ss"): "LV pFET ss corner is 5.3 % under the spec minimum (161 vs 170 uA/um); "
-                           "the other seven corner limits land within 2 mV or 1 %",
+                           "the pFET runs ~5 % low at all corners (IHP-Open-PDK#1259)",
 }
 
 # Passives: (device, Rs min/typ/max ohm/sq, DW min/typ/max nm, TC1 ppm/K, TC2 ppm/K^2)

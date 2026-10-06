@@ -225,6 +225,14 @@ The same search explained several deviations:
 - **IHP SG13CMOS5L vs SG13G2 v0.3.0.** Leakage differs between them
   because PSP's model code moved from 103.6 to 103.8.2 (IHP-Open-PDK
   PR #931). Their parameter files are identical.
+- **Reported upstream** (October 2026):
+  - [IHP-Open-PDK#1259](https://github.com/IHP-GmbH/IHP-Open-PDK/issues/1259):
+    the LV pFET's Idsat is about 5 % low at all corners, and `mos_ss` is
+    below the spec minimum.
+  - [gf180mcu_fd_pr#46](https://github.com/fossi-foundation/globalfoundries-pdk-libs-gf180mcu_fd_pr/issues/46):
+    the 1.5 fF/µm² MIM's TC1 is outside the spec.
+  - [skywater-pdk#450](https://github.com/google/skywater-pdk/issues/450):
+    the device tables' FS/SF columns contradict each other.
 - **Still unexplained:**
   - SKY130's narrow-nFET Vt;
   - SkyWater's contradictory FS/SF columns;

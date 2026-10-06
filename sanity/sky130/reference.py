@@ -82,8 +82,8 @@ KNOWN_DEVIATIONS = {
     # Idsat row makes FS the slow corner but its Vt row makes FS fast, and
     # for the pFET the reverse. The models agree with the nFET Idsat row and
     # the pFET Vt row, so the other two rows' FS/SF entries are reported here.
-    ("VTXNS15", "fs"): "table's FS/SF Vt columns contradict its own Idsat row; with FS/SF swapped it matches (+0.044)",
-    ("VTXNS15", "sf"): "table's FS/SF Vt columns contradict its own Idsat row; with FS/SF swapped it matches (-0.042)",
-    ("IDSPS15S", "fs"): "table's FS/SF Idsat columns contradict its own Vt row; with FS/SF swapped it matches (1.319)",
-    ("IDSPS15S", "sf"): "table's FS/SF Idsat columns contradict its own Vt row; with FS/SF swapped it matches (0.681)",
+    ("VTXNS15", "fs"): "table's FS/SF Vt columns contradict its own Idsat row; with FS/SF swapped it matches (+0.044); skywater-pdk#450",
+    ("VTXNS15", "sf"): "table's FS/SF Vt columns contradict its own Idsat row; with FS/SF swapped it matches (-0.042); skywater-pdk#450",
+    ("IDSPS15S", "fs"): "table's FS/SF Idsat columns contradict its own Vt row; with FS/SF swapped it matches (1.319); skywater-pdk#450",
+    ("IDSPS15S", "sf"): "table's FS/SF Idsat columns contradict its own Vt row; with FS/SF swapped it matches (0.681); skywater-pdk#450",
 }
