@@ -68,9 +68,12 @@ changes the signature only, not the code.
 ngspice 47 is built from its source release with `--enable-osdi
 --with-x=no --with-readline=no --disable-openmp --disable-debug`.
 OpenMP is off because Apple clang ships no `omp.h`, and it is off on
-Linux too so both platforms build the same way. The sanity decks run
-`ngspice -b -n`, which ignores any `~/.spiceinit`, so a user's
-compatibility mode (for example `ngbehavior=hsa`) cannot change results.
+Linux too so both platforms build the same way. The sanity decks never
+read a user's `~/.spiceinit`, so a compatibility mode set there (for
+example `ngbehavior=hsa`) cannot change results. Where the PDK needs no
+settings they run `ngspice -b -n`; where it does, its `.spiceinit` is
+written to the run directory, which ngspice reads in place of the home
+one.
 
 ## SKY130 (`pdks/sky130/setup.sh`)
 
@@ -93,8 +96,8 @@ No changes to PDK files. Two differences from the PDKs' own setup:
 | I1 | OSDI models are compiled into `<pdk>/ngspice/osdi/` with the flags of the PDK's `openvaf-compile-va.sh` (`-D__NGSPICE__`), instead of running that script. | The script writes into the PDK's tracked tree. For SG13CMOS5L that tree holds prebuilt `cap_cmom*.osdi`, which are Linux x86-64 binaries and would be overwritten (and don't load on macOS). |
 | I2 | Our spiceinit loads each `.osdi` by absolute path; the PDKs' `.spiceinit` uses `$PDK_ROOT/$PDK`. | Works without setting environment variables, and from any directory. |
 
-For SG13CMOS5L, the SG13CMOS5L checkout sits inside an IHP-Open-PDK dev
-checkout. That is the layout its README requires, because its MOS models
+For SG13CMOS5L, both `ihp-sg13cmos5l/` and `ihp-sg13g2/` are fetched from
+the one pinned IHP-Open-PDK dev commit, because SG13CMOS5L's MOS models
 and Verilog-A are symlinks into `../ihp-sg13g2`.
 
 ## TR-1um (`pdks/tr1um/setup.sh`)
