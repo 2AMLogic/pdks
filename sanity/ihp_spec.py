@@ -117,6 +117,12 @@ HBT_ROWS = [
 # test structure of each class; and the order ss < slow-mixed < tt <
 # fast-mixed < ff in Idsat (derived). For an nFET the fast-mixed corner is
 # mos_fs, for a pFET mos_sf.
+# IHP's modelling reports (ihp-sg13g2/libs.doc/meas/MOS/doc/report_*_lv.pdf,
+# Rev. 1.2, section 3.1.1) list the targets the LV corners were actually
+# fitted to. They equal the spec limits except: pFET Idsat 160 / 205 / 260
+# (spec 170 / 215 / 270), pFET ss Vt -0.52 (spec -0.53), nFET ff Idsat 580
+# (spec 600) and nFET ff Vt 0.44 (spec 0.43). The checks stay against the
+# specification; the reports explain the one known deviation below.
 CORNER_ROWS = {
     # class: {polarity: (Vt row, Idsat row)}
     "lv": {1: ("VTN10x013", "IDSN013"), -1: ("VTP10x013", "IDSP013")},
@@ -125,7 +131,9 @@ CORNER_ROWS = {
 CORNER_TOL = dict(vt=0.010, idsat=0.05)
 CORNER_KNOWN = {
     ("IDSP013", "mos_ss"): "LV pFET ss corner is 5.3 % under the spec minimum (161 vs 170 uA/um); "
-                           "the pFET runs ~5 % low at all corners (IHP-Open-PDK#1259)",
+                           "the model follows IHP's modelling targets of 160 / 205 / 260 uA/um "
+                           "(libs.doc/meas/MOS/doc/report_pmos_lv.pdf, 3.1.1), not the spec's "
+                           "170 / 215 / 270 (IHP-Open-PDK#1259)",
 }
 
 # Passives: (device, Rs min/typ/max ohm/sq, DW min/typ/max nm, TC1 ppm/K, TC2 ppm/K^2)

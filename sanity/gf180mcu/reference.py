@@ -80,7 +80,8 @@ PASSIVES = [
 ]
 KNOWN_DEVIATIONS = {
     ("cap_mim_1f5fF", "tc1"): "the model sets c_tc1 = 40.6 ppm/K, outside GF's own 9.9-16.6 ppm/K "
-                              "window for the 1.5 fF/um2 MIM (reported: gf180mcu_fd_pr#46)",
+                              "window for the 1.5 fF/um2 MIM (reported: gf180mcu_fd_pr#46; per the "
+                              "maintainer, no open-PDK run has used this option, all used 2.0 fF/um2)",
 }
 
 TOL = dict(
