@@ -21,7 +21,7 @@ Public repo: one-command ngspice setup for open PDKs (README.md).
   and bootstrap will (correctly) refuse to write there.
 
 <!-- BEGIN REPO-SKILLS -->
-This repository has [Repo Skills](https://github.com/rjwalters/repo) v0.19.8 installed —
+This repository has [Repo Skills](https://github.com/rjwalters/repo) v0.19.9 installed —
 general repository hygiene and environment commands invoked as `/repo:<command>`. Run
 `/repo:help` for the command list, or see `.claude/skills/repo/SKILL.md` for the full
 guide. Hygiene commands apply safe, reversible fixes by default and report each
