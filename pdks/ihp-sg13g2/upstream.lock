@@ -4,3 +4,7 @@
 # about 2.5 MB); the commit id pins their content.
 IHP_SG13G2_URL=https://github.com/IHP-GmbH/IHP-Open-PDK.git
 IHP_SG13G2_COMMIT=5cccb161f7492697cfa52eb14dc03beb00bdca9e
+# IHP's measured LV MOS data at four temperatures (libs.doc/meas/MOS), for
+# the silicon checks: eight IC-CAP files fetched from the same commit and
+# checked against pdks/ihp-sg13g2/meas.sha256 (about 0.65 MB).
+IHP_SG13G2_RAW=https://raw.githubusercontent.com/IHP-GmbH/IHP-Open-PDK/5cccb161f7492697cfa52eb14dc03beb00bdca9e

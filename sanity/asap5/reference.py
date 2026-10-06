@@ -53,8 +53,8 @@ TOL = dict(
 # Reported on every run, not counted as failures.
 KNOWN_DEVIATIONS = {
     ("nmos_sram", "dibl"): "22.1 vs 20.06 printed, while every other device matches within "
-                           "0.1 mV/V; [MEJ22] 7.1.1 says the SRAM models were re-derived from "
-                           "an earlier calibration rather than new TCAD",
+                           "0.1 mV/V; the SRAM card was revised (MEJ22 7.1.1; the author's 2019 "
+                           "dissertation, Table 6.3, prints 18.74 for an earlier version)",
 }
 
 # [MEJ22] 7.1: "NMOS Idsat is 3.58x the Idlin and 3.94x for the PMOS" (RVT,

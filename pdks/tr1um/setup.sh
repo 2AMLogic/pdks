@@ -7,7 +7,7 @@ GUARD_DIRS+=("$PREFIX/tr1um")
 
 setup_tr1um() {
   local root="$PREFIX/tr1um" ng="$PREFIX/tr1um/ngspice"
-  local id; id="tr1um $TR1UM_COMMIT $(files_id "$REPO/pdks/tr1um/files.sha256" "$REPO"/ngspice/tr1um/*.in)"
+  local id; id="tr1um $TR1UM_COMMIT $(files_id "$REPO/pdks/tr1um/setup.sh" "$REPO/pdks/tr1um/files.sha256" "$REPO"/ngspice/tr1um/*.in)"
   if stamp_ok "$root" "$id"; then
     log "TR-1um: already set up"
     return

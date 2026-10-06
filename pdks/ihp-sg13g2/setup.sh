@@ -11,7 +11,7 @@ GUARD_DIRS+=("$PREFIX/ihp-sg13g2")
 
 setup_ihp_sg13g2() {
   local root="$PREFIX/ihp-sg13g2" src="$PREFIX/ihp-sg13g2/IHP-Open-PDK"
-  local id; id="ihp-sg13g2 $IHP_SG13G2_COMMIT openvaf-r $OPENVAF_VERSION $(files_id "$REPO/pdks/ihp-common.sh" "$REPO"/ngspice/ihp/*.in)"
+  local id; id="ihp-sg13g2 $IHP_SG13G2_COMMIT openvaf-r $OPENVAF_VERSION $(files_id "$REPO/pdks/ihp-sg13g2/setup.sh" "$REPO/pdks/ihp-common.sh" "$REPO/pdks/ihp-sg13g2/meas.sha256" "$REPO"/ngspice/ihp/*.in)"
   if stamp_ok "$root" "$id"; then
     log "IHP SG13G2: already set up"
     return
@@ -24,5 +24,10 @@ setup_ihp_sg13g2() {
   ihp_osdi "$src/ihp-sg13g2/libs.tech/verilog-a" "$root/ngspice/osdi" psp103 psp103_nqs r3_cmc mosvar
   ihp_glue ihp-sg13g2 "$src/ihp-sg13g2/libs.tech/ngspice/models" "$root/ngspice/osdi" \
     psp103 psp103_nqs r3_cmc mosvar
+  log "IHP SG13G2: fetching measured MOS data (four temperatures)"
+  local f sum
+  while read -r sum f; do
+    fetch "$IHP_SG13G2_RAW/$f" "$sum" "$src/$f"
+  done < "$REPO/pdks/ihp-sg13g2/meas.sha256"
   stamp "$root" "$id"
 }

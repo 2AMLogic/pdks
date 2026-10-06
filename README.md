@@ -10,9 +10,9 @@ results are checked against each foundry's or author's published values.
 |---|---|---|---|---|
 | `asap7` | ASAP7 r1p7: 7 nm predictive FinFET (ASU / Arm) | BSIM-CMG 107, compiled to OSDI | 9 MB | 73/73 against the PDK paper |
 | `asap5` | ASAP5 r0p4: 5 nm predictive gate-all-around nanowire FET (ASU) | BSIM-CMG 107, compiled to OSDI | 0.3 MB | 47/47 against the PDK paper, plus 1 known deviation |
-| `sky130` | SkyWater SKY130 (`sky130A`; `sky130B`'s ngspice libraries are identical in this release) | BSIM4, built in | 21 MB | 23/23 against SkyWater's e-test windows and corner tables, plus 5 known deviations |
+| `sky130` | SkyWater SKY130 (`sky130A`; `sky130B`'s ngspice libraries are identical in this release) | BSIM4, built in | 21 MB | 25/25 against SkyWater's e-test windows, device tables (continuous models) and corner tables, plus 5 known deviations |
 | `gf180mcu` | GlobalFoundries GF180MCU | BSIM4, built in | 1.4 MB | 54/54 against GF's slow/typical/fast EP targets and spec limits, incl. passives and their temperature coefficients, plus 1 known deviation |
-| `ihp-sg13g2` | IHP SG13G2 SiGe BiCMOS | PSP 103 (OSDI), VBIC HBT | 2.5 MB | 65/65 against IHP's process spec: 1.2 V and 3.3 V MOS, corners, resistors and MIM with their temperature coefficients, and the HBT, plus 1 known deviation |
+| `ihp-sg13g2` | IHP SG13G2 SiGe BiCMOS | PSP 103 (OSDI), VBIC HBT | 3 MB | 83/83 against IHP's process spec (1.2 V and 3.3 V MOS, corners, resistors and MIM with their temperature coefficients, the HBT) and IHP's measured silicon over temperature, plus 7 known deviations |
 | `ihp-sg13cmos5l` | IHP SG13CMOS5L CMOS | PSP 103 (OSDI) | 5 MB | 59/59 against IHP's process spec: 1.2 V and 3.3 V MOS, corners, resistors and their temperature coefficients, plus 1 known deviation |
 | `tr1um` | Tokai Rika TR-1um 1 µm CMOS (OpenSUSI) | BSIM3v3, built in | 30 KB | 16/16 against Tokai Rika's published I-V curves (digitised), plus 1 known deviation |
 
@@ -101,9 +101,11 @@ definition used is documented next to the reference values.
     says its SRAM models came from an earlier calibration.
 - **SKY130.** Vt, Idsat and leakage of the 1.8 V FETs, against SkyWater's
   e-test MIN–MAX windows ("Device Details" tables):
-  - The tables' own TT-model column doesn't match the released models.
-    Idsat is +4.7 % (n) and +7.7 % (p) above it; this is printed for
-    information.
+  - The tables' TT column matches SkyWater's continuous ("combined")
+    models, which ship in the same build but aren't the default.
+    - Against those, Idsat is within 0.4 %, and this is checked.
+    - The default binned models sit +4.7 % (n) and +7.7 % (p) above the
+      column, which is printed for information.
   - One row is a **known deviation**, reported on every run: the narrow
     0.42/1 µm nFET's Vt (0.60 V) is above its window.
 - **GF180MCU.** Idsat and Vth0 of five FETs against GF's typical EP
@@ -178,10 +180,57 @@ coefficients the foundries do publish. Each is swept from −40 to 125 °C.
     quadratic fit over −40 to 125 °C, the models' extraction range.
   - GF's own 1.5 fF/µm² MIM model has TC1 = 40.6 ppm/K, outside GF's
     9.9–16.6 window. It is reported as a known deviation.
+- **IHP SG13G2 transistors (measured silicon).** IHP-Open-PDK ships IC-CAP
+  measurements of the 1.2 V n- and pFET (10/0.13 µm) at 233, 300, 343
+  and 398 K.
+  - The measured die sits 8–10 % below the spec's typical Idsat, so
+    absolute values are printed for information only.
+  - What is checked is each quantity's shift from 300 K, model against
+    silicon:
+    - Idsat ratio within 2 %;
+    - Ioff within 0.2 decade;
+    - Vtlin and Vtsat within 10 mV.
+  - 18 of the 24 shifts match.
+  - The other 6 are reported as known deviations, all at the
+    temperature extremes:
+    - At 233 K the model's leakage falls about 0.45 decade more than
+      silicon's.
+    - At 398 K the model's thresholds drop 11–18 mV more than silicon's.
+  - This is one die, so it shows where the model's temperature
+    behaviour departs from silicon, not a production spread.
 - **Not checked.**
   - SKY130, ASAP7 and ASAP5 publish no temperature data.
   - TR-1um publishes R(T) and C(T) only as plots. Its models follow its
     plotted simulation, which differs from its plotted measurements.
+
+### Related work and explanations
+
+A web search (October 2026) found no earlier report of any of these known
+deviations, and no other cross-PDK suite like this one. Related work:
+
+- GF180MCU's model repository has its own regression suite. It compares
+  ngspice with foundry measurements (`models/ngspice/testing/regression`,
+  data in `180MCU_SPICE_DATA`). However, its "measured" MIM C(T) data
+  reproduces the model's 40.6 ppm/K exactly, so it is model output, not
+  independent silicon.
+- IHP's `libs.tech/gnucap/tests` compares simulator outputs against
+  stored golden outputs. It doesn't check against the spec or silicon.
+
+The same search explained several deviations:
+
+- **ASAP5.** The author's dissertation (Vashishtha, ASU 2019) confirms
+  the DIBL method: 50 mV linear drain bias, Vt at 50 nA. Its earlier
+  tables give different SRAM values, so the shipped nmos_sram card was
+  revised after the paper's Table 8 was made.
+- **IHP SG13CMOS5L vs SG13G2 v0.3.0.** Leakage differs between them
+  because PSP's model code moved from 103.6 to 103.8.2 (IHP-Open-PDK
+  PR #931). Their parameter files are identical.
+- **Still unexplained:**
+  - SKY130's narrow-nFET Vt;
+  - SkyWater's contradictory FS/SF columns;
+  - ASAP7's DIBL column (one untested guess: normalising to a 0.9 V
+    supply gives the 1.31× factor);
+  - ASAP5's SS offset.
 
 ## Licences
 

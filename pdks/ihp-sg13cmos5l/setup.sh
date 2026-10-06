@@ -12,7 +12,7 @@ GUARD_DIRS+=("$PREFIX/ihp-sg13cmos5l")
 setup_ihp_sg13cmos5l() {
   local root="$PREFIX/ihp-sg13cmos5l" base="$PREFIX/ihp-sg13cmos5l/IHP-Open-PDK"
   local pdk="$base/ihp-sg13cmos5l"
-  local id; id="ihp-sg13cmos5l $IHP_CMOS5L_COMMIT openvaf-r $OPENVAF_VERSION $(files_id "$REPO/pdks/ihp-common.sh" "$REPO"/ngspice/ihp/*.in)"
+  local id; id="ihp-sg13cmos5l $IHP_CMOS5L_COMMIT openvaf-r $OPENVAF_VERSION $(files_id "$REPO/pdks/ihp-sg13cmos5l/setup.sh" "$REPO/pdks/ihp-common.sh" "$REPO"/ngspice/ihp/*.in)"
   if stamp_ok "$root" "$id"; then
     log "IHP SG13CMOS5L: already set up"
     return

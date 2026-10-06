@@ -47,6 +47,19 @@ def run(prefix, ng):
                 rep.check(label + " Ioff", "bound", v, -99, hi, "log A", 1)
             data[name] = v
 
+        print("\nContinuous models (libs.tech/combined) vs the tables' TT column\n")
+        clib = os.path.join(prefix, "sky130", "sky130A", "libs.tech", "combined", "sky130.lib.spice")
+        for name, dev, tt in ref.COMBINED_IDSAT:
+            pol = -1 if dev.startswith("p") else 1
+            sw = mos_sweeps(ng, work, "%s_combined" % dev, '.lib "%s" tt' % clib,
+                            "X1 d g s 0 sky130_fd_pr__%s w=7 l=0.15" % dev, pol, ref.VDD, 0.05, 0.05,
+                            ref.VDD, ref.TEMP, imeas="i(vs)", spiceinit=SPICEINIT)
+            v = at(*sw["vg_sat"], ref.VDD)
+            data[name + " combined"] = v
+            rep.check("%s %s Idsat (continuous)" % (name, dev), "published", v,
+                      tt * (1 - ref.COMBINED_TOL), tt * (1 + ref.COMBINED_TOL), "mA", 1e3,
+                      "(TT column %.3f mA, %+.1f %%)" % (tt * 1e3, 100 * (v / tt - 1)))
+
         print("\nCorners, relative to TT (7/0.15 devices)\n")
         base = {}
         for corner in ("tt", "ff", "ss", "fs", "sf"):

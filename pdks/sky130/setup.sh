@@ -9,7 +9,7 @@ GUARD_DIRS+=("$PREFIX/sky130")
 
 setup_sky130() {
   local root="$PREFIX/sky130" ng="$PREFIX/sky130/ngspice"
-  local id; id="sky130 $SKY130_COMMON_SHA256 $SKY130_FD_PR_SHA256 $(files_id "$REPO"/ngspice/sky130/*.in)"
+  local id; id="sky130 $SKY130_COMMON_SHA256 $SKY130_FD_PR_SHA256 $(files_id "$REPO/pdks/sky130/setup.sh" "$REPO"/ngspice/sky130/*.in)"
   if stamp_ok "$root" "$id"; then
     log "SKY130: already set up"
     return
@@ -20,7 +20,7 @@ setup_sky130() {
   fetch "$SKY130_URL_BASE/common.tar.zst" "$SKY130_COMMON_SHA256" "$common"
   fetch "$SKY130_URL_BASE/sky130_fd_pr.tar.zst" "$SKY130_FD_PR_SHA256" "$fdpr"
   claim_dir "$root"
-  zstd -dc "$common" | tar -x -C "$root" sky130A/.config sky130A/libs.tech/ngspice
+  zstd -dc "$common" | tar -x -C "$root" sky130A/.config sky130A/libs.tech/ngspice sky130A/libs.tech/combined
   zstd -dc "$fdpr" | tar -x -C "$root" sky130A/libs.ref/sky130_fd_pr/spice
   # No adaptations: the library is ngspice-native (BSIM4, no OSDI).
   mkdir -p "$ng"
