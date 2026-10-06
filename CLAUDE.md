@@ -12,7 +12,8 @@ Public repo: one-command ngspice setup for open PDKs (README.md).
 - **Every change to upstream material** goes in `ngspice/ADAPTATIONS.md`
   with its reason, and its output hash is recorded (`adapted.sha256`,
   `prepare.sh`).
-- **Sanity references are cited, not fitted.** `sanity/reference.py`
+- **Sanity references are cited, not fitted.** `sanity/<pdk>/reference.py`
+  (and `sanity/ihp_spec.py` for both IHP PDKs)
   labels each check published / bound / derived and documents every
   extraction definition.
 - Test with `./bootstrap.sh --pdk <name>[,...] --prefix <scratch dir>`. On the
