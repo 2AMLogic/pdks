@@ -147,7 +147,8 @@ each check is depends on what was published:
   - Each ss/ff corner lands on its limit within 10 mV or 5 %, for the
     1.2 V and the 3.3 V devices.
   - The corners also order correctly. The LV pFET ss Idsat is 5 % under
-    its limit and is reported as a known deviation.
+    its limit and is reported as a known deviation: the model was fitted
+    to lower targets than the spec's (see below).
 - **ASAP7, ASAP5 (derived).** Their papers show corners only as plots, so
   the check is the ordering: SS < TT < FF (and the mixed corners in
   between) for every device.
@@ -179,7 +180,8 @@ coefficients the foundries do publish. Each is swept from −40 to 125 °C.
   - GF states no fit range or method. We use the linear coefficient of a
     quadratic fit over −40 to 125 °C, the models' extraction range.
   - GF's own 1.5 fF/µm² MIM model has TC1 = 40.6 ppm/K, outside GF's
-    9.9–16.6 window. It is reported as a known deviation.
+    9.9–16.6 window. It is reported as a known deviation. No open-PDK
+    run has manufactured this option; all used the 2.0 fF/µm² MIM.
 - **IHP SG13G2 transistors (measured silicon).** IHP-Open-PDK ships IC-CAP
   measurements of the 1.2 V n- and pFET (10/0.13 µm) at 233, 300, 343
   and 398 K.
@@ -225,17 +227,31 @@ The same search explained several deviations:
 - **IHP SG13CMOS5L vs SG13G2 v0.3.0.** Leakage differs between them
   because PSP's model code moved from 103.6 to 103.8.2 (IHP-Open-PDK
   PR #931). Their parameter files are identical.
-- **Reported upstream** (October 2026):
+- **Reported upstream** (October 2026), with the maintainers' replies:
   - [IHP-Open-PDK#1259](https://github.com/IHP-GmbH/IHP-Open-PDK/issues/1259):
     the LV pFET's Idsat is about 5 % low at all corners, and `mos_ss` is
     below the spec minimum.
+    - Reply: the model is right and the spec should be updated.
+    - IHP's modelling report (`libs.doc/meas/MOS/doc/report_pmos_lv.pdf`,
+      section 3.1.1) lists the corner targets the model was fitted to:
+      160 / 205 / 260 µA/µm, against the spec's 170 / 215 / 270. The
+      model lands on them (161 / 203 / 261).
+    - The measured die is lower still, at 193 µA/µm.
   - [gf180mcu_fd_pr#46](https://github.com/fossi-foundation/globalfoundries-pdk-libs-gf180mcu_fd_pr/issues/46):
     the 1.5 fF/µm² MIM's TC1 is outside the spec.
+    - Reply: this option has never been manufactured from the open PDK;
+      every run used the 2.0 fF/µm² MIM. Whether 40.6 ppm/K is intended
+      was not answered.
   - [skywater-pdk#450](https://github.com/google/skywater-pdk/issues/450):
     the device tables' FS/SF columns contradict each other.
+    - Reply: the google repository is deprecated and archived. The
+      maintained models are in
+      `fossi-foundation/skywater-pdk-libs-sky130_fd_pr`, which doesn't
+      carry these tables. The transposition is not yet confirmed.
 - **Still unexplained:**
   - SKY130's narrow-nFET Vt;
-  - SkyWater's contradictory FS/SF columns;
+  - why SkyWater's FS/SF columns are transposed in two rows (the models
+    themselves are consistent);
   - ASAP7's DIBL column (one untested guess: normalising to a 0.9 V
     supply gives the 1.31× factor);
   - ASAP5's SS offset.
