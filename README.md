@@ -156,9 +156,10 @@ each check is depends on what was published:
 
 ### Temperature
 
-No PDK here publishes transistor data at temperatures other than nominal,
-so temperature checks cover passive devices, whose temperature
-coefficients the foundries do publish. Each is swept from −40 to 125 °C.
+Only IHP publishes transistor data at temperatures other than nominal
+(measured silicon for SG13G2, below). Otherwise temperature checks cover
+passive devices, whose temperature coefficients the foundries do publish.
+Each is swept from −40 to 125 °C.
 
 - **IHP SG13G2 / SG13CMOS5L (published).**
   - The resistors (Rsil, Rppd, Rhigh) are checked against the spec's own
@@ -283,19 +284,20 @@ Nothing else upstream is committed here: bootstrap downloads it. Notices:
 
 - **ASAP7 and ASAP5 are predictive, not foundry-accurate.** They are
   academic models of plausible 7 nm and 5 nm processes; no fab
-  manufactures them. The other four are
+  manufactures them. The other five are
   real processes, but their open models are what the foundries published,
   not a substitute for a foundry's sign-off flow.
 - Device simulation only. No DRC, LVS or extraction, and no standard-cell
   libraries are fetched.
 - Corner checks are only as strong as the published corner data (see
-  "Corners"). Temperature checks cover passives only (see
-  "Temperature"): no PDK here publishes transistor data at other
-  temperatures. TR-1um has only a typical corner.
+  "Corners"). Temperature checks cover passives, plus the SG13G2 1.2 V
+  FETs against one measured die (see "Temperature"): no other PDK here
+  publishes transistor data at other temperatures. TR-1um has only a typical corner.
 - Platforms: tested on macOS arm64 and Linux x86_64 (Ubuntu 24.04).
   macOS x86_64 should work, since OpenVAF-reloaded publishes a build, but
-  it is untested. There is no Linux arm64 build of OpenVAF-reloaded, so the
-  OSDI-based PDKs (`asap7`, `ihp-*`) can't run there.
+  it is untested. There is no Linux arm64 build of OpenVAF-reloaded, which
+  the OSDI-based PDKs (`asap7`, `asap5`, `ihp-*`) need, and `bootstrap.sh`
+  stops on that platform for every PDK.
 
 ## Considered and not included
 
