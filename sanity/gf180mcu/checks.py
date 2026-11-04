@@ -61,9 +61,9 @@ def passives(rep, ng, work, models, data):
 
 def run(prefix, ng):
     models = os.path.join(prefix, "gf180mcu", "gf180mcu_fd_pr", "models", "ngspice")
-    if not os.path.exists(os.path.join(models, "sm141064.ngspice")):
+    if not os.path.exists(os.path.join(models, "sm141064.spice")):
         raise SystemExit("GF180MCU models not found under %s (run bootstrap.sh --pdk gf180mcu)" % models)
-    header = '.include "%s/design.ngspice"\n.lib "%s/sm141064.ngspice" typical' % (models, models)
+    header = '.include "%s/design.spice"\n.lib "%s/sm141064.spice" typical' % (models, models)
     rep, data = Report(), {}
     print("GF180MCU typical, %d C, W = 10 um. Sources and tolerances: sanity/gf180mcu/reference.py\n" % ref.TEMP)
     with tempfile.TemporaryDirectory(prefix="gf180-sanity-") as work:
@@ -89,7 +89,7 @@ def run(prefix, ng):
 
         print("Corners: [MRG] slow / fast EP targets at the ss / ff models\n")
         for corner, targets in ref.CORNERS.items():
-            hdr = '.include "%s/design.ngspice"\n.lib "%s/sm141064.ngspice" %s' % (models, models, corner)
+            hdr = '.include "%s/design.spice"\n.lib "%s/sm141064.spice" %s' % (models, models, corner)
             for dev, (idsat_t, vth_t) in targets.items():
                 p = ref.DEVICES[dev]
                 pol = -1 if dev.startswith("p") else 1

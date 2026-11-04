@@ -45,7 +45,7 @@ PDK needs ngspice settings, a `spiceinit`. Copy that file to
 | asap7 | `.lib ".../asap7/ngspice/models/asap7.lib" tt` | `Nn1 d g s b nmos_rvt l=20n nfin=3` | loads the BSIM-CMG OSDI |
 | asap5 | `.lib ".../asap5/ngspice/models/asap5.lib" tt` | `Nn1 d g s b nmos_rvt nfin=2` (one "fin" = 2 nanowires) | loads the BSIM-CMG OSDI |
 | sky130 | `.lib ".../sky130/sky130A/libs.tech/ngspice/sky130.lib.spice" tt` | `X1 d g s b sky130_fd_pr__nfet_01v8 w=1 l=0.15` (µm) | `ngbehavior=hsa`, `ng_nomodcheck` |
-| gf180mcu | `.include ".../design.ngspice"` then `.lib ".../sm141064.ngspice" typical` | `M1 d g s b nfet_03v3 w=1u l=0.28u` | none |
+| gf180mcu | `.include ".../design.spice"` then `.lib ".../sm141064.spice" typical` | `M1 d g s b nfet_03v3 w=1u l=0.28u` | none |
 | ihp-* | `.lib ".../libs.tech/ngspice/models/cornerMOSlv.lib" mos_tt` (3.3 V: `cornerMOShv.lib`) | `X1 d g s b sg13_lv_nmos w=1u l=0.13u ng=1` | loads the PSP/R3/MOSVAR OSDI |
 | tr1um | `.include ".../tr1um/TR-1um/libs.tech/spice/models/ip62_models"` | `X1 d g s b NMOS w=10u l=1u` | none |
 

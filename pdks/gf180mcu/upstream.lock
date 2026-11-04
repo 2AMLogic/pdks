@@ -1,7 +1,10 @@
 # GF180MCU device models, pinned upstream. Sourced by bootstrap.sh.
 # The ngspice model files from gf180mcu_fd_pr at the commit that open_pdks
-# c6d73a35 (the fleet's gf180mcuD build) records for it. Fetched file by file
-# and checked against pdks/gf180mcu/files.sha256: about 1.4 MB in all.
+# f6eeac7 (the fleet's gf180mcuD build) records for it: nodeinfo.json in the
+# ciel-releases gf180mcu-f6eeac7d... common.tar.zst lists gf180mcu_fd_pr
+# b6866b82. Fetched file by file and checked against
+# pdks/gf180mcu/files.sha256: about 1.4 MB in all. Upstream renamed the
+# models from *.ngspice to *.spice at this commit; the content is the same.
 GF180_FDPR_REPO=https://github.com/fossi-foundation/globalfoundries-pdk-libs-gf180mcu_fd_pr
-GF180_FDPR_COMMIT=faef89e8c1b392733c32820a7b12e3a3847cc18c
-GF180_FDPR_RAW=https://raw.githubusercontent.com/fossi-foundation/globalfoundries-pdk-libs-gf180mcu_fd_pr/faef89e8c1b392733c32820a7b12e3a3847cc18c
+GF180_FDPR_COMMIT=b6866b82e2bd560a29f3576c19106ff7b8b41b10
+GF180_FDPR_RAW=https://raw.githubusercontent.com/fossi-foundation/globalfoundries-pdk-libs-gf180mcu_fd_pr/b6866b82e2bd560a29f3576c19106ff7b8b41b10
