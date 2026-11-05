@@ -7,13 +7,9 @@ import os
 import tempfile
 
 import reference as ref
-from common import Report, at, mos_sweeps, ngspice, read_xy, render as _render, results, ss_decade, vt_cc
+from common import Report, at, mos_sweeps, ngspice, read_xy, render, results, ss_decade, vt_cc
 
 DECKS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks")
-
-
-def render(deck, out_dir, name, **subs):
-    return _render(os.path.join(DECKS, deck), out_dir, name, **subs)
 
 
 def characterise(ng, models, osdi, work, device, tag=None):
@@ -47,7 +43,7 @@ def characterise(ng, models, osdi, work, device, tag=None):
 
 def vtc(ng, models, osdi, work, vt):
     out = os.path.join(work, "vtc_" + vt)
-    ngspice(ng, render("inverter_vtc.sp", work, "vtc_" + vt, MODELS=models, OSDI=osdi,
+    ngspice(ng, render(os.path.join(DECKS, "inverter_vtc.sp"), work, "vtc_" + vt, MODELS=models, OSDI=osdi,
                        VT=vt, VDD=ref.VDD, OUT=out))
     vin, vout = read_xy(out + ".vtc")
     vm = next(vin[i] for i in range(len(vin)) if vout[i] <= vin[i])
@@ -56,13 +52,13 @@ def vtc(ng, models, osdi, work, vt):
 
 
 def fo4(ng, models, osdi, work, vt):
-    r = results(ngspice(ng, render("fo4.sp", work, "fo4_" + vt, MODELS=models, OSDI=osdi,
+    r = results(ngspice(ng, render(os.path.join(DECKS, "fo4.sp"), work, "fo4_" + vt, MODELS=models, OSDI=osdi,
                                    VT=vt, VDD=ref.VDD, VMID=ref.VDD / 2)))
     return dict(tphl=r["tphl"], tplh=r["tplh"], fo4=(r["tphl"] + r["tplh"]) / 2)
 
 
 def ring(ng, models, osdi, work, vt):
-    r = results(ngspice(ng, render("ring11.sp", work, "ring11_" + vt, MODELS=models, OSDI=osdi,
+    r = results(ngspice(ng, render(os.path.join(DECKS, "ring11.sp"), work, "ring11_" + vt, MODELS=models, OSDI=osdi,
                                    VT=vt, VDD=ref.VDD, VMID=ref.VDD / 2)))
     period = r["five_periods"] / 5
     return dict(period=period, freq=1 / period, stage=period / (2 * ref.RO_STAGES))

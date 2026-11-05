@@ -53,7 +53,7 @@ import os
 import re
 import tempfile
 
-from common import Report, at, mos_sweeps, ngspice, render, results, vt_cc, vt_max_gm
+from common import Report, at, mos_sweeps, ngspice, render, results, tc_fit, vt_cc, vt_max_gm
 
 TEMP = 27
 VDD = 1.2
@@ -147,17 +147,6 @@ TC_TOL = dict(tc1=0.05, tc2=0.10)
 TEMPS = (-40, -15, 10, 27, 60, 95, 125)
 RES_DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks", "ihp_res.sp")
 MIM_DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks", "ihp_mim.sp")
-
-
-def tc_fit(ts, ys, t0=27.0):
-    """Least-squares TC1, TC2 (in ppm/K, ppm/K^2) of y(T) = y0 [1 + a dT + b dT^2]."""
-    y0 = ys[ts.index(t0)]
-    X = [(t - t0, (t - t0) ** 2) for t in ts]
-    Z = [y / y0 - 1 for y in ys]
-    sxx = sum(a * a for a, _ in X); sxy = sum(a * b for a, b in X); syy = sum(b * b for _, b in X)
-    sxz = sum(a * z for (a, _), z in zip(X, Z)); syz = sum(b * z for (_, b), z in zip(X, Z))
-    det = sxx * syy - sxy * sxy
-    return (sxz * syy - syz * sxy) / det * 1e6, (syz * sxx - sxz * sxy) / det * 1e6
 
 
 def tc_checks(rep, name, ts, ys, tc1, tc2):
