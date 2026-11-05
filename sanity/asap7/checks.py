@@ -7,7 +7,7 @@ import os
 import tempfile
 
 import reference as ref
-from common import Report, at, ngspice, read_xy, render as _render, results, ss_decade, vt_cc
+from common import Report, at, mos_sweeps, ngspice, read_xy, render as _render, results, ss_decade, vt_cc
 
 DECKS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks")
 
@@ -18,15 +18,16 @@ def render(deck, out_dir, name, **subs):
 
 def characterise(ng, models, osdi, work, device, tag=None):
     pol = -1 if device.startswith("pmos") else 1
-    tag = tag or device
-    out = os.path.join(work, tag)
-    deck = render("device_iv.sp", work, tag, MODELS=models, OSDI=osdi, DEVICE=device,
-                  OUT=out, VDD=pol * ref.VDD, VHALF=pol * ref.VDD / 2,
-                  VLIN=pol * 0.05, VSTEP=pol * 0.005)
-    ngspice(ng, deck)
-    lin = read_xy(out + ".vg_lin")
-    sat = read_xy(out + ".vg_sat")
-    vd_full = read_xy(out + ".vd_full")
+    # Current is measured at the SOURCE (i(vs)), not the drain: [MEJ16]'s Ioff
+    # values equal the model's channel current IDS exactly, i.e. they exclude
+    # gate-induced drain leakage (GIDL), which flows into the drain terminal.
+    # One fin, l = 20n drawn (the cell libraries' value; the cards add xl = 1n,
+    # giving the paper's 21 nm actual gate length). No aux sweep is needed,
+    # and Ioff is read at Vgs = 0, Vds = VDD.
+    sw = mos_sweeps(ng, work, tag or device, ".include " + models,
+                    "N1 d g s 0 %s l=20n nfin=1" % device, pol, ref.VDD,
+                    0.05, 0.05, ref.VDD, 25, imeas="i(vs)", pre="pre_osdi " + osdi)
+    lin, sat, vd_full = sw["vg_lin"], sw["vg_sat"], sw["vd_full"]
     vdd, h = ref.VDD, ref.VDD / 2
     idsat = at(*sat, vdd)
     vtlin, vtsat = vt_cc(*lin, ref.ICC), vt_cc(*sat, ref.ICC)
