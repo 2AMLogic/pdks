@@ -49,16 +49,28 @@ def results(log):
     return {m.group(1): float(m.group(2)) for m in re.finditer(r"^RESULT (\w+) (\S+)", log, re.M)}
 
 
-def read_xy(path):
-    """Two-column wrdata output as (|x|, |y|) lists."""
+def read_xy(path, pol=None):
+    """Two-column wrdata output as (|x|, |y|) lists. With pol (+1 / -1) x is
+    instead signed, pol * x, which gives device-terms voltages for a pFET."""
     xs, ys = [], []
     with open(path) as f:
         for line in f:
             parts = line.split()
             if len(parts) >= 2:
-                xs.append(abs(float(parts[0])))
+                xs.append(abs(float(parts[0])) if pol is None else pol * float(parts[0]))
                 ys.append(abs(float(parts[1])))
     return xs, ys
+
+
+def tc_fit(ts, ys, t0=27.0):
+    """Least-squares TC1, TC2 (in ppm/K, ppm/K^2) of y(T) = y0 [1 + a dT + b dT^2]."""
+    y0 = ys[ts.index(t0)]
+    X = [(t - t0, (t - t0) ** 2) for t in ts]
+    Z = [y / y0 - 1 for y in ys]
+    sxx = sum(a * a for a, _ in X); sxy = sum(a * b for a, b in X); syy = sum(b * b for _, b in X)
+    sxz = sum(a * z for (a, _), z in zip(X, Z)); syz = sum(b * z for (_, b), z in zip(X, Z))
+    det = sxx * syy - sxy * sxy
+    return (sxz * syy - syz * sxy) / det * 1e6, (syz * sxx - sxz * sxy) / det * 1e6
 
 
 def at(xs, ys, x):
@@ -157,14 +169,5 @@ def mos_sweeps(ng, work, name, header, instance, pol, vdd, vlin, vaux, voff,
                   TEMP=temp, OUT=out, IMEAS=imeas, VDD=pol * vdd, VLIN=pol * vlin,
                   VAUX=pol * vaux, VOFF=pol * voff, VSTEP=pol * vstep, VGSTART=pol * vgstart)
     ngspice(ng, deck, cwd=work, spiceinit=spiceinit)
-    res = {}
-    for s in ("vg_lin", "vg_aux", "vg_sat", "vg_off", "vd_full"):
-        xs, ys = [], []
-        with open("%s.%s" % (out, s)) as f:
-            for line in f:
-                parts = line.split()
-                if len(parts) >= 2:
-                    xs.append(pol * float(parts[0]))
-                    ys.append(abs(float(parts[1])))
-        res[s] = (xs, ys)
-    return res
+    return {s: read_xy("%s.%s" % (out, s), pol)
+            for s in ("vg_lin", "vg_aux", "vg_sat", "vg_off", "vd_full")}

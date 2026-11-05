@@ -9,19 +9,9 @@ import tempfile
 import re
 
 import reference as ref
-from common import Report, at, mos_sweeps, ngspice, render, ss_min, vt_max_gm
+from common import Report, at, mos_sweeps, ngspice, render, ss_min, tc_fit, vt_max_gm
 
 PASSIVE_DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks", "passive_t.sp")
-
-
-def tc_fit(ts, ys, t0):
-    """Least-squares TC1 (ppm/K) of y(T) = y0 [1 + a dT + b dT^2]."""
-    y0 = ys[ts.index(t0)]
-    X = [(t - t0, (t - t0) ** 2) for t in ts]
-    Z = [y / y0 - 1 for y in ys]
-    sxx = sum(a * a for a, _ in X); sxy = sum(a * b for a, b in X); syy = sum(b * b for _, b in X)
-    sxz = sum(a * z for (a, _), z in zip(X, Z)); syz = sum(b * z for (_, b), z in zip(X, Z))
-    return (sxz * syy - syz * sxy) / (sxx * syy - sxy * sxy) * 1e6
 
 
 def passives(rep, ng, work, models, data):
@@ -38,7 +28,7 @@ def passives(rep, ng, work, models, data):
         ts = [x[0] for x in xs]
         ys = [x[1] for x in xs] if kind == "cap" else [0.1 / x[1] for x in xs]
         y25 = ys[ts.index(25.0)]
-        tc1 = tc_fit(ts, ys, 25.0)
+        tc1 = tc_fit(ts, ys, 25.0)[0]
         data[model] = dict(tc1_ppm=tc1)
         if kind == "res":
             rs = y25 * 10 / 200

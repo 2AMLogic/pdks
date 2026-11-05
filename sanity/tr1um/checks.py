@@ -7,20 +7,9 @@ import os
 import tempfile
 
 import reference as ref
-from common import Report, at, ngspice, render
+from common import Report, at, ngspice, read_xy, render
 
 DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks", "iv_points.sp")
-
-
-def sweep(path, pol):
-    xs, ys = [], []
-    with open(path) as f:
-        for line in f:
-            parts = line.split()
-            if len(parts) >= 2:
-                xs.append(pol * float(parts[0]))
-                ys.append(abs(float(parts[1])))
-    return xs, ys
 
 
 def run(prefix, ng):
@@ -37,8 +26,8 @@ def run(prefix, ng):
             subs = dict(MODELS=models, DEVICE=dev, OUT=out, VDS5=pol * 5, VD7=pol * 7, VSTEP=pol * 0.01)
             subs.update({"VG%d" % v: pol * v for v in (2, 3, 4, 5, 6)})
             ngspice(ng, render(DECK, work, dev, **subs))
-            curves[dev] = dict(idvg=sweep(out + ".idvg", pol),
-                               **{"idvd%d" % v: sweep(out + ".idvd%d" % v, pol) for v in (2, 3, 4, 5, 6)})
+            curves[dev] = dict(idvg=read_xy(out + ".idvg", pol),
+                               **{"idvd%d" % v: read_xy(out + ".idvd%d" % v, pol) for v in (2, 3, 4, 5, 6)})
         for dev, curve, vgs, vds, sim, meas in ref.POINTS:
             c = curves[dev]
             i = at(*c["idvg"], vgs) if curve == "Id-Vg" else at(*c["idvd%d" % vgs], vds)
