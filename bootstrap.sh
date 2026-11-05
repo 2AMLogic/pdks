@@ -251,10 +251,18 @@ install_openvaf() {
   stamp "$dir" "$id"
 }
 
+# CPU target for every .osdi. openvaf-r defaults to 'native', which bakes the
+# build host's instructions (e.g. AVX-512) into the model; a cached or copied
+# .osdi then dies with SIGILL ("illegal instruction" in ngspice) on an older
+# CPU (#24, #27). 'generic' is the portable value openvaf-r documents for
+# distributable output (--target_cpu, checked against v24.0.2mob). It is part
+# of every OSDI stamp id so a native-built .osdi is rebuilt once.
+OSDI_TARGET=generic
+
 # compile_va VA OSDI [OPENVAF_ARGS...]: one Verilog-A file to one .osdi
 compile_va() {
   local va=$1 out=$2; shift 2
-  (cd "$(dirname "$va")" && "$OPENVAF" "$@" -o "$out" "$(basename "$va")" >"$out.log" 2>&1) \
+  (cd "$(dirname "$va")" && "$OPENVAF" --target_cpu "$OSDI_TARGET" "$@" -o "$out" "$(basename "$va")" >"$out.log" 2>&1) \
     || { tail -30 "$out.log"; die "OpenVAF failed to compile $va"; }
   rm -f "$out.log"
 }

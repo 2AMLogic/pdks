@@ -40,7 +40,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/pdks-ci/tools/bsimcmg107
-          key: bsimcmg107-osdi-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('tools/versions.lock', 'tools/bsimcmg107.sha256', 'ngspice/bsimcmg107/prepare.sh') }}
+          key: bsimcmg107-osdi-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('tools/versions.lock', 'tools/bsimcmg107.sha256', 'ngspice/bsimcmg107/prepare.sh') }}
 
       - name: Bootstrap and run sanity checks
         run: ./bootstrap.sh --pdk ${{ matrix.pdk }} --prefix "$PREFIX"
