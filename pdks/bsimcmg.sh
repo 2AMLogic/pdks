@@ -5,7 +5,7 @@
 
 build_bsimcmg() {
   local dir="$TOOLS/bsimcmg107"
-  local id; id="bsimcmg $BSIMCMG_URL_BASE $(sha256 "$REPO/tools/bsimcmg107.sha256") $(sha256 "$REPO/ngspice/bsimcmg107/prepare.sh") openvaf-r $OPENVAF_VERSION"
+  local id; id="bsimcmg $BSIMCMG_URL_BASE $(sha256 "$REPO/tools/bsimcmg107.sha256") $(sha256 "$REPO/ngspice/bsimcmg107/prepare.sh") openvaf-r $OPENVAF_VERSION target $OSDI_TARGET"
   BSIMCMG_OSDI="$dir/bsimcmg107.osdi"
   if stamp_ok "$dir" "$id" && [ -f "$BSIMCMG_OSDI" ]; then
     log "BSIM-CMG $BSIMCMG_VERSION OSDI: already built"
