@@ -10,7 +10,7 @@ results are checked against each foundry's or author's published values.
 |---|---|---|---|---|
 | `asap7` | ASAP7 r1p7: 7 nm predictive FinFET (ASU / Arm) | BSIM-CMG 107, compiled to OSDI | 9 MB | 73/73 against the PDK paper |
 | `asap5` | ASAP5 r0p4: 5 nm predictive gate-all-around nanowire FET (ASU) | BSIM-CMG 107, compiled to OSDI | 0.3 MB | 47/47 against the PDK paper, plus 1 known deviation |
-| `sky130` | SkyWater SKY130 (`sky130A`; `sky130B`'s ngspice libraries are identical in this release) | BSIM4, built in | 21 MB | 25/25 against SkyWater's e-test windows, device tables (continuous models) and corner tables, plus 5 known deviations |
+| `sky130` | SkyWater SKY130 (`sky130A`; `sky130B`'s ngspice libraries are identical in this release) | BSIM4, built in | 21 MB | 42/42 against SkyWater's e-test windows, device tables (continuous models) and corner tables, plus 6 known deviations |
 | `gf180mcu` | GlobalFoundries GF180MCU | BSIM4, built in | 1.4 MB | 54/54 against GF's slow/typical/fast EP targets and spec limits, incl. passives and their temperature coefficients, plus 1 known deviation |
 | `ihp-sg13g2` | IHP SG13G2 SiGe BiCMOS | PSP 103 (OSDI), VBIC HBT | 3 MB | 83/83 against IHP's process spec (1.2 V and 3.3 V MOS, corners, resistors and MIM with their temperature coefficients, the HBT) and IHP's measured silicon over temperature, plus 7 known deviations |
 | `ihp-sg13cmos5l` | IHP SG13CMOS5L CMOS | PSP 103 (OSDI) | 5 MB | 59/59 against IHP's process spec: 1.2 V and 3.3 V MOS, corners, resistors and their temperature coefficients, plus 1 known deviation |
@@ -99,15 +99,18 @@ definition used is documented next to the reference values.
   - SS reads 0.6–0.9 mV/dec low; the paper doesn't state its definition.
   - nmos_sram's DIBL (22.1 vs 20.06) is a known deviation. The paper
     says its SRAM models came from an earlier calibration.
-- **SKY130.** Vt, Idsat and leakage of the 1.8 V FETs, against SkyWater's
-  e-test MIN–MAX windows ("Device Details" tables):
+- **SKY130.** Vt, Idsat and leakage of the 1.8 V FETs (standard, plus
+  the LVT nFET and LVT/HVT pFETs), against SkyWater's e-test MIN–MAX
+  windows ("Device Details" tables):
   - The tables' TT column matches SkyWater's continuous ("combined")
     models, which ship in the same build but aren't the default.
     - Against those, Idsat is within 0.4 %, and this is checked.
     - The default binned models sit +4.7 % (n) and +7.7 % (p) above the
       column, which is printed for information.
-  - One row is a **known deviation**, reported on every run: the narrow
-    0.42/1 µm nFET's Vt (0.60 V) is above its window.
+  - Two threshold rows are **known deviations**, reported on every run:
+    the narrow 0.42/1 µm nFET's Vt (0.60 V) is above its window, and the
+    narrow 0.42/8 µm LVT pFET's EDR window lies entirely outside the
+    table's own TT value, which looks like a source typo (model 0.714 V).
 - **GF180MCU.** Idsat and Vth0 of five FETs against GF's typical EP
   targets. All match to printed precision (e.g. 510.0 vs 510 µA/µm,
   0.630 vs 0.63 V). Ioff and subthreshold slope are checked against the

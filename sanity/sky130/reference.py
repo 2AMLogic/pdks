@@ -3,9 +3,13 @@
 Source [SKY]: SkyWater SKY130 PDK documentation, "Device Details", sections
 "1.8V NMOS FET" and "1.8V PMOS FET"
 (https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html),
-tables from google/skywater-pdk at 7198cf647113f56041e02abf3eb623692820c5e1:
-docs/rules/device-details/nfet_01v8/nfet_01v8-table0.rst and
-docs/rules/device-details/pfet_01v8/pfet_01v8-table0.rst.
+and the 1.8 V LVT/HVT flavours of the same section, tables from
+google/skywater-pdk at 7198cf647113f56041e02abf3eb623692820c5e1:
+docs/rules/device-details/nfet_01v8/nfet_01v8-table0.rst,
+docs/rules/device-details/pfet_01v8/pfet_01v8-table0.rst,
+docs/rules/device-details/nfet_01v8_lvt/nfet_01v8_lvt-table0.rst,
+docs/rules/device-details/pfet_01v8_lvt/pfet_01v8_lvt-table0.rst and
+docs/rules/device-details/pfet_01v8_hvt/pfet_01v8_hvt-table0.rst.
 
 Each row gives model values per corner and an e-test (EDR) NOM / MIN / MAX.
 We check against the EDR MIN-MAX window, because the tables' own TT model
@@ -25,6 +29,13 @@ columns of those rows are misaligned in the source table, so only the TT
 maximum is used, as an upper bound, with Ioff measured at the source
 terminal at Vgs = 0, |Vds| = VDD (the drain current at that bias is
 dominated by the simulator's gmin floor).
+
+The pfet_01v8_lvt table names its threshold rows VTC... (the others use
+VTX...) and uses L = 0.35 um; it states no different extraction for VTC, so
+the same max-gm definition applies. Two of its cells are evidently source
+typos and are used as printed: VTCPN42L's EDR window (-1.042 .. -0.845) lies
+entirely outside its own TT/NOM value (-0.630), and VTCPSN35L's EDR NOM is
+-8.505 (NOM is not used here).
 """
 
 TEMP = 27
@@ -45,6 +56,27 @@ ROWS = [
     ("VTXPSN15S", "pfet_01v8", 0.42, 0.15, "vt",    0.554,  0.856,  0.705),
     ("IDSPS15S",  "pfet_01v8", 7.00, 0.15, "idsat", 0.917e-3, 1.777e-3, 1.347e-3),
     ("ILKP15S",   "pfet_01v8", 7.00, 0.15, "ilk",   None,   -7.58,  None),
+    # nfet_01v8_lvt
+    ("VTXNLL",    "nfet_01v8_lvt", 7.00, 8.00, "vt",    0.415,  0.465,  0.434),
+    ("VTXNN42L",  "nfet_01v8_lvt", 0.42, 1.00, "vt",    0.440,  0.530,  0.485),
+    ("VTXNS15L",  "nfet_01v8_lvt", 7.00, 0.15, "vt",    0.556,  0.666,  0.611),
+    ("VTXNSN15L", "nfet_01v8_lvt", 0.42, 0.15, "vt",    0.529,  0.750,  0.640),
+    ("IDSNS15L",  "nfet_01v8_lvt", 7.00, 0.15, "idsat", 3.527e-3, 4.489e-3, 4.010e-3),
+    ("ILKN15L",   "nfet_01v8_lvt", 7.00, 0.15, "ilk",   None,   -9.53,  None),
+    # pfet_01v8_lvt
+    ("VTCPLL",    "pfet_01v8_lvt", 7.00, 8.00, "vt",    0.518,  0.785,  0.651),
+    ("VTCPN42L",  "pfet_01v8_lvt", 0.42, 8.00, "vt",    0.845,  1.042,  0.630),
+    ("VTCPS35L",  "pfet_01v8_lvt", 7.00, 0.35, "vt",    0.384,  0.683,  0.533),
+    ("VTCPSN35L", "pfet_01v8_lvt", 0.42, 0.35, "vt",    0.316,  0.693,  0.504),
+    ("IDSPS35L",  "pfet_01v8_lvt", 7.00, 0.35, "idsat", 1.00e-3, 1.44e-3, 1.22e-3),
+    ("ILKP35L",   "pfet_01v8_lvt", 7.00, 0.35, "ilk",   None,   -5.14,  None),
+    # pfet_01v8_hvt
+    ("VTXPL",     "pfet_01v8_hvt", 7.00, 8.00, "vt",    1.067,  1.141,  1.107),
+    ("VTXPN42",   "pfet_01v8_hvt", 0.42, 8.00, "vt",    0.959,  1.056,  1.013),
+    ("VTXPS15",   "pfet_01v8_hvt", 7.00, 0.15, "vt",    0.814,  0.963,  0.888),
+    ("VTXPSN15",  "pfet_01v8_hvt", 0.42, 0.15, "vt",    0.678,  0.951,  0.819),
+    ("IDSPS15",   "pfet_01v8_hvt", 7.00, 0.15, "idsat", 0.697e-3, 1.309e-3, 1.003e-3),
+    ("ILKP15",    "pfet_01v8_hvt", 7.00, 0.15, "ilk",   None,   -10.7,  None),
 ]
 # pFET values are magnitudes; the source prints them negative.
 
@@ -78,6 +110,10 @@ KNOWN_DEVIATIONS = {
     "VTXNN42": "narrow 0.42/1 nFET: the released TT model gives about 0.60 V, "
                "above both the table's own TT model value (0.550) and its EDR "
                "max; no single Vt definition puts all eight Vt rows in their windows",
+    "VTCPN42L": "narrow 0.42/8 LVT pFET: the table's EDR window (0.845 .. 1.042 V) "
+                "lies entirely outside its own TT/NOM value (0.630 V), so it looks "
+                "like a source typo; the released TT model gives 0.714 V, closer to "
+                "the table's TT value than to the window",
     # The table's FS and SF columns contradict each other: for the nFET its
     # Idsat row makes FS the slow corner but its Vt row makes FS fast, and
     # for the pFET the reverse. The models agree with the nFET Idsat row and
