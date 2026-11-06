@@ -1,5 +1,5 @@
 """SKY130 sanity checks: threshold voltage, saturation current and leakage of
-the 1.8 V nFET and pFET against SkyWater's published e-test windows. Sources
+the 1.8 V nFET and pFET (plus the LVT nFET and LVT/HVT pFET) against SkyWater's published e-test windows. Sources
 and definitions: reference.py. Run via sanity/run.py --pdk sky130.
 """
 
