@@ -305,8 +305,12 @@ for p in $PDKS; do
   # Without one, -n keeps the user's ~/.spiceinit out of the test.
   nflag=-n; [ -f "$PREFIX/$p/ngspice/.spiceinit" ] && nflag=""
   # shellcheck disable=SC2086
-  (cd "$PREFIX/$p/ngspice" && "$NGSPICE" -b $nflag example.sp 2>&1 | grep '^RESULT') \
-    || die "$p: example deck failed"
+  # Keep the full output: on failure it is the only diagnostic there is.
+  out=$(cd "$PREFIX/$p/ngspice" && "$NGSPICE" -b $nflag example.sp 2>&1) || true
+  if ! printf '%s\n' "$out" | grep '^RESULT'; then
+    printf '%s\n' "$out" >&2
+    die "$p: example deck failed"
+  fi
   if [ "$SANITY" = 1 ]; then
     log "$p: sanity checks (sanity/$p/)"
     python3 "$REPO/sanity/run.py" --pdk "$p" --prefix "$PREFIX" \
