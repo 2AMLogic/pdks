@@ -8,13 +8,13 @@ results are checked against each foundry's or author's published values.
 
 | `--pdk` | Process | Models | Fetched | Sanity checks | Mismatch (Monte Carlo) | Noise |
 |---|---|---|---|---|---|---|
-| `asap7` | ASAP7 r1p7: 7 nm predictive FinFET (ASU / Arm) | BSIM-CMG 107, compiled to OSDI | 9 MB | 121/121 against the PDK paper (73 device, 48 interconnect) | not yet (#37) | not yet (#37) |
-| `asap5` | ASAP5 r0p4: 5 nm predictive gate-all-around nanowire FET (ASU) | BSIM-CMG 107, compiled to OSDI | 0.3 MB | 111/111 against the PDK paper (47 device, 64 interconnect), plus 1 known deviation | not yet (#37) | not yet (#37) |
+| `asap7` | ASAP7 r1p7: 7 nm predictive FinFET (ASU / Arm) | BSIM-CMG 107, compiled to OSDI | 9 MB | 126/126: 73 device checks against the PDK paper, 48 interconnect, 5 derived card and noise checks | not modelled: predictive, cards carry no statistical parameters (authors recommend none) | `noise.sp` example; Nyquist thermal and flicker exponent checked (BSIM-CMG defaults, no extracted level: gap) |
+| `asap5` | ASAP5 r0p4: 5 nm predictive gate-all-around nanowire FET (ASU) | BSIM-CMG 107, compiled to OSDI | 0.3 MB | 116/116: 47 device checks against the PDK paper, 64 interconnect, 5 derived card and noise checks, plus 1 known deviation | not modelled: predictive, cards carry no statistical parameters (authors recommend none) | `noise.sp` example; Nyquist thermal and flicker exponent checked (BSIM-CMG defaults, no extracted level: gap) |
 | `sky130` | SkyWater SKY130 (`sky130A`; `sky130B`'s ngspice libraries are identical in this release) | BSIM4, built in | 21 MB | 105/105 against SkyWater's e-test windows, device tables (continuous models) and corner tables, the derived mismatch and noise checks, and the interconnect table (44 interconnect) below, plus 8 known deviations | `mc_mm_switch` via the `*_mm` corners; `mismatch.sp` example; Pelgrom area scaling checked (derived; SkyWater publishes no coefficient) | `noise.sp` example; flicker exponent and thermal noise checked (no published level: gap) |
 | `gf180mcu` | GlobalFoundries GF180MCU | BSIM4, built in | 1.4 MB | 120/120 against GF's slow/typical/fast EP targets and spec limits, incl. passives and their temperature coefficients, the derived mismatch and noise checks below, and the interconnect table (49 interconnect), plus 3 known deviations | `sw_stat_mismatch` (default 0) with the `X` subcircuits of `fets_mm`; `mismatch.sp` example; Pelgrom area scaling checked (derived), nFET compared with GF's plotted fit lines (digitised; known deviations) | `noise.sp` example; flicker exponent and thermal noise checked (GF publishes only the measurement conditions, no level: gap) |
 | `ihp-sg13g2` | IHP SG13G2 SiGe BiCMOS | PSP 103 (OSDI), VBIC HBT | 3 MB | 162/162 against IHP's process spec and layout rules (1.2 V and 3.3 V MOS, corners, resistors and MIM with their temperature coefficients, the HBT, 79 interconnect) and IHP's measured silicon over temperature, plus 7 known deviations | not yet (#37) | not yet (#37) |
 | `ihp-sg13cmos5l` | IHP SG13CMOS5L CMOS | PSP 103 (OSDI) | 5 MB | 115/115 against IHP's process spec and layout rules: 1.2 V and 3.3 V MOS, corners, resistors and their temperature coefficients, 56 interconnect, plus 1 known deviation | not yet (#37) | not yet (#37) |
-| `tr1um` | Tokai Rika TR-1um 1 µm CMOS (OpenSUSI) | BSIM3v3, built in | 30 KB | 22/22 against Tokai Rika's published I-V curves (digitised) and the derived noise and model-scan checks below, plus 2 known deviations | none: the manual lists "Matching" as not provided and the cards have no statistical parameters (gap) | `noise.sp` example on the BSIM3v3 defaults (no noise model published; flicker is 0) |
+| `tr1um` | Tokai Rika TR-1um 1 µm CMOS (OpenSUSI) | BSIM3v3, built in | 35 KB | 34/34 against Tokai Rika's published I-V curves (digitised, 16) and design rules (interconnect, 12), and the derived noise, model-scan and wire-ladder checks, plus 2 known deviations | none: the manual lists "Matching" as not provided and the cards have no statistical parameters (gap) | `noise.sp` example on the BSIM3v3 defaults (no noise model published; flicker is 0) |
 
 ## Quick start
 
@@ -166,6 +166,12 @@ definition used is documented next to the reference values.
     known deviation.
   - The silicon measurements in the same figure are printed for
     information.
+  - Interconnect: the layer table (`interconnect.csv`) is checked against
+    the design-rule table in the repository (M1, M2 and V1 width and
+    spacing; pitch derived), and the `wire.inc` RC ladder against the
+    closed-form Elmore delay. Thickness, sheet resistance, capacitance
+    per length and via resistance are printed by no public document, so
+    they are explicit gaps, not estimates.
 
 ### Corners
 
@@ -200,6 +206,16 @@ each check is depends on what was published:
     `noia = 0`. They are listed in `sanity/sky130/reference.py`.
   - The mismatch and noise checks add several minutes of single-core ngspice, because the
     Monte Carlo loop re-reads the library for every sample.
+- **ASAP7 and ASAP5 mismatch and noise (predictive: no measured statistics).**
+  Neither paper nor the PDK notes give a variability, mismatch or noise
+  recommendation for the devices (ASAP5's paper treats lithography
+  variability for the layout rules only), so the mismatch column reads "not
+  modelled" and no Monte Carlo deck exists; no variability value is estimated.
+  The checks scan the pinned cards (0 statistical constructs, 0 noise
+  parameters set: BSIM-CMG 107's generic defaults apply), and run `.noise` on
+  an `nmos_rvt` (10 fins): the drain noise at Vds = 0 equals `4kT*gds` within
+  2 % (derived; read at a bias where gate-current shot noise is small) and the
+  flicker exponent equals the default `ef` = 1. Details: `pdks/<pdk>/README.md`.
 - **GF180MCU mismatch and noise.** GF publishes the 3.3 V mismatch only as
   plots of `sigma(dVtlin)` and `sigma(dIdsat)` against `1/sqrt(W*L)`
   (Model Reference Guide 9.4), and for noise only the measurement
