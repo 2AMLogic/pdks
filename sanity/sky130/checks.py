@@ -4,13 +4,108 @@ and definitions: reference.py. Run via sanity/run.py --pdk sky130.
 """
 
 import math
+import glob
 import os
+import re
 import tempfile
 
 import reference as ref
-from common import Report, at, mos_sweeps, vt_max_gm
+from common import Report, at, mos_sweeps, ngspice, render, results, vt_max_gm
 
 SPICEINIT = "set ngbehavior=hsa\nset ng_nomodcheck\n"
+DECKS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "ngspice", "sky130")
+
+
+def mismatch_deck(ng, work, prefix, name, corner, w, l, m, n, seed):
+    deck = render(os.path.join(DECKS, "mismatch.sp.in"), work, name, PDK_DIR=os.path.join(prefix, "sky130", "sky130A"),
+                  NGSPICE=ng, CORNER=corner, W=w, L=l, M=m, N=n, SEED=seed)
+    return results(ngspice(ng, deck, cwd=work, spiceinit=SPICEINIT))
+
+
+def noise_deck(ng, work, prefix, name, bias):
+    deck = render(os.path.join(DECKS, "noise.sp.in"), work, name, PDK_DIR=os.path.join(prefix, "sky130", "sky130A"),
+                  NGSPICE=ng, VGLO=bias["VG"] - 0.002, VGHI=bias["VG"] + 0.002, **bias)
+    return results(ngspice(ng, deck, cwd=work, spiceinit=SPICEINIT))
+
+
+def noise_scan(prefix):
+    """Models in every *.pm3.spice (corner variants excluded) and those lacking
+    noise parameters: (files, models, noia == 0 count, {file: [(count, missing)]})."""
+    spice = os.path.join(prefix, "sky130", "sky130A", "libs.ref", "sky130_fd_pr", "spice")
+    files = [f for f in sorted(glob.glob(os.path.join(spice, "*.pm3.spice")))
+             if not re.search(r"__(ff|fs|sf|ss|leak|tt_leak)\.pm3", f)]
+    models = zero = absent = 0
+    ef = set()
+    for f in files:
+        for b in re.split(r"(?im)^\.model\s+", open(f).read())[1:]:
+            if "mos" not in b.split("\n", 1)[0].lower():
+                continue
+            models += 1
+            miss = [k for k in ("noia", "ntnoi", "tnoia") if not re.search(r"(?im)^\+\s*%s\s*=" % k, b)]
+            absent += bool(miss)
+            m = re.search(r"(?im)^\+\s*noia\s*=\s*([-0-9.e+]+)\s*$", b)
+            zero += bool(m) and float(m.group(1)) == 0
+            if os.path.basename(f) == "sky130_fd_pr__nfet_01v8__tt.pm3.spice":
+                ef.add(re.search(r"(?im)^\+\s*ef\s*=\s*(\S+)", b).group(1))
+    return len(files), models, zero, absent, ef
+
+
+def mismatch_and_noise(rep, data, prefix, ng, work):
+    print("\nMismatch (Monte Carlo, library corner tt_mm: mc_mm_switch=1), 1.8 V nFET, %d pairs per area" % ref.MISMATCH_N)
+    print("  No published reference exists (reference.py); checks are derived from the model files.\n")
+    n = ref.MISMATCH_N
+    runs = []
+    for w, l, m, seed in ref.MISMATCH_AREAS:
+        r = mismatch_deck(ng, work, prefix, "mm_%g_%g_%g" % (w, l, m), "tt_mm", w, l, m, n, seed)
+        runs.append(("%g/%g x%g" % (w, l, m), r))
+        data["mismatch %g/%g x%g" % (w, l, m)] = r
+        rep.info("sigma(dVgs) %g/%g x%g" % (w, l, m), r["sigma_dvgs_V"], "mV", 1e3)
+    for key, label, n_s in (("avt_dvgs_mVum", "AVT(dVgs)", n), ("avt_mVum", "AVT(Vt)", 2 * n), ("abeta_pcum", "ABeta", 2 * n)):
+        vals = [r[key] for _, r in runs]
+        mean = sum(vals) / len(vals)
+        t = ref.mc_tol(n_s)
+        for (tag, r) in runs:
+            rep.check("%s*sqrt(A) %s" % (label, tag), "derived", r[key], mean * (1 - t), mean * (1 + t),
+                      "%s" % ("%um" if key == "abeta_pcum" else "mV um"), 1, "(area scaling; mean %.3g, +-%.0f %%)" % (mean, 100 * t))
+    vt_floor = ref.VTH0_SLOPE * 1e3
+    t = ref.mc_tol(2 * n)
+    for (tag, r) in runs:
+        rep.check("AVT(Vt) floor %s" % tag, "bound", r["avt_mVum"], vt_floor * (1 - t), 1e9, "mV um", 1,
+                  "(model vth0_slope %.3f mV um; measured/slope %.2f)" % (vt_floor, r["avt_mVum"] / vt_floor))
+    rep.info("ABeta vs model toxe_slope", sum(r["abeta_pcum"] for _, r in runs) / len(runs), "%um", 1,
+             "(model toxe_slope %.3f %%um; beta ~ 1/tox)" % (ref.TOXE_SLOPE * 100))
+    off = mismatch_deck(ng, work, prefix, "mm_off", "tt", 1, 0.5, 1, 3, 1)
+    rep.check("mismatch off (corner tt): sigma(dVgs)", "derived", off["sigma_dvgs_V"], 0, 1e-9, "V", 1, "(mc_mm_switch=0)")
+    a = mismatch_deck(ng, work, prefix, "mm_rep1", "tt_mm", 1, 0.5, 1, 3, 5)
+    b = mismatch_deck(ng, work, prefix, "mm_rep2", "tt_mm", 1, 0.5, 1, 3, 5)
+    rep.check("same seed, same result", "derived", abs(a["sigma_dvgs_V"] - b["sigma_dvgs_V"]) + abs(a["sigma_vt_V"] - b["sigma_vt_V"]),
+              0, 0, "V", 1, "(setseed + reset)")
+
+    print("\nNoise, 1.8 V nFET %(W)g/%(L)g um, Vg %(VG)g V, Vd %(VD)g V (ngspice .noise, 27 C)\n" % ref.NOISE_BIAS)
+    r = noise_deck(ng, work, prefix, "noise_long", ref.NOISE_BIAS)
+    data["noise long"] = r
+    lo, hi = ref.GAMMA_LONG
+    rep.known("thermal gamma (4kT*gamma*gm) 7/8", r["gamma_thermal"], lo, hi, "", 1, ref.NOISE_KNOWN["gamma"])
+    lo, hi = ref.NYQUIST
+    rep.known("Nyquist S_id/(4kT*gds) at Vds=0", r["nyquist_ratio"], lo, hi, "", 1, ref.NOISE_KNOWN["nyquist"])
+    sl = r["flicker_slope"]
+    rep.check("flicker slope 1..100 Hz = -ef", "derived", sl, -ref.EF - ref.FLICKER_SLOPE_TOL, -ref.EF + ref.FLICKER_SLOPE_TOL, "", 1,
+              "(model ef %.2f)" % ref.EF)
+    rep.info("flicker level at 1 Hz (input, V^2/Hz)", r["sv_flicker_1Hz_V2"], "V2/Hz", 1, "(no published value: gap)")
+    short = noise_deck(ng, work, prefix, "noise_short", ref.NOISE_BIAS_SHORT)
+    data["noise short"] = short
+    rep.info("thermal gamma 7/0.15", short["gamma_thermal"], "", 1, "(information; no long-channel claim)")
+
+    nf, nm, zero, absent, ef = noise_scan(prefix)
+    rep.check("noise scan: models with noia = 0", "bound", zero, 0, 0, "", 1, "(%d models in %d files)" % (nm, nf))
+    rep.check("noise scan: models missing noia/ntnoi/tnoia", "derived", absent, ref.NOISE_ABSENT_MODELS, ref.NOISE_ABSENT_MODELS, "", 1,
+              "(listed in reference.NOISE_ABSENT)")
+    rep.check("noise scan: nfet_01v8 ef in every bin", "derived", float(len(ef)), 1, 1, "", 1, "(value %s)" % ", ".join(sorted(ef)))
+    rep.check("noise scan: model counts", "derived", float(nm), ref.NOISE_SCAN_MODELS, ref.NOISE_SCAN_MODELS, "", 1)
+    print("\nGaps (not estimated):")
+    for g in ref.GAPS:
+        print("  - " + g)
+
 
 
 def run(prefix, ng):
@@ -84,4 +179,6 @@ def run(prefix, ng):
                     rep.known(label, v, lo, hi, unit, 1, ref.KNOWN_DEVIATIONS[(name, corner)])
                 else:
                     rep.check(label, "published", v, lo, hi, unit, 1, "(table %+.3f)" % want if qty == "vt" else "(table %.3f)" % want)
+        print("")
+        mismatch_and_noise(rep, data, prefix, ng, work)
     return rep.summary(), data, rep.rows

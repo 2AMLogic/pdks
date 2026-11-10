@@ -6,15 +6,15 @@ or Linux host. Each upstream source is pinned by commit or SHA-256 and
 fetched at setup, so the clone is small. The setup is reproducible, and
 results are checked against each foundry's or author's published values.
 
-| `--pdk` | Process | Models | Fetched | Sanity checks |
-|---|---|---|---|---|
-| `asap7` | ASAP7 r1p7: 7 nm predictive FinFET (ASU / Arm) | BSIM-CMG 107, compiled to OSDI | 9 MB | 73/73 against the PDK paper |
-| `asap5` | ASAP5 r0p4: 5 nm predictive gate-all-around nanowire FET (ASU) | BSIM-CMG 107, compiled to OSDI | 0.3 MB | 47/47 against the PDK paper, plus 1 known deviation |
-| `sky130` | SkyWater SKY130 (`sky130A`; `sky130B`'s ngspice libraries are identical in this release) | BSIM4, built in | 21 MB | 42/42 against SkyWater's e-test windows, device tables (continuous models) and corner tables, plus 6 known deviations |
-| `gf180mcu` | GlobalFoundries GF180MCU | BSIM4, built in | 1.4 MB | 54/54 against GF's slow/typical/fast EP targets and spec limits, incl. passives and their temperature coefficients, plus 1 known deviation |
-| `ihp-sg13g2` | IHP SG13G2 SiGe BiCMOS | PSP 103 (OSDI), VBIC HBT | 3 MB | 83/83 against IHP's process spec (1.2 V and 3.3 V MOS, corners, resistors and MIM with their temperature coefficients, the HBT) and IHP's measured silicon over temperature, plus 7 known deviations |
-| `ihp-sg13cmos5l` | IHP SG13CMOS5L CMOS | PSP 103 (OSDI) | 5 MB | 59/59 against IHP's process spec: 1.2 V and 3.3 V MOS, corners, resistors and their temperature coefficients, plus 1 known deviation |
-| `tr1um` | Tokai Rika TR-1um 1 µm CMOS (OpenSUSI) | BSIM3v3, built in | 30 KB | 16/16 against Tokai Rika's published I-V curves (digitised), plus 1 known deviation |
+| `--pdk` | Process | Models | Fetched | Sanity checks | Mismatch (Monte Carlo) | Noise |
+|---|---|---|---|---|---|---|
+| `asap7` | ASAP7 r1p7: 7 nm predictive FinFET (ASU / Arm) | BSIM-CMG 107, compiled to OSDI | 9 MB | 73/73 against the PDK paper | not yet (#37) | not yet (#37) |
+| `asap5` | ASAP5 r0p4: 5 nm predictive gate-all-around nanowire FET (ASU) | BSIM-CMG 107, compiled to OSDI | 0.3 MB | 47/47 against the PDK paper, plus 1 known deviation | not yet (#37) | not yet (#37) |
+| `sky130` | SkyWater SKY130 (`sky130A`; `sky130B`'s ngspice libraries are identical in this release) | BSIM4, built in | 21 MB | 61/61 against SkyWater's e-test windows, device tables (continuous models) and corner tables, and the derived mismatch and noise checks below, plus 8 known deviations | `mc_mm_switch` via the `*_mm` corners; `mismatch.sp` example; Pelgrom area scaling checked (derived; SkyWater publishes no coefficient) | `noise.sp` example; flicker exponent and thermal noise checked (no published level: gap) |
+| `gf180mcu` | GlobalFoundries GF180MCU | BSIM4, built in | 1.4 MB | 54/54 against GF's slow/typical/fast EP targets and spec limits, incl. passives and their temperature coefficients, plus 1 known deviation | not yet (#37) | not yet (#37) |
+| `ihp-sg13g2` | IHP SG13G2 SiGe BiCMOS | PSP 103 (OSDI), VBIC HBT | 3 MB | 83/83 against IHP's process spec (1.2 V and 3.3 V MOS, corners, resistors and MIM with their temperature coefficients, the HBT) and IHP's measured silicon over temperature, plus 7 known deviations | not yet (#37) | not yet (#37) |
+| `ihp-sg13cmos5l` | IHP SG13CMOS5L CMOS | PSP 103 (OSDI) | 5 MB | 59/59 against IHP's process spec: 1.2 V and 3.3 V MOS, corners, resistors and their temperature coefficients, plus 1 known deviation | not yet (#37) | not yet (#37) |
+| `tr1um` | Tokai Rika TR-1um 1 µm CMOS (OpenSUSI) | BSIM3v3, built in | 30 KB | 16/16 against Tokai Rika's published I-V curves (digitised), plus 1 known deviation | not yet (#37) | not yet (#37) |
 
 ## Quick start
 
@@ -145,6 +145,25 @@ each check is depends on what was published:
     row and the pFET Idsat row they are swapped relative to the other row.
   - Those four entries are reported as known deviations, and each matches
     once FS and SF are swapped.
+- **SKY130 mismatch and noise (derived; nothing published).** SkyWater's
+  documentation at the pinned commit gives no Pelgrom coefficient, no
+  flicker level and no thermal-noise gamma, so these are gaps, not
+  estimates. The checks use the model files and physics:
+  - Mismatch is on in the `*_mm` library corners (`mc_mm_switch=1`);
+    `tt` gives zero spread. Each instance draws `vth0`, `toxe` and `voff`
+    spreads that scale as `1/sqrt(l*w*mult)`. The checks run 100 samples
+    at three areas (via `mult`) and require `sigma*sqrt(area)` to be
+    constant within 3 sampling errors, for the pair offset, Vt and beta.
+    `sigma(Vt)*sqrt(area)` is also bounded below by the model's own
+    `vth0_slope` (3.356 mV µm). Same seed gives identical output.
+  - Noise: the flicker exponent equals the model's `ef` (0.84).
+    Two **known deviations**: thermal gamma of the 7/8 µm nFET is 2.05
+    (long-channel theory: 2/3 to 1), and the channel noise at Vds = 0 is
+    0.91 of the Nyquist value `4kT*gds`.
+  - 14 of 1308 MOS models lack `ntnoi`/`tnoia` (or `noia`); none has
+    `noia = 0`. They are listed in `sanity/sky130/reference.py`.
+  - The mismatch and noise checks add several minutes of single-core ngspice, because the
+    Monte Carlo loop re-reads the library for every sample.
 - **IHP (published limits).** The specification gives MIN–MAX windows, and
   the `mos_ss` and `mos_ff` corners are built on their edges.
   - Each ss/ff corner lands on its limit within 10 mV or 5 %, for the
