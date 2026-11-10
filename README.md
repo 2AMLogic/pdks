@@ -11,10 +11,10 @@ results are checked against each foundry's or author's published values.
 | `asap7` | ASAP7 r1p7: 7 nm predictive FinFET (ASU / Arm) | BSIM-CMG 107, compiled to OSDI | 9 MB | 121/121 against the PDK paper (73 device, 48 interconnect) | not yet (#37) | not yet (#37) |
 | `asap5` | ASAP5 r0p4: 5 nm predictive gate-all-around nanowire FET (ASU) | BSIM-CMG 107, compiled to OSDI | 0.3 MB | 111/111 against the PDK paper (47 device, 64 interconnect), plus 1 known deviation | not yet (#37) | not yet (#37) |
 | `sky130` | SkyWater SKY130 (`sky130A`; `sky130B`'s ngspice libraries are identical in this release) | BSIM4, built in | 21 MB | 105/105 against SkyWater's e-test windows, device tables (continuous models) and corner tables, the derived mismatch and noise checks, and the interconnect table (44 interconnect) below, plus 8 known deviations | `mc_mm_switch` via the `*_mm` corners; `mismatch.sp` example; Pelgrom area scaling checked (derived; SkyWater publishes no coefficient) | `noise.sp` example; flicker exponent and thermal noise checked (no published level: gap) |
-| `gf180mcu` | GlobalFoundries GF180MCU | BSIM4, built in | 1.4 MB | 103/103 against GF's slow/typical/fast EP targets and spec limits, incl. passives and their temperature coefficients, and the interconnect table (49 interconnect), plus 1 known deviation | not yet (#37) | not yet (#37) |
+| `gf180mcu` | GlobalFoundries GF180MCU | BSIM4, built in | 1.4 MB | 120/120 against GF's slow/typical/fast EP targets and spec limits, incl. passives and their temperature coefficients, the derived mismatch and noise checks below, and the interconnect table (49 interconnect), plus 3 known deviations | `sw_stat_mismatch` (default 0) with the `X` subcircuits of `fets_mm`; `mismatch.sp` example; Pelgrom area scaling checked (derived), nFET compared with GF's plotted fit lines (digitised; known deviations) | `noise.sp` example; flicker exponent and thermal noise checked (GF publishes only the measurement conditions, no level: gap) |
 | `ihp-sg13g2` | IHP SG13G2 SiGe BiCMOS | PSP 103 (OSDI), VBIC HBT | 3 MB | 162/162 against IHP's process spec and layout rules (1.2 V and 3.3 V MOS, corners, resistors and MIM with their temperature coefficients, the HBT, 79 interconnect) and IHP's measured silicon over temperature, plus 7 known deviations | not yet (#37) | not yet (#37) |
 | `ihp-sg13cmos5l` | IHP SG13CMOS5L CMOS | PSP 103 (OSDI) | 5 MB | 115/115 against IHP's process spec and layout rules: 1.2 V and 3.3 V MOS, corners, resistors and their temperature coefficients, 56 interconnect, plus 1 known deviation | not yet (#37) | not yet (#37) |
-| `tr1um` | Tokai Rika TR-1um 1 µm CMOS (OpenSUSI) | BSIM3v3, built in | 30 KB | 16/16 against Tokai Rika's published I-V curves (digitised), plus 1 known deviation | not yet (#37) | not yet (#37) |
+| `tr1um` | Tokai Rika TR-1um 1 µm CMOS (OpenSUSI) | BSIM3v3, built in | 30 KB | 22/22 against Tokai Rika's published I-V curves (digitised) and the derived noise and model-scan checks below, plus 2 known deviations | none: the manual lists "Matching" as not provided and the cards have no statistical parameters (gap) | `noise.sp` example on the BSIM3v3 defaults (no noise model published; flicker is 0) |
 
 ## Quick start
 
@@ -200,6 +200,31 @@ each check is depends on what was published:
     `noia = 0`. They are listed in `sanity/sky130/reference.py`.
   - The mismatch and noise checks add several minutes of single-core ngspice, because the
     Monte Carlo loop re-reads the library for every sample.
+- **GF180MCU mismatch and noise.** GF publishes the 3.3 V mismatch only as
+  plots of `sigma(dVtlin)` and `sigma(dIdsat)` against `1/sqrt(W*L)`
+  (Model Reference Guide 9.4), and for noise only the measurement
+  conditions, no level.
+  - Mismatch is off by default (`sw_stat_mismatch=0` in `design.spice`);
+    the checks set it to 1. Only the `X` subcircuits of `fets_mm` carry it
+    (`M` cards, as in `example.sp`, have none). Each instance draws
+    `delvto` and a `mulu0` factor from `par_vth` (7.148 mV µm) and
+    `par_k` (0.70 % µm), divided by `sqrt(leff*weff)`.
+  - 100 pairs at three areas (via `par`, which scales the spread only): `sigma*sqrt(Aeff)` constant
+    within 3 sampling errors, equal to `par_vth` within 3 errors of the
+    pooled sample (derived), `sigma(dIdsat)` bounded below by `par_k`.
+    Mismatch off gives zero spread; the same seed gives identical output.
+  - Against the plotted nFET lines (read off the figure, about ±5 %): 7.3
+    against 8.9 mV µm for Vtlin, and 0.80 against 0.58 % µm for Idsat.
+    Both are **known deviations**.
+  - Noise: flicker exponent equals `ef` (0.95), thermal gamma of the 10/5 µm
+    nFET is 0.92 (theory 2/3 to 1) and the Nyquist ratio at Vds = 0 is
+    1.006. All 198 MOS models set `noia`; 2 (pfet_06v0) lack `ntnoi`.
+- **TR-1um mismatch and noise (gaps).** The reference manual's Table I-1-2
+  lists "Noise model" and "Matching" as not provided. The cards carry no
+  statistical terms (scanned) and no noise parameter, so BSIM3v3 defaults
+  apply: flicker is 0 and thermal noise is `2/3*4kT*(gm+gmbs+gds)`. Checked:
+  thermal gamma 0.94 of the 30/10 µm NMOS (theory 2/3 to 1) and that scan.
+  One **known deviation**: the Nyquist ratio at Vds = 0 is 0.667.
 - **IHP (published limits).** The specification gives MIN–MAX windows, and
   the `mos_ss` and `mos_ff` corners are built on their edges.
   - Each ss/ff corner lands on its limit within 10 mV or 5 %, for the
