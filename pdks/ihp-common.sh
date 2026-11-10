@@ -16,7 +16,8 @@ ihp_osdi() {
 }
 
 # ihp_glue PDK MODELS_DIR OSDI_DIR MODEL...: write ngspice/spiceinit (and a
-# .spiceinit copy) loading each .osdi by absolute path, and example.sp.
+# .spiceinit copy) loading each .osdi by absolute path, example.sp, and the
+# mismatch and noise examples.
 ihp_glue() {
   local pdk=$1 models=$2 osdi=$3 m; shift 3
   local ng="$PREFIX/$pdk/ngspice"
@@ -31,4 +32,21 @@ ihp_glue() {
   cp "$ng/spiceinit" "$ng/.spiceinit"
   render "$REPO/ngspice/ihp/example.sp.in" "$ng/example.sp" \
     "MODELS_DIR=$models" "NGSPICE=$NGSPICE" "PDK=$pdk"
+  # Mismatch (Monte Carlo) and noise decks for the LV (1.2 V) and HV (3.3 V)
+  # nMOS: mismatch.sp / noise.sp and mismatch_hv.sp / noise_hv.sp. The same
+  # templates serve both PDKs (their MOS models are the same PSP 103 cards).
+  local c sfx lt dev vdd vds vg vglo vghi
+  for c in LV HV; do
+    if [ "$c" = LV ]; then
+      sfx="" lt=lv dev=sg13_lv_nmos vdd=1.2 vds=0.05 vg=0.7 vglo=0.698 vghi=0.702
+    else
+      sfx="_hv" lt=hv dev=sg13_hv_nmos vdd=3.3 vds=0.1 vg=1.5 vglo=1.498 vghi=1.502
+    fi
+    render "$REPO/ngspice/ihp/mismatch.sp.in" "$ng/mismatch$sfx.sp" "PDK=$pdk" "CLASS=$c" \
+      "DECK=mismatch$sfx.sp" "MODELS_DIR=$models" "NGSPICE=$NGSPICE" "LIBTAG=$lt" "DEV=$dev" \
+      "VDD=$vdd" "VDS=$vds" W=4 L=4 M=1 N=100 MM=1 SEED=1
+    render "$REPO/ngspice/ihp/noise.sp.in" "$ng/noise$sfx.sp" "PDK=$pdk" "CLASS=$c" \
+      "DECK=noise$sfx.sp" "MODELS_DIR=$models" "NGSPICE=$NGSPICE" "LIBTAG=$lt" "DEV=$dev" \
+      W=10 L=10 "VG=$vg" "VD=$vdd" "VGLO=$vglo" "VGHI=$vghi"
+  done
 }
