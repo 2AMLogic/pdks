@@ -12,7 +12,7 @@ GUARD_DIRS+=("$TOOLS/bsimcmg107" "$PREFIX/asap5")
 setup_asap5() {
   build_bsimcmg
   local root="$PREFIX/asap5" pdk="$PREFIX/asap5/asap5" ng="$PREFIX/asap5/ngspice"
-  local id; id="asap5 $ASAP5_COMMIT $(files_id "$REPO/pdks/asap5/setup.sh" "$REPO/pdks/asap5/models.sha256" "$REPO/ngspice/asap5/adapted.sha256" "$REPO/ngspice/wire.inc" "$REPO/pdks/asap5/interconnect.csv" "$REPO"/ngspice/asap5/*.in)"
+  local id; id="asap5 $ASAP5_COMMIT $(files_id "$REPO/pdks/asap5/setup.sh" "$REPO/pdks/asap5/models.sha256" "$REPO/ngspice/asap5/adapted.sha256" "$REPO/ngspice/wire.inc" "$REPO/ngspice/bsimcmg107/noise.sp.in" "$REPO/pdks/asap5/interconnect.csv" "$REPO"/ngspice/asap5/*.in)"
   if stamp_ok "$root" "$id"; then
     log "ASAP5 r0p4: already set up"
     return
@@ -30,8 +30,9 @@ setup_asap5() {
       "MODELS_DIR=$ng/models" "OSDI=$BSIMCMG_OSDI" "NGSPICE=$NGSPICE"
   done
   mv "$ng/asap5.lib" "$ng/models/asap5.lib"
-  render "$REPO/ngspice/asap5/noise.sp.in" "$ng/noise.sp" \
+  render "$REPO/ngspice/bsimcmg107/noise.sp.in" "$ng/noise.sp" \
     "MODELS_DIR=$ng/models" "OSDI=$BSIMCMG_OSDI" "NGSPICE=$NGSPICE" \
+    "PDK=ASAP5" "LIB=asap5.lib" "L_CARD=nfin = 10, the cards' l = 14 nm" "L_INST=" \
     NFIN=10 VG=0.35 VD=0.7 VGLO=0.348 VGHI=0.352
 
   log "ASAP5 r0p4: installing interconnect table and wire include"

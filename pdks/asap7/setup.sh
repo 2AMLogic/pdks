@@ -12,7 +12,7 @@ GUARD_DIRS+=("$TOOLS/bsimcmg107" "$PREFIX/asap7")
 setup_asap7() {
   build_bsimcmg
   local root="$PREFIX/asap7" pdk="$PREFIX/asap7/asap7_pdk_r1p7" ng="$PREFIX/asap7/ngspice"
-  local id; id="asap7 $ASAP7_PDK_COMMIT $(files_id "$REPO/pdks/asap7/setup.sh" "$REPO/pdks/asap7/models.sha256" "$REPO/ngspice/asap7/adapted.sha256" "$REPO/ngspice/wire.inc" "$REPO/pdks/asap7/interconnect.csv" "$REPO"/ngspice/asap7/*.in)"
+  local id; id="asap7 $ASAP7_PDK_COMMIT $(files_id "$REPO/pdks/asap7/setup.sh" "$REPO/pdks/asap7/models.sha256" "$REPO/ngspice/asap7/adapted.sha256" "$REPO/ngspice/wire.inc" "$REPO/ngspice/bsimcmg107/noise.sp.in" "$REPO/pdks/asap7/interconnect.csv" "$REPO"/ngspice/asap7/*.in)"
   if stamp_ok "$root" "$id" && [ "$(git -C "$pdk" rev-parse HEAD 2>/dev/null)" = "$ASAP7_PDK_COMMIT" ]; then
     log "ASAP7 r1p7: already set up"
     return
@@ -30,8 +30,9 @@ setup_asap7() {
       "MODELS_DIR=$ng/models" "OSDI=$BSIMCMG_OSDI" "NGSPICE=$NGSPICE"
   done
   mv "$ng/asap7.lib" "$ng/models/asap7.lib"
-  render "$REPO/ngspice/asap7/noise.sp.in" "$ng/noise.sp" \
+  render "$REPO/ngspice/bsimcmg107/noise.sp.in" "$ng/noise.sp" \
     "MODELS_DIR=$ng/models" "OSDI=$BSIMCMG_OSDI" "NGSPICE=$NGSPICE" \
+    "PDK=ASAP7" "LIB=asap7.lib" "L_CARD=l = 20n, nfin = 10" "L_INST=l=20n " \
     NFIN=10 VG=0.3 VD=0.7 VGLO=0.298 VGHI=0.302
 
   log "ASAP7 r1p7: installing interconnect table and wire include"

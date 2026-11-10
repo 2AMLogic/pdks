@@ -86,11 +86,14 @@ IDSAT_OVER_IDLIN = {"nmos_rvt": 3.58, "pmos_rvt": 3.94}
 #     the source and drain resistances.
 CARD_MODELS = 40
 
-# Noise deck (ngspice/asap5/noise.sp.in): nmos_rvt, nfin = 10, Vds = 0.7 V,
+# Noise deck (ngspice/bsimcmg107/noise.sp.in, shared with ASAP7): nmos_rvt, nfin = 10, Vds = 0.7 V,
 # 25 C, drain through an ideal inductor so the drain current noise appears across
 # the device's own output impedance. Output-referred noise divided by the AC gain
 # gives the input-referred spectrum; the drain current noise is that times gm.
 NOISE_BIAS = dict(nfin=10, vg=0.35, vd=0.7)
+# Placeholders of the shared deck that differ per PDK (L_CARD is comment text;
+# the cards' own l is used, so the instance carries no l=).
+NOISE_DECK_VARS = dict(PDK="ASAP5", LIB="asap5.lib", L_CARD="nfin = 10, the cards' l = 14 nm", L_INST="")
 EF = 1.0                     # BSIM-CMG 107 default (the cards set none)
 FLICKER_SLOPE_TOL = 0.01     # the model term is exactly f^-ef; allowance is numerical
 # Nyquist (derived): a conductor in equilibrium has drain current noise

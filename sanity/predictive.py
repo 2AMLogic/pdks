@@ -33,14 +33,17 @@ def scan_cards(files):
     return models, noisy, stat
 
 
-def run_noise(ng, ngdir, work, name, deck_in, osdi, nfin, vg, vd):
-    """Render the deck template ngspice/<pdk>/noise.sp.in and run it."""
-    path = render(deck_in, work, name, NGSPICE=ng, MODELS_DIR=os.path.join(ngdir, "models"), OSDI=osdi,
+NOISE_DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "ngspice", "bsimcmg107", "noise.sp.in")
+
+
+def run_noise(ng, ngdir, work, name, deck_vars, osdi, nfin, vg, vd):
+    """Render the shared deck template ngspice/bsimcmg107/noise.sp.in and run it."""
+    path = render(NOISE_DECK, work, name, **deck_vars, NGSPICE=ng, MODELS_DIR=os.path.join(ngdir, "models"), OSDI=osdi,
                   NFIN=nfin, VG=vg, VD=vd, VGLO=round(vg - 0.002, 6), VGHI=round(vg + 0.002, 6))
     return results(ngspice(ng, path, cwd=work))
 
 
-def checks(rep, data, ref, card_files, ngdir, deck_in, osdi, ng, work):
+def checks(rep, data, ref, card_files, ngdir, osdi, ng, work):
     print("\nMismatch and noise (predictive PDK: no measured statistics; reference.py)\n")
     models, noisy, stat = scan_cards(card_files)
     data["card_scan"] = dict(files=len(card_files), models=models, with_noise_params=noisy, statistical=stat)
@@ -51,7 +54,7 @@ def checks(rep, data, ref, card_files, ngdir, deck_in, osdi, ng, work):
     rep.check("cards: model count", "derived", models, ref.CARD_MODELS, ref.CARD_MODELS, "", 1)
 
     b = ref.NOISE_BIAS
-    r = run_noise(ng, ngdir, work, "noise", deck_in, osdi, b["nfin"], b["vg"], b["vd"])
+    r = run_noise(ng, ngdir, work, "noise", ref.NOISE_DECK_VARS, osdi, b["nfin"], b["vg"], b["vd"])
     data["noise"] = r
     lo, hi = ref.NYQUIST
     rep.check("Nyquist S_id/(4kT*gds) at Vds=0", "derived", r["nyquist_ratio"], lo, hi, "", 1,
