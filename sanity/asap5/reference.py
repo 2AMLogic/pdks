@@ -60,3 +60,58 @@ KNOWN_DEVIATIONS = {
 # [MEJ22] 7.1: "NMOS Idsat is 3.58x the Idlin and 3.94x for the PMOS" (RVT,
 # TT). The Idlin bias is not stated; printed at |Vds| = 50 mV for information.
 IDSAT_OVER_IDLIN = {"nmos_rvt": 3.58, "pmos_rvt": 3.94}
+
+# ---------------------------------------------------------------------------
+# Interconnect (pdks/asap5/interconnect.csv, installed as
+# <prefix>/asap5/ngspice/interconnect.csv)
+#
+# [MEJ22] Table 5 ("Width, pitch, and photolithography assumptions for ASAP5
+# layers", p. 4) gives width and pitch for M1-M12 and the via widths for
+# V1-V12 (SHA-256 of the pinned paper, asap5PDK_r0p4/docs/asap5_pdk_mej_paper.pdf:
+# f5f635a460ee05de96a333944a544661dd7051767748df871e9f2b232271532a). Section
+# 5.1: "The BEOL metals and vias have a 2:1 AR in ASAP5", i.e. 26 nm trench
+# height for the 13 nm layers; thickness (metal) and height (via) are 2 x width,
+# a derived value. V1-V3 list "21/13" under Width/drawn; the table's text
+# says V1-V3 are patterned at a 13 nm width, which is what is used here.
+# Table 5's via "pitch" column is footnoted and not used.
+# NOT published as numbers: sheet resistance (the paper plots line resistivity
+# against trench CD in Fig. 8 for Co and Cu, with no table), its temperature
+# coefficient, via resistance, and any capacitance. The Calibre decks are not
+# released upstream ("not released" in the paper) and are not fetched. They
+# are explicit gaps in the table, and are not estimated.
+#
+# Metal layer: (width, pitch) in nm, [MEJ22] Table 5.
+METALS = {
+    **{"M%d" % i: (13, 26) for i in (1, 2, 3)},
+    **{"M%d" % i: (18, 36) for i in (4, 5)},
+    **{"M%d" % i: (24, 48) for i in (6, 7, 8, 9)},
+    **{"M%d" % i: (40, 80) for i in (10, 11, 12)},
+}
+# Via layer: width in nm, [MEJ22] Table 5.
+VIAS = {
+    **{"V%d" % i: 13 for i in (1, 2, 3)},
+    **{"V%d" % i: 18 for i in (4, 5)},
+    **{"V%d" % i: 24 for i in (6, 7, 8, 9)},
+    **{"V%d" % i: 40 for i in (10, 11, 12)},
+}
+ASPECT = 2.0  # [MEJ22] section 5.1
+GAP_QUANTITIES = ("rsheet", "rsheet_tcr", "c_iso_per_um", "c_pitch_per_um")  # per metal
+GAP_VIA_QUANTITIES = ("r_via",)
+
+# Wire-ladder check (derived: it tests our include against the closed form,
+# not a published number). The deck drives an ideal step through RS into a
+# wire of N pi segments loaded by CL. The simulated value is the first
+# moment of the step response, integral of (vin - vout) dt, and the closed
+# form is the Elmore delay
+#     RS (C + CL) + R (C / 2 + CL),   R = RSH L / W,   C = CPL L.
+# For a pi ladder this holds for every N (the distributed line's R C / 2).
+# RSH and CPL below are TEST INPUTS chosen so the wire dominates; they are
+# not ASAP5 values (ASAP5 publishes none, see above).
+ELMORE = dict(l="20u", w="13n", rsh=50.0, cpl="0.2n", rs="1k", cl="1f", tstop="10n")
+ELMORE_L, ELMORE_W, ELMORE_RSH, ELMORE_CPL = 20e-6, 13e-9, 50.0, 0.2e-9
+ELMORE_RS, ELMORE_CL = 1e3, 1e-15
+ELMORE_SEGMENTS = (1, 4, 64)
+# Tolerance: the integral is trapezoidal on a 2 ps step over 10 ns, about 58
+# time constants, so truncation is negligible; 1e-3 leaves margin for a
+# different ngspice build.
+ELMORE_TOL = 1e-3
