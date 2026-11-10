@@ -12,8 +12,8 @@ results are checked against each foundry's or author's published values.
 | `asap5` | ASAP5 r0p4: 5 nm predictive gate-all-around nanowire FET (ASU) | BSIM-CMG 107, compiled to OSDI | 0.3 MB | 111/111 against the PDK paper (47 device, 64 interconnect), plus 1 known deviation | not yet (#37) | not yet (#37) |
 | `sky130` | SkyWater SKY130 (`sky130A`; `sky130B`'s ngspice libraries are identical in this release) | BSIM4, built in | 21 MB | 61/61 against SkyWater's e-test windows, device tables (continuous models) and corner tables, and the derived mismatch and noise checks below, plus 8 known deviations | `mc_mm_switch` via the `*_mm` corners; `mismatch.sp` example; Pelgrom area scaling checked (derived; SkyWater publishes no coefficient) | `noise.sp` example; flicker exponent and thermal noise checked (no published level: gap) |
 | `gf180mcu` | GlobalFoundries GF180MCU | BSIM4, built in | 1.4 MB | 54/54 against GF's slow/typical/fast EP targets and spec limits, incl. passives and their temperature coefficients, plus 1 known deviation | not yet (#37) | not yet (#37) |
-| `ihp-sg13g2` | IHP SG13G2 SiGe BiCMOS | PSP 103 (OSDI), VBIC HBT | 3 MB | 83/83 against IHP's process spec (1.2 V and 3.3 V MOS, corners, resistors and MIM with their temperature coefficients, the HBT) and IHP's measured silicon over temperature, plus 7 known deviations | not yet (#37) | not yet (#37) |
-| `ihp-sg13cmos5l` | IHP SG13CMOS5L CMOS | PSP 103 (OSDI) | 5 MB | 59/59 against IHP's process spec: 1.2 V and 3.3 V MOS, corners, resistors and their temperature coefficients, plus 1 known deviation | not yet (#37) | not yet (#37) |
+| `ihp-sg13g2` | IHP SG13G2 SiGe BiCMOS | PSP 103 (OSDI), VBIC HBT | 3 MB | 162/162 against IHP's process spec and layout rules (1.2 V and 3.3 V MOS, corners, resistors and MIM with their temperature coefficients, the HBT, 79 interconnect) and IHP's measured silicon over temperature, plus 7 known deviations | not yet (#37) | not yet (#37) |
+| `ihp-sg13cmos5l` | IHP SG13CMOS5L CMOS | PSP 103 (OSDI) | 5 MB | 115/115 against IHP's process spec and layout rules: 1.2 V and 3.3 V MOS, corners, resistors and their temperature coefficients, 56 interconnect, plus 1 known deviation | not yet (#37) | not yet (#37) |
 | `tr1um` | Tokai Rika TR-1um 1 µm CMOS (OpenSUSI) | BSIM3v3, built in | 30 KB | 16/16 against Tokai Rika's published I-V curves (digitised), plus 1 known deviation | not yet (#37) | not yet (#37) |
 
 ## Quick start
@@ -133,6 +133,14 @@ definition used is documented next to the reference values.
   extraction definition and is checked within its MIN–MAX window.
   SG13G2 adds the npn13G2 HBT: β 722 (spec 650 typ), Ic 3.69 µA (3.8),
   fT 353 GHz (≥ 300).
+  - Interconnect: the layer table (`interconnect.csv`) is checked against
+    the process specification and layout rules (width, spacing, thickness,
+    sheet resistance and its temperature coefficient, area capacitance, via
+    width and resistance; pitch and via height derived), Rs × t is bounded
+    below by bulk aluminium, and the shared `wire.inc` ladder against the
+    closed-form Elmore delay. Capacitance per length is not published
+    (area capacitance only), so it is an explicit gap, not an estimate, as
+    are the two quantities SG13CMOS5L's spec prints as `tbd`.
 - **TR-1um.** Drain current of the 5 V NMOS and PMOS at 17 bias points,
   against the simulated curves in Tokai Rika's reference manual (Table
   I-2-7).

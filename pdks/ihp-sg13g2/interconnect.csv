@@ -1,0 +1,82 @@
+layer,quantity,value,unit,status,source
+M1,width_min,160,nm,published,[G2LR] M1.a (min. width)
+M1,spacing_min,180,nm,published,[G2LR] M1.b (min. space or notch)
+M1,pitch,340,nm,derived,width + spacing (M1.a and M1.b)
+M1,thickness,420,nm,published,[G2] 2.16 (p. 17) TMET1 target
+M1,rsheet,0.11,ohm/sq,published,[G2] 2.13 (p. 14) RSMET1 target (min-max in spec)
+M1,rsheet_tcr,0.0034,1/K,published,[G2] 2.13 (p. 14) TC1RSMET1 target
+M1,c_area_up,68,aF/um2,published,[G2] 2.17 (p. 18) CAMET1/2 target (area capacitance to the next layer up)
+M1,c_area_sub,37,aF/um2,published,[G2] 2.17 (p. 18) CAMET1SUB target
+M1,c_iso_per_um,gap,aF/um,gap,not published in [G2] or [G2LR] (only area capacitances are; no fringe or lateral component)
+M1,c_pitch_per_um,gap,aF/um,gap,not published in [G2] or [G2LR] (only area capacitances are; no fringe or lateral component)
+M2,width_min,200,nm,published,[G2LR] Mn.a (min. width)
+M2,spacing_min,210,nm,published,[G2LR] Mn.b (min. space or notch)
+M2,pitch,410,nm,derived,width + spacing (Mn.a and Mn.b)
+M2,thickness,490,nm,published,[G2] 2.16 (p. 17) TMET2 target
+M2,rsheet,0.088,ohm/sq,published,[G2] 2.13 (p. 14) RSMET2 target (min-max in spec)
+M2,rsheet_tcr,0.0035,1/K,published,[G2] 2.13 (p. 14) TC1RSMET2 target
+M2,c_area_up,68,aF/um2,published,[G2] 2.17 (p. 18) CAMET2/3 target (area capacitance to the next layer up)
+M2,c_iso_per_um,gap,aF/um,gap,not published in [G2] or [G2LR] (only area capacitances are; no fringe or lateral component)
+M2,c_pitch_per_um,gap,aF/um,gap,not published in [G2] or [G2LR] (only area capacitances are; no fringe or lateral component)
+M3,width_min,200,nm,published,[G2LR] Mn.a (min. width)
+M3,spacing_min,210,nm,published,[G2LR] Mn.b (min. space or notch)
+M3,pitch,410,nm,derived,width + spacing (Mn.a and Mn.b)
+M3,thickness,490,nm,published,[G2] 2.16 (p. 17) TMET3 target
+M3,rsheet,0.088,ohm/sq,published,[G2] 2.13 (p. 14) RSMET3 target (min-max in spec)
+M3,rsheet_tcr,0.0035,1/K,published,[G2] 2.13 (p. 14) TC1RSMET3 target
+M3,c_area_up,68,aF/um2,published,[G2] 2.17 (p. 18) CAMET3/4 target (area capacitance to the next layer up)
+M3,c_iso_per_um,gap,aF/um,gap,not published in [G2] or [G2LR] (only area capacitances are; no fringe or lateral component)
+M3,c_pitch_per_um,gap,aF/um,gap,not published in [G2] or [G2LR] (only area capacitances are; no fringe or lateral component)
+M4,width_min,200,nm,published,[G2LR] Mn.a (min. width)
+M4,spacing_min,210,nm,published,[G2LR] Mn.b (min. space or notch)
+M4,pitch,410,nm,derived,width + spacing (Mn.a and Mn.b)
+M4,thickness,490,nm,published,[G2] 2.16 (p. 17) TMET4 target
+M4,rsheet,0.088,ohm/sq,published,[G2] 2.13 (p. 14) RSMET4 target (min-max in spec)
+M4,rsheet_tcr,0.0035,1/K,published,[G2] 2.13 (p. 14) TC1RSMET4 target
+M4,c_area_up,68,aF/um2,published,[G2] 2.17 (p. 18) CAMET4/5 target (area capacitance to the next layer up)
+M4,c_iso_per_um,gap,aF/um,gap,not published in [G2] or [G2LR] (only area capacitances are; no fringe or lateral component)
+M4,c_pitch_per_um,gap,aF/um,gap,not published in [G2] or [G2LR] (only area capacitances are; no fringe or lateral component)
+M5,width_min,200,nm,published,[G2LR] Mn.a (min. width)
+M5,spacing_min,210,nm,published,[G2LR] Mn.b (min. space or notch)
+M5,pitch,410,nm,derived,width + spacing (Mn.a and Mn.b)
+M5,thickness,490,nm,published,[G2] 2.16 (p. 17) TMET5 target
+M5,rsheet,0.088,ohm/sq,published,[G2] 2.13 (p. 14) RSMET5 target (min-max in spec)
+M5,rsheet_tcr,0.0035,1/K,published,[G2] 2.13 (p. 14) TC1RSMET5 target
+M5,c_area_up,42.5,aF/um2,published,[G2] 2.17 (p. 18) CATOPMET1 target (area capacitance to the next layer up)
+M5,c_iso_per_um,gap,aF/um,gap,not published in [G2] or [G2LR] (only area capacitances are; no fringe or lateral component)
+M5,c_pitch_per_um,gap,aF/um,gap,not published in [G2] or [G2LR] (only area capacitances are; no fringe or lateral component)
+TM1,width_min,1640,nm,published,[G2LR] TM1.a (min. width)
+TM1,spacing_min,1640,nm,published,[G2LR] TM1.b (min. space or notch)
+TM1,pitch,3280,nm,derived,width + spacing (TM1.a and TM1.b)
+TM1,thickness,2000,nm,published,[G2] 2.16 (p. 17) TTM1 target
+TM1,rsheet,0.018,ohm/sq,published,[G2] 2.13 (p. 14) RSTM1 target (min-max in spec)
+TM1,rsheet_tcr,0.0037,1/K,published,[G2] 2.13 (p. 14) TC1RSTM1 target
+TM1,c_area_up,13,aF/um2,published,[G2] 2.17 (p. 18) CATOPMET2 target (area capacitance to the next layer up)
+TM1,c_iso_per_um,gap,aF/um,gap,not published in [G2] or [G2LR] (only area capacitances are; no fringe or lateral component)
+TM1,c_pitch_per_um,gap,aF/um,gap,not published in [G2] or [G2LR] (only area capacitances are; no fringe or lateral component)
+TM2,width_min,2000,nm,published,[G2LR] TM2.a (min. width)
+TM2,spacing_min,2000,nm,published,[G2LR] TM2.b (min. space or notch)
+TM2,pitch,4000,nm,derived,width + spacing (TM2.a and TM2.b)
+TM2,thickness,3000,nm,published,[G2] 2.16 (p. 17) TTM2 target
+TM2,rsheet,0.011,ohm/sq,published,[G2] 2.13 (p. 14) RSTM2 target (min-max in spec)
+TM2,rsheet_tcr,0.0038,1/K,published,[G2] 2.13 (p. 14) TC1RSTM2 target
+TM2,c_iso_per_um,gap,aF/um,gap,not published in [G2] or [G2LR] (only area capacitances are; no fringe or lateral component)
+TM2,c_pitch_per_um,gap,aF/um,gap,not published in [G2] or [G2LR] (only area capacitances are; no fringe or lateral component)
+V1,width_min,190,nm,published,[G2LR] V1.a (min. and max. width)
+V1,height,540,nm,derived,inter-layer dielectric thickness the via spans: [G2] 2.16 (p. 17) TILD1
+V1,r_via,9,ohm,published,[G2] 2.14 (p. 15) RVIA1 target (per via; contact chain)
+V2,width_min,190,nm,published,[G2LR] Vn.a (min. and max. width)
+V2,height,540,nm,derived,inter-layer dielectric thickness the via spans: [G2] 2.16 (p. 17) TILD2
+V2,r_via,9,ohm,published,[G2] 2.14 (p. 15) RVIA2 target (per via; contact chain)
+V3,width_min,190,nm,published,[G2LR] Vn.a (min. and max. width)
+V3,height,540,nm,derived,inter-layer dielectric thickness the via spans: [G2] 2.16 (p. 17) TILD3
+V3,r_via,9,ohm,published,[G2] 2.14 (p. 15) RVIA3 target (per via; contact chain)
+V4,width_min,190,nm,published,[G2LR] Vn.a (min. and max. width)
+V4,height,540,nm,derived,inter-layer dielectric thickness the via spans: [G2] 2.16 (p. 17) TILD4
+V4,r_via,9,ohm,published,[G2] 2.14 (p. 15) RVIA4 target (per via; contact chain)
+TV1,width_min,420,nm,published,[G2LR] TV1.a (min. and max. width)
+TV1,height,850,nm,derived,inter-layer dielectric thickness the via spans: [G2] 2.16 (p. 17) TILDTM1
+TV1,r_via,2.2,ohm,published,[G2] 2.14 (p. 15) RTV1 target (per via; contact chain)
+TV2,width_min,900,nm,published,[G2LR] TV2.a (min. and max. width)
+TV2,height,2800,nm,derived,inter-layer dielectric thickness the via spans: [G2] 2.16 (p. 17) TILTM2
+TV2,r_via,1.1,ohm,published,[G2] 2.14 (p. 15) RTV2 target (per via; contact chain)
