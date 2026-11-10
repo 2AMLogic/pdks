@@ -108,3 +108,52 @@ VTC_RAIL_TOL = 0.010
 #    gives (1 + p) / (4 + p) = 0.4; we accept 0.25 to 0.6.
 RO_STAGES = 11
 RO_FO1_OVER_FO4 = (0.25, 0.6)
+
+# ---------------------------------------------------------------------------
+# Interconnect (pdks/asap7/interconnect.csv, installed as
+# <prefix>/asap7/ngspice/interconnect.csv)
+#
+# [MEJ16] Table 1 ("Key layer lithography assumptions, widths and pitches")
+# is the only per-layer geometry the PDK's documents publish: width and
+# pitch for M1-M9 and the via layers. Section 4.4 states "Metal and via
+# aspect ratios follow [13] at 2:1", which gives thickness (metal) and
+# height (via) as 2 x width; that is a derived value. The DRM
+# (docs/asap7_drm.pdf at the pinned commit) lists the layers and their DRC
+# rules but no thickness, resistance or capacitance. Sheet resistance,
+# its temperature coefficient, via resistance and capacitance per length are
+# NOT published in the pinned repository: [MEJ16] section 6 says extraction
+# models exist (Cu/Ru, with the size-effect resistivity of Pyzyna et al.) but
+# prints no numbers, and the Calibre RCX deck is distributed separately by
+# ASU and is not fetched. They are explicit gaps in the table, so there is
+# nothing to check them against, and they are not estimated.
+#
+# Metal layer: (width, pitch) in nm, [MEJ16] Table 1 (drawn width = width).
+METALS = {
+    "M1": (18, 36), "M2": (18, 36), "M3": (18, 36),
+    "M4": (24, 48), "M5": (24, 48),
+    "M6": (32, 64), "M7": (32, 64),
+    "M8": (40, 80), "M9": (40, 80),
+}
+# Via layer: width in nm, [MEJ16] Table 1 (VIA0-VIA3, VIA4-5, VIA6-7, VIA8).
+VIAS = {"V1": 18, "V2": 18, "V3": 18, "V4": 24, "V5": 24, "V6": 32, "V7": 32, "V8": 40}
+ASPECT = 2.0  # [MEJ16] section 4.4
+GAP_QUANTITIES = ("rsheet", "rsheet_tcr", "c_iso_per_um", "c_pitch_per_um")  # per metal
+GAP_VIA_QUANTITIES = ("r_via",)
+
+# Wire-ladder check (derived: it tests our include against the closed form,
+# not a published number). The deck drives an ideal step through RS into a
+# wire of N pi segments loaded by CL. The simulated value is the first
+# moment of the step response, integral of (vin - vout) dt, and the closed
+# form is the Elmore delay
+#     RS (C + CL) + R (C / 2 + CL),   R = RSH L / W,   C = CPL L.
+# For a pi ladder this holds for every N (the distributed line's R C / 2).
+# RSH and CPL below are TEST INPUTS chosen so the wire dominates; they are
+# not ASAP7 values (ASAP7 publishes none, see above).
+ELMORE = dict(l="20u", w="18n", rsh=50.0, cpl="0.2n", rs="1k", cl="1f", tstop="10n")
+ELMORE_L, ELMORE_W, ELMORE_RSH, ELMORE_CPL = 20e-6, 18e-9, 50.0, 0.2e-9
+ELMORE_RS, ELMORE_CL = 1e3, 1e-15
+ELMORE_SEGMENTS = (1, 4, 64)
+# Tolerance: the integral is trapezoidal on a 2 ps step (measured error
+# ~1e-5) over 10 ns, about 58 time constants, so truncation is negligible;
+# 1e-3 leaves margin for a different ngspice build.
+ELMORE_TOL = 1e-3
