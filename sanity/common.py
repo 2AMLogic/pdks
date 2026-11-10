@@ -176,6 +176,19 @@ def mos_sweeps(ng, work, name, header, instance, pol, vdd, vlin, vaux, voff,
 WIRE_DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks", "wire_elmore.sp")
 
 
+def require_wire_w(ng, wire_inc, work):
+    """wire.inc gives `w` no default: a ladder instance without it must stop
+    ngspice. Aborts the run if one simulates instead. Not a Report row, so the
+    per-PDK check counts are unchanged."""
+    deck = os.path.join(work, "wire_no_w.sp")
+    with open(deck, "w") as f:
+        f.write(".include %s\nvin in 0 1\nX1 in 0 wire l=100u rsh=1 cpl=1e-10\n.op\n.end\n" % wire_inc)
+    p = subprocess.run([ng, "-b", "-n", deck], capture_output=True, text=True, cwd=work)
+    log = p.stdout + p.stderr
+    if p.returncode == 0 and not re.search(r"^\s*Error|w_not_given", log, re.M):
+        raise SystemExit("wire.inc accepted a ladder with no w; it must be a required parameter")
+
+
 def elmore(ng, wire_inc, work, nseg, e, rsh, L, W, cpl, rs, cl):
     """Simulated and closed-form Elmore delay of the wire.inc ladder with nseg
     segments (sanity/decks/wire_elmore.sp). `e` holds the ngspice-notation

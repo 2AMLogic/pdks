@@ -69,7 +69,7 @@ Bootstrap installs, next to the models in `<prefix>/sky130/ngspice/`:
 - `wire.inc`: `wire`, `wire1` … `wire64`, the same pi ladder and interface
   as ASAP7: `X1 a b wire16 l=100u w={sky130_met1_w} rsh={sky130_met1_rsh} cpl=<F/m>`.
   `cpl` has no default (it is a gap), so a deck cannot pick up a made-up
-  wire; omitting `rsh` or `cpl` stops ngspice with an unknown-parameter error.
+  wire; omitting `w`, `rsh` or `cpl` stops ngspice with an unknown-parameter error.
 
 Nothing here adapts upstream files, so `ngspice/ADAPTATIONS.md` has no
 entry; the table is transcribed from the documentation and carries no

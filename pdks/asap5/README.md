@@ -31,7 +31,7 @@ Bootstrap installs, next to the models in `<prefix>/asap5/ngspice/`:
   `.param asap5_<layer>_<w|s|t|p|h>` (m1_w, m1_s, v1_w, ...).
 - `wire.inc`: `wire`, `wire1` ... `wire64`, an N-segment pi ladder:
   `X1 a b wire16 l=100u w={asap5_m2_w} rsh=<ohm/sq> cpl=<F/m>`. R = rsh*l/w
-  and C = cpl*l. `rsh` and `cpl` have no default, so a deck cannot pick up
+  and C = cpl*l. `w`, `rsh` and `cpl` have no default, so a deck cannot pick up
   a made-up wire by accident. The far-end Elmore delay of an open wire is
   R*C/2 for any segment count.
 

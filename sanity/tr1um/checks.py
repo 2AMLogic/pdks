@@ -12,7 +12,7 @@ import re
 import tempfile
 
 import reference as ref
-from common import Report, at, elmore, ngspice, read_xy, render, results
+from common import Report, at, elmore, ngspice, read_xy, render, require_wire_w, results
 
 DECKS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks")
 DECK = os.path.join(DECKS, "iv_points.sp")
@@ -96,6 +96,7 @@ def interconnect(rep, ngdir, drfile, ng, work, data):
               float(set(gaps) == expect), 1, 1, "", 1)
     data["interconnect_gaps"] = sorted("%s.%s" % k for k in gaps)
     print()
+    require_wire_w(ng, wire_inc, work)
     for n in ref.ELMORE_SEGMENTS:
         sim, closed = elmore(ng, wire_inc, work, n, ref.ELMORE, ref.ELMORE_RSH, ref.ELMORE_L, ref.ELMORE_W, ref.ELMORE_CPL,
                            ref.ELMORE_RS, ref.ELMORE_CL)

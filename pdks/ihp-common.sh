@@ -52,7 +52,7 @@ ihp_glue() {
 }
 
 # ihp_interconnect PDK: install pdks/PDK/interconnect.csv and the shared
-# ngspice/ihp/wire.inc into <prefix>/PDK/ngspice/, and generate
+# ngspice/wire.inc into <prefix>/PDK/ngspice/, and generate
 # interconnect.inc from the table. Geometry is .param <pdk>_<layer>_<w|s|t|p|h>
 # in metres and the sheet resistance <pdk>_<layer>_rsh in ohm/sq, with the pdk
 # name's dashes as underscores. Gaps (no published value) are left out, so
@@ -60,7 +60,7 @@ ihp_glue() {
 ihp_interconnect() {
   local pdk=$1 ng="$PREFIX/$1/ngspice"
   mkdir -p "$ng"
-  cp "$REPO/pdks/$pdk/interconnect.csv" "$REPO/ngspice/ihp/wire.inc" "$ng/"
+  cp "$REPO/pdks/$pdk/interconnect.csv" "$REPO/ngspice/wire.inc" "$ng/"
   awk -F, -v p="${pdk//-/_}" 'NR > 1 && $5 != "gap" && ($2 in k) {
     printf ".param %s_%s_%s=%s%s\n", p, tolower($1), k[$2], $3, u[$2]
   }

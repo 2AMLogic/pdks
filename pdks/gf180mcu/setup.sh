@@ -7,7 +7,7 @@ GUARD_DIRS+=("$PREFIX/gf180mcu")
 
 setup_gf180mcu() {
   local root="$PREFIX/gf180mcu" ng="$PREFIX/gf180mcu/ngspice"
-  local id; id="gf180mcu $GF180_FDPR_COMMIT $(files_id "$REPO/pdks/gf180mcu/setup.sh" "$REPO/pdks/gf180mcu/files.sha256" "$REPO/ngspice/gf180mcu/wire.inc" "$REPO/pdks/gf180mcu/interconnect.csv" "$REPO"/ngspice/gf180mcu/*.in)"
+  local id; id="gf180mcu $GF180_FDPR_COMMIT $(files_id "$REPO/pdks/gf180mcu/setup.sh" "$REPO/pdks/gf180mcu/files.sha256" "$REPO/ngspice/wire.inc" "$REPO/pdks/gf180mcu/interconnect.csv" "$REPO"/ngspice/gf180mcu/*.in)"
   if stamp_ok "$root" "$id"; then
     log "GF180MCU: already set up"
     return
@@ -23,7 +23,7 @@ setup_gf180mcu() {
   render "$REPO/ngspice/gf180mcu/example.sp.in" "$ng/example.sp" \
     "MODELS_DIR=$root/gf180mcu_fd_pr/models/ngspice" "NGSPICE=$NGSPICE"
   log "GF180MCU: installing interconnect table and wire include"
-  cp "$REPO/pdks/gf180mcu/interconnect.csv" "$REPO/ngspice/gf180mcu/wire.inc" "$ng/"
+  cp "$REPO/pdks/gf180mcu/interconnect.csv" "$REPO/ngspice/wire.inc" "$ng/"
   # Geometry as .param gf180mcu_<layer>_<w|s|p> in metres and the sheet
   # resistance as gf180mcu_<layer>_rsh in ohm/sq. Gaps (no published value) are
   # left out, so using one is an unknown-parameter error.

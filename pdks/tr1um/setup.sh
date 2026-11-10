@@ -7,7 +7,7 @@ GUARD_DIRS+=("$PREFIX/tr1um")
 
 setup_tr1um() {
   local root="$PREFIX/tr1um" ng="$PREFIX/tr1um/ngspice"
-  local id; id="tr1um $TR1UM_COMMIT $(files_id "$REPO/pdks/tr1um/setup.sh" "$REPO/pdks/tr1um/files.sha256" "$REPO/ngspice/tr1um/wire.inc" "$REPO/pdks/tr1um/interconnect.csv" "$REPO"/ngspice/tr1um/*.in)"
+  local id; id="tr1um $TR1UM_COMMIT $(files_id "$REPO/pdks/tr1um/setup.sh" "$REPO/pdks/tr1um/files.sha256" "$REPO/ngspice/wire.inc" "$REPO/pdks/tr1um/interconnect.csv" "$REPO"/ngspice/tr1um/*.in)"
   if stamp_ok "$root" "$id"; then
     log "TR-1um: already set up"
     return
@@ -23,7 +23,7 @@ setup_tr1um() {
   render "$REPO/ngspice/tr1um/example.sp.in" "$ng/example.sp" \
     "MODELS_DIR=$root/TR-1um/libs.tech/spice/models" "NGSPICE=$NGSPICE"
   log "TR-1um: installing interconnect table and wire include"
-  cp "$REPO/pdks/tr1um/interconnect.csv" "$REPO/ngspice/tr1um/wire.inc" "$ng/"
+  cp "$REPO/pdks/tr1um/interconnect.csv" "$REPO/ngspice/wire.inc" "$ng/"
   # Geometry as .param tr1um_<layer>_<w|s|t|p|h>, in metres (the table is in
   # um). Gaps (no published value) are left out, so using one is an
   # unknown-parameter error.
