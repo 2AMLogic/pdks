@@ -12,7 +12,7 @@ import re
 import tempfile
 
 import reference as ref
-from common import Report, at, ngspice, read_xy, render, results
+from common import Report, at, elmore, ngspice, read_xy, render, results
 
 DECKS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks")
 DECK = os.path.join(DECKS, "iv_points.sp")
@@ -66,17 +66,6 @@ def mismatch_and_noise(rep, data, models, ng, work):
         print("  - " + g)
 
 
-def elmore(ng, wire_inc, work, nseg):
-    e = ref.ELMORE
-    r = results(ngspice(ng, render(os.path.join(DECKS, "wire_elmore.sp"), work, "wire_elmore_%d" % nseg,
-                                   WIRE_INC=wire_inc, N=nseg, L=e["l"], W=e["w"], RSH=e["rsh"], CPL=e["cpl"],
-                                   RS=e["rs"], CL=e["cl"], TSTOP=e["tstop"])))
-    R = ref.ELMORE_RSH * ref.ELMORE_L / ref.ELMORE_W
-    C = ref.ELMORE_CPL * ref.ELMORE_L
-    closed = ref.ELMORE_RS * (C + ref.ELMORE_CL) + R * (C / 2 + ref.ELMORE_CL)
-    return r["elmore"], closed
-
-
 def interconnect(rep, ngdir, drfile, ng, work, data):
     table = os.path.join(ngdir, "interconnect.csv")
     wire_inc = os.path.join(ngdir, "wire.inc")
@@ -108,7 +97,8 @@ def interconnect(rep, ngdir, drfile, ng, work, data):
     data["interconnect_gaps"] = sorted("%s.%s" % k for k in gaps)
     print()
     for n in ref.ELMORE_SEGMENTS:
-        sim, closed = elmore(ng, wire_inc, work, n)
+        sim, closed = elmore(ng, wire_inc, work, n, ref.ELMORE, ref.ELMORE_RSH, ref.ELMORE_L, ref.ELMORE_W, ref.ELMORE_CPL,
+                           ref.ELMORE_RS, ref.ELMORE_CL)
         data["wire_elmore_%d" % n] = dict(simulated=sim, closed_form=closed)
         rep.check("wire ladder Elmore delay, %d segment%s" % (n, "" if n == 1 else "s"), "derived", sim,
                   closed * (1 - ref.ELMORE_TOL), closed * (1 + ref.ELMORE_TOL), "ps", 1e12,
