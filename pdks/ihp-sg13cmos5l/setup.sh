@@ -12,7 +12,7 @@ GUARD_DIRS+=("$PREFIX/ihp-sg13cmos5l")
 setup_ihp_sg13cmos5l() {
   local root="$PREFIX/ihp-sg13cmos5l" base="$PREFIX/ihp-sg13cmos5l/IHP-Open-PDK"
   local pdk="$base/ihp-sg13cmos5l"
-  local id; id="ihp-sg13cmos5l $IHP_CMOS5L_COMMIT openvaf-r $OPENVAF_VERSION target $OSDI_TARGET $(files_id "$REPO/pdks/ihp-sg13cmos5l/setup.sh" "$REPO/pdks/ihp-common.sh" "$REPO"/ngspice/ihp/*.in)"
+  local id; id="ihp-sg13cmos5l $IHP_CMOS5L_COMMIT openvaf-r $OPENVAF_VERSION target $OSDI_TARGET $(files_id "$REPO/pdks/ihp-sg13cmos5l/setup.sh" "$REPO/pdks/ihp-common.sh" "$REPO/pdks/ihp-sg13cmos5l/interconnect.csv" "$REPO"/ngspice/ihp/*.in "$REPO/ngspice/ihp/wire.inc")"
   if stamp_ok "$root" "$id"; then
     log "IHP SG13CMOS5L: already set up"
     return
@@ -29,5 +29,7 @@ setup_ihp_sg13cmos5l() {
     psp103 psp103_nqs r3_cmc mosvar cap_cmomi cap_cmomf
   ihp_glue ihp-sg13cmos5l "$pdk/libs.tech/ngspice/models" "$root/ngspice/osdi" \
     psp103 psp103_nqs r3_cmc mosvar cap_cmomi cap_cmomf
+  log "IHP SG13CMOS5L: installing interconnect table and wire include"
+  ihp_interconnect ihp-sg13cmos5l
   stamp "$root" "$id"
 }
