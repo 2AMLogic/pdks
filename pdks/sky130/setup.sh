@@ -28,6 +28,10 @@ setup_sky130() {
   for t in spiceinit example.sp; do
     render "$REPO/ngspice/sky130/$t.in" "$ng/$t" "PDK_DIR=$root/sky130A" "NGSPICE=$NGSPICE"
   done
+  render "$REPO/ngspice/sky130/mismatch.sp.in" "$ng/mismatch.sp" "PDK_DIR=$root/sky130A" "NGSPICE=$NGSPICE" \
+    CORNER=tt_mm W=1 L=0.5 M=1 N=100 SEED=1
+  render "$REPO/ngspice/sky130/noise.sp.in" "$ng/noise.sp" "PDK_DIR=$root/sky130A" "NGSPICE=$NGSPICE" \
+    W=7 L=8 VG=1.2 VD=0.9 VGLO=1.198 VGHI=1.202
   cp "$ng/spiceinit" "$ng/.spiceinit"
   stamp "$root" "$id"
 }

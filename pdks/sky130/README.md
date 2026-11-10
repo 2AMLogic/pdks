@@ -12,3 +12,18 @@
 `f6eeac7` is the build the 2AM fleet uses. It replaces `c6d73a35`, which was
 installed with volare (its release feed stopped in Aug 2025). Newer builds are
 published at fossi-foundation/ciel-releases.
+
+## Mismatch and noise
+
+SkyWater's documentation at the pinned commit publishes no mismatch
+coefficient and no noise level, so the checks (`sanity/sky130/reference.py`)
+are derived from the model files, and the gaps are listed there.
+
+| | |
+|---|---|
+| Mismatch switch | `.lib tt_mm` (and every other `*_mm` corner) sets `mc_mm_switch=1`; `tt` sets 0. `.lib mc` is process variation (`mc_pr_switch`), not mismatch. |
+| Where | Each `*__mismatch.corner.spice` (nfet_01v8, nfet_01v8_lvt, pfet_01v8, pfet_01v8_lvt, pfet_01v8_hvt, nfet_03v3_nvt, nfet_05v0_nvt, nfet_g5v0d10v5, pfet_g5v0d10v5) carries the `*_slope` parameters; the `*.pm3.spice` bins apply them, e.g. nfet_01v8 `vth0` at line 76 of `sky130_fd_pr__nfet_01v8__tt.pm3.spice` |
+| Model | `param + MC_MM_SWITCH*AGAUSS(0,1,1)*slope/sqrt(l*w*mult)` for `vth0`, `toxe` (relative) and `voff`, `l` and `w` in µm. nFET slopes: 3.356 mV µm, 0.344 %µm, 7 mV µm |
+| `mult` | Appears only in these terms; the device line has no `m=` |
+| Examples | `sky130/ngspice/mismatch.sp` (100 samples of a pair, one process, `setseed` + `reset`) and `noise.sp` (`.noise` with per-source spectra) |
+| Noise model | BSIM4 `fnoimod=1`, `tnoimod=1`: flicker `noia=2.5e42`, `ef=0.84`; `kf=0` and unused |
