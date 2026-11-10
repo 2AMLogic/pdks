@@ -89,6 +89,65 @@ TOL = dict(
     vth0=0.010,  # V; printed to 2 decimals (+-5 mV) plus 5 mV margin
 )
 
+# ---------------------------------------------------------------------------
+# Interconnect (pdks/gf180mcu/interconnect.csv, installed as
+# <prefix>/gf180mcu/ngspice/interconnect.csv)
+#
+# Sources, all from google/gf180mcu-pdk at de3240d7529a6970437ac3344820aaae7839f215
+# (docs published at gf180mcu-pdk.readthedocs.io); SHA-256 of each file is in
+# pdks/gf180mcu/README.md:
+#
+# [DRM] docs/physical_verification/design_manual/tables_clear/22_Metaln_58.csv
+#       (rules Mn.1 width, Mn.2a space: M1 0.23 um, M2-M5 0.28 um) and
+#       23_Vian_59.csv (Vn.1 via size, Vn.2a via space: 0.26 um).
+# [EPS] docs/analog/spice/elec_specs/tables_clear/: 5_General_Specification1.csv
+#       (metal sheet resistance, MIN/TYP/MAX in mohm/sq), 5_General_Specification2.csv
+#       (via resistance, ohm/via) and 5_General_Specification7.csv
+#       (temperature coefficient in %/degC).
+# [IA]  docs/analog/layout/inter_specs/tables_clear/3_General_conductor.csv
+#       (conductor thickness, "for typical cap", the Raphael technology
+#       parameters of the interconnect application note) and
+#       5_Sheet_Rho_table.csv (the same sheet resistance, 0.090 +/- 0.014).
+#
+# Definitions: pitch = width + spacing (derived). Metal levels M1-M5 and
+# Via1-Via5 only: MetalTop has four thickness options (6, 9, 11, 30 kA) that
+# a design picks, so it is not tabulated. The metal thickness is the
+# "typical cap" value of [IA], a simulation parameter rather than an EP
+# specification limit; the CSV says so. Capacitance per length exists in
+# [IA] only as plots (images/2_cross_section_*.png), which are not
+# transcribed, so the isolated and minimum-pitch capacitance per length stay
+# gaps, as does the via height. Nothing is estimated or fitted.
+#
+# Layer: (width, spacing) in nm, [DRM].
+METALS = {"M1": (230, 230), "M2": (280, 280), "M3": (280, 280), "M4": (280, 280), "M5": (280, 280)}
+THICKNESS = 550  # nm, [IA] 3_General_conductor.csv, M1-M5
+RSHEET = 0.090   # ohm/sq, [EPS] 5_General_Specification1.csv typ; window below
+RSHEET_WINDOW = (0.076, 0.104)  # [EPS] min, max; [IA] prints 0.090 +/- 0.014 (same)
+RSHEET_TC = 0.33  # %/degC, [EPS] 5_General_Specification7.csv typ (min 0.28, max 0.38)
+VIAS = {"V1": 260, "V2": 260, "V3": 260, "V4": 260, "V5": 260}  # nm, width and spacing, [DRM]
+R_VIA = 4.5      # ohm per via, 0.26 x 0.26 um, [EPS] 5_General_Specification2.csv typ (max 15)
+GAP_QUANTITIES = ("c_iso_per_um", "c_pitch_per_um")  # per metal
+GAP_VIA_QUANTITIES = ("height",)
+
+# Wire-ladder check (derived: it tests our include against the closed form,
+# not a published number). The deck drives an ideal step through RS into a
+# wire of N pi segments loaded by CL. The simulated value is the first
+# moment of the step response, integral of (vin - vout) dt, and the closed
+# form is the Elmore delay
+#     RS (C + CL) + R (C / 2 + CL),   R = RSH L / W,   C = CPL L.
+# RSH and W are the M1 sheet resistance and minimum width from the table
+# (published). CPL is a TEST INPUT chosen so the wire dominates; GF180MCU
+# publishes no capacitance per length as a table (a gap above).
+ELMORE = dict(l="5m", cpl="0.2n", rs="1k", cl="1f", tstop="50n")
+ELMORE_L, ELMORE_CPL = 5e-3, 0.2e-9
+ELMORE_RS, ELMORE_CL = 1e3, 1e-15
+ELMORE_LAYER = "M1"
+ELMORE_SEGMENTS = (1, 4, 64)
+# Tolerance: trapezoidal integral on a 2 ps step over 50 ns (about 10 time
+# constants, a 5 mm wire so that it dominates the 1 ps input edge); 1e-3 leaves margin
+# for a different ngspice build (measured error ~1e-5 for the ASAP7 deck).
+ELMORE_TOL = 1e-3
+
 
 # ---------------------------------------------------------------------------
 # Mismatch (Monte Carlo) and noise. Added for issue #43.

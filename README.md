@@ -10,8 +10,8 @@ results are checked against each foundry's or author's published values.
 |---|---|---|---|---|---|---|
 | `asap7` | ASAP7 r1p7: 7 nm predictive FinFET (ASU / Arm) | BSIM-CMG 107, compiled to OSDI | 9 MB | 126/126: 73 device checks against the PDK paper, 48 interconnect, 5 derived card and noise checks | not modelled: predictive, cards carry no statistical parameters (authors recommend none) | `noise.sp` example; Nyquist thermal and flicker exponent checked (BSIM-CMG defaults, no extracted level: gap) |
 | `asap5` | ASAP5 r0p4: 5 nm predictive gate-all-around nanowire FET (ASU) | BSIM-CMG 107, compiled to OSDI | 0.3 MB | 116/116: 47 device checks against the PDK paper, 64 interconnect, 5 derived card and noise checks, plus 1 known deviation | not modelled: predictive, cards carry no statistical parameters (authors recommend none) | `noise.sp` example; Nyquist thermal and flicker exponent checked (BSIM-CMG defaults, no extracted level: gap) |
-| `sky130` | SkyWater SKY130 (`sky130A`; `sky130B`'s ngspice libraries are identical in this release) | BSIM4, built in | 21 MB | 61/61 against SkyWater's e-test windows, device tables (continuous models) and corner tables, and the derived mismatch and noise checks below, plus 8 known deviations | `mc_mm_switch` via the `*_mm` corners; `mismatch.sp` example; Pelgrom area scaling checked (derived; SkyWater publishes no coefficient) | `noise.sp` example; flicker exponent and thermal noise checked (no published level: gap) |
-| `gf180mcu` | GlobalFoundries GF180MCU | BSIM4, built in | 1.4 MB | 54/54 against GF's slow/typical/fast EP targets and spec limits, incl. passives and their temperature coefficients, and the derived mismatch and noise checks below, plus 3 known deviations | `sw_stat_mismatch` (default 0) with the `X` subcircuits of `fets_mm`; `mismatch.sp` example; Pelgrom area scaling checked (derived), nFET compared with GF's plotted fit lines (digitised; known deviations) | `noise.sp` example; flicker exponent and thermal noise checked (GF publishes only the measurement conditions, no level: gap) |
+| `sky130` | SkyWater SKY130 (`sky130A`; `sky130B`'s ngspice libraries are identical in this release) | BSIM4, built in | 21 MB | 105/105 against SkyWater's e-test windows, device tables (continuous models) and corner tables, the derived mismatch and noise checks, and the interconnect table (44 interconnect) below, plus 8 known deviations | `mc_mm_switch` via the `*_mm` corners; `mismatch.sp` example; Pelgrom area scaling checked (derived; SkyWater publishes no coefficient) | `noise.sp` example; flicker exponent and thermal noise checked (no published level: gap) |
+| `gf180mcu` | GlobalFoundries GF180MCU | BSIM4, built in | 1.4 MB | 120/120 against GF's slow/typical/fast EP targets and spec limits, incl. passives and their temperature coefficients, the derived mismatch and noise checks below, and the interconnect table (49 interconnect), plus 3 known deviations | `sw_stat_mismatch` (default 0) with the `X` subcircuits of `fets_mm`; `mismatch.sp` example; Pelgrom area scaling checked (derived), nFET compared with GF's plotted fit lines (digitised; known deviations) | `noise.sp` example; flicker exponent and thermal noise checked (GF publishes only the measurement conditions, no level: gap) |
 | `ihp-sg13g2` | IHP SG13G2 SiGe BiCMOS | PSP 103 (OSDI), VBIC HBT | 3 MB | 162/162 against IHP's process spec and layout rules (1.2 V and 3.3 V MOS, corners, resistors and MIM with their temperature coefficients, the HBT, 79 interconnect) and IHP's measured silicon over temperature, plus 7 known deviations | not yet (#37) | not yet (#37) |
 | `ihp-sg13cmos5l` | IHP SG13CMOS5L CMOS | PSP 103 (OSDI) | 5 MB | 115/115 against IHP's process spec and layout rules: 1.2 V and 3.3 V MOS, corners, resistors and their temperature coefficients, 56 interconnect, plus 1 known deviation | not yet (#37) | not yet (#37) |
 | `tr1um` | Tokai Rika TR-1um 1 µm CMOS (OpenSUSI) | BSIM3v3, built in | 35 KB | 34/34 against Tokai Rika's published I-V curves (digitised, 16) and design rules (interconnect, 12), and the derived noise, model-scan and wire-ladder checks, plus 2 known deviations | none: the manual lists "Matching" as not provided and the cards have no statistical parameters (gap) | `noise.sp` example on the BSIM3v3 defaults (no noise model published; flicker is 0) |
@@ -123,10 +123,26 @@ definition used is documented next to the reference values.
     the narrow 0.42/1 µm nFET's Vt (0.60 V) is above its window, and the
     narrow 0.42/8 µm LVT pFET's EDR window lies entirely outside the
     table's own TT value, which looks like a source typo (model 0.714 V).
+  - Interconnect: the layer table (`interconnect.csv`) is checked against
+    SkyWater's periphery design rules (width, spacing of li1, met1–met5
+    and the cuts), the RCX sheet resistance and the three published
+    layer-to-layer capacitance matrices; pitch is derived, and the
+    capacitance is checked to fall with separation (derived). The
+    `wire.inc` RC ladder is checked against the closed-form Elmore delay,
+    using the published met1 sheet resistance. Thickness, capacitance per
+    length to the substrate and via resistance are not published, so
+    they are explicit gaps, not estimates.
 - **GF180MCU.** Idsat and Vth0 of five FETs against GF's typical EP
   targets. All match to printed precision (e.g. 510.0 vs 510 µA/µm,
   0.630 vs 0.63 V). Ioff and subthreshold slope are checked against the
   electrical-spec limits.
+  - Interconnect: the layer table (`interconnect.csv`) is checked against
+    GF's design rules (M1–M5 width and spacing, via size), the EP sheet
+    resistance, its temperature coefficient and via resistance, and the
+    application note's metal thickness; pitch is derived. The `wire.inc`
+    RC ladder is checked against the closed-form Elmore delay with the
+    published M1 sheet resistance. Capacitance per length exists only as
+    plots, so it is an explicit gap, as is the via height.
 - **IHP SG13G2 / SG13CMOS5L.** Every MOS row of IHP's process
   specification, for both the 1.2 V and the 3.3 V devices: Vt at three
   geometries, Idsat, Ioff, DIBL and SS. Each uses the spec's own
