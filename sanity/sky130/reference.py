@@ -242,3 +242,116 @@ GAPS = [
     "mismatch of resistors, capacitors and BJTs; mismatch and noise of the other devices (checked here: nfet_01v8 only)",
     "noise of the models in NOISE_ABSENT: parameters absent, BSIM4 defaults apply",
 ]
+
+
+# ---------------------------------------------------------------------------
+# Interconnect (pdks/sky130/interconnect.csv, installed as
+# <prefix>/sky130/ngspice/interconnect.csv)
+#
+# Sources, all from google/skywater-pdk at 7198cf647113f56041e02abf3eb623692820c5e1
+# (docs published at skywater-pdk.readthedocs.io); SHA-256 of each file is in
+# pdks/sky130/README.md:
+#
+# [SKYR]   docs/rules/periphery-rules.rst: the periphery design rules. Width
+#          and spacing of li1, met1-met5 (rules li.1/li.3, m1.1/m1.2, m2.1/
+#          m2.2, m3.1/m3.2, m4.1/m4.2, m5.1/m5.2) and the cut size and spacing of
+#          mcon, via, via2, via3, via4 (ct.1/ct.2, via.1a/via.2, via2.1a/via2.2,
+#          via3.1/via3.2, via4.1/via4.2).
+# [SKYRES] docs/rules/rcx/resistance-values.tsv: "Resistances", the RCX
+#          sheet resistance in mohms/sq for local interconnect and Metal1-5.
+#          The same table prints contact and via values under the same unit
+#          label with no per-cut definition, so they are NOT used (gap).
+# [SKYC]   docs/rules/rcx/capacitance-parallel.tsv, capacitance-fringe-upward.tsv
+#          and capacitance-fringe-downward.tsv: interlayer parallel-plate
+#          (aF/um2) and fringe (aF/um) capacitance. They are layer-to-layer
+#          only: there is no capacitance to the substrate, so the isolated and
+#          minimum-pitch capacitance per length stay gaps.
+# Layer thickness appears only in a figure (docs/_static/metal_stack.svg) and
+# is a gap. Nothing below is estimated or fitted.
+#
+# Definitions: pitch = width + spacing (derived). The CSV prints sheet
+# resistance in ohm/sq (table value in mohms/sq / 1000) and widths in nm
+# (rule value in um x 1000).
+#
+# Layer: (width, spacing) in nm, [SKYR].
+METALS = {"li1": (170, 170), "met1": (140, 140), "met2": (140, 140),
+          "met3": (300, 300), "met4": (300, 300), "met5": (1600, 1600)}
+# Cut layer: (width, spacing) in nm, [SKYR].
+CUTS = {"mcon": (170, 190), "via": (150, 170), "via2": (200, 200), "via3": (200, 200), "via4": (800, 800)}
+# Sheet resistance in ohm/sq, [SKYRES] (mohms/sq: 12800, 125, 125, 47, 47, 29).
+RSHEET = {"li1": 12.8, "met1": 0.125, "met2": 0.125, "met3": 0.047, "met4": 0.047, "met5": 0.029}
+GAP_QUANTITIES = ("thickness", "rsheet_tcr", "c_iso_per_um", "c_pitch_per_um")  # per metal
+GAP_CUT_QUANTITIES = ("r_via",)
+# [SKYC] matrices, keyed (lower layer, upper layer). Strings, as printed.
+CAP_AREA = {
+    ("li1", "met1"): 114.1970,
+    ("li1", "met2"): 37.5647,
+    ("li1", "met3"): 20.7915,
+    ("li1", "met4"): 11.6705,
+    ("li1", "met5"): 8.0265,
+    ("met1", "met2"): 133.8610,
+    ("met1", "met3"): 34.5350,
+    ("met1", "met4"): 15.0275,
+    ("met1", "met5"): 9.4789,
+    ("met2", "met3"): 86.1861,
+    ("met2", "met4"): 20.3321,
+    ("met2", "met5"): 11.3410,
+    ("met3", "met4"): 84.0346,
+    ("met3", "met5"): 19.6269,
+    ("met4", "met5"): 68.3252,
+}
+# aF/um, fringe towards the upper layer.
+CAP_FRINGE_UP = {
+    ("li1", "met1"): 34.7,
+    ("li1", "met2"): 21.739,
+    ("li1", "met3"): 15.078,
+    ("li1", "met4"): 10.141,
+    ("li1", "met5"): 7.6366,
+    ("met1", "met2"): 48.193,
+    ("met1", "met3"): 26.676,
+    ("met1", "met4"): 16.421,
+    ("met1", "met5"): 12.017,
+    ("met2", "met3"): 44.432,
+    ("met2", "met4"): 22.332,
+    ("met2", "met5"): 15.693,
+    ("met3", "met4"): 42.643,
+    ("met3", "met5"): 27.836,
+    ("met4", "met5"): 46.976,
+}
+# aF/um, keyed (upper layer, lower layer).
+CAP_FRINGE_DOWN = {
+    ("met1", "li1"): 59.496,
+    ("met2", "li1"): 46.277,
+    ("met2", "met1"): 67.045,
+    ("met3", "li1"): 46.708,
+    ("met3", "met1"): 54.814,
+    ("met3", "met2"): 69.846,
+    ("met4", "li1"): 39.709,
+    ("met4", "met1"): 42.563,
+    ("met4", "met2"): 46.382,
+    ("met4", "met3"): 70.522,
+    ("met5", "li1"): 41.147,
+    ("met5", "met1"): 43.188,
+    ("met5", "met2"): 45.592,
+    ("met5", "met3"): 54.152,
+    ("met5", "met4"): 82.819,
+}
+
+# Wire-ladder check (derived: it tests our include against the closed form,
+# not a published number). The deck drives an ideal step through RS into a
+# wire of N pi segments loaded by CL. The simulated value is the first
+# moment of the step response, integral of (vin - vout) dt, and the closed
+# form is the Elmore delay
+#     RS (C + CL) + R (C / 2 + CL),   R = RSH L / W,   C = CPL L.
+# RSH and W are the met1 sheet resistance and minimum width from the table
+# (published). CPL is a TEST INPUT chosen so the wire dominates; SKY130
+# publishes no capacitance per length to the substrate (a gap above).
+ELMORE = dict(l="5m", cpl="0.2n", rs="1k", cl="1f", tstop="50n")
+ELMORE_L, ELMORE_CPL = 5e-3, 0.2e-9
+ELMORE_RS, ELMORE_CL = 1e3, 1e-15
+ELMORE_LAYER = "met1"
+ELMORE_SEGMENTS = (1, 4, 64)
+# Tolerance: trapezoidal integral on a 2 ps step over 50 ns (about 10 time
+# constants, a 5 mm wire so that it dominates the 1 ps input edge); 1e-3 leaves margin
+# for a different ngspice build (measured error ~1e-5 for the ASAP7 deck).
+ELMORE_TOL = 1e-3
