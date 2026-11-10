@@ -1,0 +1,133 @@
+layer,quantity,value,unit,status,source
+M1,width_min,13,nm,published,[MEJ22] Table 5 (Width/drawn: 13)
+M1,pitch,26,nm,published,[MEJ22] Table 5
+M1,spacing_min,13,nm,derived,pitch - width ([MEJ22] Table 5)
+M1,thickness,26,nm,derived,2 x width: [MEJ22] sec. 5.1 (BEOL metals and vias have a 2:1 aspect ratio)
+M1,rsheet,gap,ohm/sq,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M1,rsheet_tcr,gap,1/K,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M1,c_iso_per_um,gap,aF/um,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M1,c_pitch_per_um,gap,aF/um,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M2,width_min,13,nm,published,[MEJ22] Table 5 (Width/drawn: 13)
+M2,pitch,26,nm,published,[MEJ22] Table 5
+M2,spacing_min,13,nm,derived,pitch - width ([MEJ22] Table 5)
+M2,thickness,26,nm,derived,2 x width: [MEJ22] sec. 5.1 (BEOL metals and vias have a 2:1 aspect ratio)
+M2,rsheet,gap,ohm/sq,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M2,rsheet_tcr,gap,1/K,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M2,c_iso_per_um,gap,aF/um,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M2,c_pitch_per_um,gap,aF/um,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M3,width_min,13,nm,published,[MEJ22] Table 5 (Width/drawn: 13)
+M3,pitch,26,nm,published,[MEJ22] Table 5
+M3,spacing_min,13,nm,derived,pitch - width ([MEJ22] Table 5)
+M3,thickness,26,nm,derived,2 x width: [MEJ22] sec. 5.1 (BEOL metals and vias have a 2:1 aspect ratio)
+M3,rsheet,gap,ohm/sq,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M3,rsheet_tcr,gap,1/K,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M3,c_iso_per_um,gap,aF/um,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M3,c_pitch_per_um,gap,aF/um,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M4,width_min,18,nm,published,[MEJ22] Table 5 (Width/drawn: 18)
+M4,pitch,36,nm,published,[MEJ22] Table 5
+M4,spacing_min,18,nm,derived,pitch - width ([MEJ22] Table 5)
+M4,thickness,36,nm,derived,2 x width: [MEJ22] sec. 5.1 (BEOL metals and vias have a 2:1 aspect ratio)
+M4,rsheet,gap,ohm/sq,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M4,rsheet_tcr,gap,1/K,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M4,c_iso_per_um,gap,aF/um,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M4,c_pitch_per_um,gap,aF/um,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M5,width_min,18,nm,published,[MEJ22] Table 5 (Width/drawn: 18)
+M5,pitch,36,nm,published,[MEJ22] Table 5
+M5,spacing_min,18,nm,derived,pitch - width ([MEJ22] Table 5)
+M5,thickness,36,nm,derived,2 x width: [MEJ22] sec. 5.1 (BEOL metals and vias have a 2:1 aspect ratio)
+M5,rsheet,gap,ohm/sq,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M5,rsheet_tcr,gap,1/K,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M5,c_iso_per_um,gap,aF/um,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M5,c_pitch_per_um,gap,aF/um,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M6,width_min,24,nm,published,[MEJ22] Table 5 (Width/drawn: 24)
+M6,pitch,48,nm,published,[MEJ22] Table 5
+M6,spacing_min,24,nm,derived,pitch - width ([MEJ22] Table 5)
+M6,thickness,48,nm,derived,2 x width: [MEJ22] sec. 5.1 (BEOL metals and vias have a 2:1 aspect ratio)
+M6,rsheet,gap,ohm/sq,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M6,rsheet_tcr,gap,1/K,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M6,c_iso_per_um,gap,aF/um,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M6,c_pitch_per_um,gap,aF/um,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M7,width_min,24,nm,published,[MEJ22] Table 5 (Width/drawn: 24)
+M7,pitch,48,nm,published,[MEJ22] Table 5
+M7,spacing_min,24,nm,derived,pitch - width ([MEJ22] Table 5)
+M7,thickness,48,nm,derived,2 x width: [MEJ22] sec. 5.1 (BEOL metals and vias have a 2:1 aspect ratio)
+M7,rsheet,gap,ohm/sq,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M7,rsheet_tcr,gap,1/K,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M7,c_iso_per_um,gap,aF/um,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M7,c_pitch_per_um,gap,aF/um,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M8,width_min,24,nm,published,[MEJ22] Table 5 (Width/drawn: 24)
+M8,pitch,48,nm,published,[MEJ22] Table 5
+M8,spacing_min,24,nm,derived,pitch - width ([MEJ22] Table 5)
+M8,thickness,48,nm,derived,2 x width: [MEJ22] sec. 5.1 (BEOL metals and vias have a 2:1 aspect ratio)
+M8,rsheet,gap,ohm/sq,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M8,rsheet_tcr,gap,1/K,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M8,c_iso_per_um,gap,aF/um,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M8,c_pitch_per_um,gap,aF/um,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M9,width_min,24,nm,published,[MEJ22] Table 5 (Width/drawn: 24)
+M9,pitch,48,nm,published,[MEJ22] Table 5
+M9,spacing_min,24,nm,derived,pitch - width ([MEJ22] Table 5)
+M9,thickness,48,nm,derived,2 x width: [MEJ22] sec. 5.1 (BEOL metals and vias have a 2:1 aspect ratio)
+M9,rsheet,gap,ohm/sq,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M9,rsheet_tcr,gap,1/K,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M9,c_iso_per_um,gap,aF/um,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M9,c_pitch_per_um,gap,aF/um,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M10,width_min,40,nm,published,[MEJ22] Table 5 (Width/drawn: 40)
+M10,pitch,80,nm,published,[MEJ22] Table 5
+M10,spacing_min,40,nm,derived,pitch - width ([MEJ22] Table 5)
+M10,thickness,80,nm,derived,2 x width: [MEJ22] sec. 5.1 (BEOL metals and vias have a 2:1 aspect ratio)
+M10,rsheet,gap,ohm/sq,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M10,rsheet_tcr,gap,1/K,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M10,c_iso_per_um,gap,aF/um,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M10,c_pitch_per_um,gap,aF/um,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M11,width_min,40,nm,published,[MEJ22] Table 5 (Width/drawn: 40)
+M11,pitch,80,nm,published,[MEJ22] Table 5
+M11,spacing_min,40,nm,derived,pitch - width ([MEJ22] Table 5)
+M11,thickness,80,nm,derived,2 x width: [MEJ22] sec. 5.1 (BEOL metals and vias have a 2:1 aspect ratio)
+M11,rsheet,gap,ohm/sq,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M11,rsheet_tcr,gap,1/K,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M11,c_iso_per_um,gap,aF/um,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M11,c_pitch_per_um,gap,aF/um,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M12,width_min,40,nm,published,[MEJ22] Table 5 (Width/drawn: 40)
+M12,pitch,80,nm,published,[MEJ22] Table 5
+M12,spacing_min,40,nm,derived,pitch - width ([MEJ22] Table 5)
+M12,thickness,80,nm,derived,2 x width: [MEJ22] sec. 5.1 (BEOL metals and vias have a 2:1 aspect ratio)
+M12,rsheet,gap,ohm/sq,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M12,rsheet_tcr,gap,1/K,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M12,c_iso_per_um,gap,aF/um,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+M12,c_pitch_per_um,gap,aF/um,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+V1,width_min,13,nm,published,[MEJ22] Table 5 (Width/drawn: V1-V3 21/13 - the 13 nm drawn via width is used)
+V1,height,26,nm,derived,2 x width: [MEJ22] sec. 5.1 (BEOL metals and vias have a 2:1 aspect ratio)
+V1,r_via,gap,ohm,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+V2,width_min,13,nm,published,[MEJ22] Table 5 (Width/drawn: V1-V3 21/13 - the 13 nm drawn via width is used)
+V2,height,26,nm,derived,2 x width: [MEJ22] sec. 5.1 (BEOL metals and vias have a 2:1 aspect ratio)
+V2,r_via,gap,ohm,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+V3,width_min,13,nm,published,[MEJ22] Table 5 (Width/drawn: V1-V3 21/13 - the 13 nm drawn via width is used)
+V3,height,26,nm,derived,2 x width: [MEJ22] sec. 5.1 (BEOL metals and vias have a 2:1 aspect ratio)
+V3,r_via,gap,ohm,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+V4,width_min,18,nm,published,[MEJ22] Table 5 (Width/drawn: 18)
+V4,height,36,nm,derived,2 x width: [MEJ22] sec. 5.1 (BEOL metals and vias have a 2:1 aspect ratio)
+V4,r_via,gap,ohm,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+V5,width_min,18,nm,published,[MEJ22] Table 5 (Width/drawn: 18)
+V5,height,36,nm,derived,2 x width: [MEJ22] sec. 5.1 (BEOL metals and vias have a 2:1 aspect ratio)
+V5,r_via,gap,ohm,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+V6,width_min,24,nm,published,[MEJ22] Table 5 (Width/drawn: 24)
+V6,height,48,nm,derived,2 x width: [MEJ22] sec. 5.1 (BEOL metals and vias have a 2:1 aspect ratio)
+V6,r_via,gap,ohm,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+V7,width_min,24,nm,published,[MEJ22] Table 5 (Width/drawn: 24)
+V7,height,48,nm,derived,2 x width: [MEJ22] sec. 5.1 (BEOL metals and vias have a 2:1 aspect ratio)
+V7,r_via,gap,ohm,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+V8,width_min,24,nm,published,[MEJ22] Table 5 (Width/drawn: 24)
+V8,height,48,nm,derived,2 x width: [MEJ22] sec. 5.1 (BEOL metals and vias have a 2:1 aspect ratio)
+V8,r_via,gap,ohm,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+V9,width_min,24,nm,published,[MEJ22] Table 5 (Width/drawn: 24)
+V9,height,48,nm,derived,2 x width: [MEJ22] sec. 5.1 (BEOL metals and vias have a 2:1 aspect ratio)
+V9,r_via,gap,ohm,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+V10,width_min,40,nm,published,[MEJ22] Table 5 (Width/drawn: 40)
+V10,height,80,nm,derived,2 x width: [MEJ22] sec. 5.1 (BEOL metals and vias have a 2:1 aspect ratio)
+V10,r_via,gap,ohm,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+V11,width_min,40,nm,published,[MEJ22] Table 5 (Width/drawn: 40)
+V11,height,80,nm,derived,2 x width: [MEJ22] sec. 5.1 (BEOL metals and vias have a 2:1 aspect ratio)
+V11,r_via,gap,ohm,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
+V12,width_min,40,nm,published,[MEJ22] Table 5 (Width/drawn: 40)
+V12,height,80,nm,derived,2 x width: [MEJ22] sec. 5.1 (BEOL metals and vias have a 2:1 aspect ratio)
+V12,r_via,gap,ohm,gap,not tabulated in [MEJ22] (line resistivity is plotted only, Fig. 8; no capacitance) or the PDK docs; the Calibre extraction decks are not released upstream and are not fetched
