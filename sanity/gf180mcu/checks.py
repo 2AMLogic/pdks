@@ -9,8 +9,9 @@ import tempfile
 import re
 
 import reference as ref
-from common import Report, at, mos_sweeps, ngspice, render, ss_min, tc_fit, vt_max_gm
+from common import Report, at, mos_sweeps, ngspice, render, results, ss_min, tc_fit, vt_max_gm
 
+DECKS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "ngspice", "gf180mcu")
 PASSIVE_DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks", "passive_t.sp")
 
 
@@ -47,6 +48,89 @@ def passives(rep, ng, work, models, data):
         else:
             rep.check(name, "published" if lo is not None else "bound", tc1,
                       -1e9 if lo is None else lo, hi, "ppm/K", 1, "(typ %g)" % typ)
+
+
+def mismatch_deck(ng, work, models, name, mm, w, l, par, n, seed):
+    deck = render(os.path.join(DECKS, "mismatch.sp.in"), work, name, MODELS_DIR=models, NGSPICE=ng,
+                  MM=mm, W=w, L=l, PAR=par, N=n, SEED=seed)
+    return results(ngspice(ng, deck, cwd=work))
+
+
+def noise_deck(ng, work, models, name, bias):
+    deck = render(os.path.join(DECKS, "noise.sp.in"), work, name, MODELS_DIR=models, NGSPICE=ng,
+                  VGLO=bias["VG"] - 0.002, VGHI=bias["VG"] + 0.002, **bias)
+    return results(ngspice(ng, deck, cwd=work))
+
+
+def noise_scan(models):
+    """MOS .models in sm141064.spice: (count, number missing noia/ntnoi/ef)."""
+    text = open(os.path.join(models, "sm141064.spice")).read()
+    n = absent = 0
+    for b in re.split(r"(?im)^\.model\s+", text)[1:]:
+        if b.split("\n", 1)[0].split()[1].lower() not in ("nmos", "pmos"):
+            continue
+        n += 1
+        absent += any(not re.search(r"(?im)^\+\s*%s\s*=" % k, b) for k in ("noia", "ntnoi", "ef"))
+    return n, absent
+
+
+def mismatch_and_noise(rep, data, models, ng, work):
+    n = ref.MISMATCH_N
+    print("\nMismatch (Monte Carlo, sw_stat_mismatch=1), 3.3 V nFET, %d pairs per area" % n)
+    print("  Published: only plotted fit lines (digitised); the model's own coefficients are the derived reference.\n")
+    runs = []
+    for w, l, par, seed in ref.MISMATCH_AREAS:
+        r = mismatch_deck(ng, work, models, "mm_%g_%g_%g" % (w, l, par), 1, w, l, par, n, seed)
+        runs.append(("%g/%g par %g" % (w, l, par), r))
+        data["mismatch %g/%g par %g" % (w, l, par)] = r
+        rep.info("sigma(Vtlin) %g/%g par %g" % (w, l, par), r["sigma_vtlin_V"], "mV", 1e3)
+    for key, label, n_s in (("avt_model_mVum", "AVT", 2 * n), ("aidsat_model_pcum", "AIdsat", n)):
+        vals = [r[key] for _, r in runs]
+        mean = sum(vals) / len(vals)
+        t = ref.mc_tol(n_s)
+        for tag, r in runs:
+            rep.check("%s*sqrt(Aeff) %s" % (label, tag), "derived", r[key], mean * (1 - t), mean * (1 + t),
+                      "mV um" if key.startswith("avt") else "%um", 1, "(area scaling; mean %.3g, +-%.0f %%)" % (mean, 100 * t))
+    mean_avt = sum(r["avt_model_mVum"] for _, r in runs) / len(runs)
+    t = ref.mc_tol(6 * n)
+    rep.check("AVT vs model par_vth", "derived", mean_avt, ref.PAR_VTH * (1 - t), ref.PAR_VTH * (1 + t), "mV um", 1,
+              "(model par_vth %.3f; 3 sampling errors of 3x2N devices)" % ref.PAR_VTH)
+    t = ref.mc_tol(n)
+    for tag, r in runs:
+        rep.check("AIdsat floor %s" % tag, "bound", r["aidsat_model_pcum"], ref.PAR_K * (1 - t), 1e9, "%um", 1,
+                  "(model par_k %.3f %%um; Vth mismatch adds to it: measured/par_k %.2f)" % (ref.PAR_K, r["aidsat_model_pcum"] / ref.PAR_K))
+    r = runs[0][1]
+    rep.known("sigma(dVtlin)*sqrt(WL) vs published", r["avt_dvt_mVum"], ref.PUB_AVT * (1 - ref.PUB_TOL),
+              ref.PUB_AVT * (1 + ref.PUB_TOL), "mV um", 1, ref.MISMATCH_KNOWN["avt"])
+    rep.known("sigma(dIdsat)*sqrt(WL) vs published", r["aidsat_pcum"], ref.PUB_AIDSAT * (1 - ref.PUB_TOL),
+              ref.PUB_AIDSAT * (1 + ref.PUB_TOL), "%um", 1, ref.MISMATCH_KNOWN["aidsat"])
+    off = mismatch_deck(ng, work, models, "mm_off", 0, 10, 1, 1, 3, 1)
+    rep.check("mismatch off: sigma(Vtlin)", "derived", off["sigma_vtlin_V"], 0, 1e-7, "V", 1, "(sw_stat_mismatch=0; 0.1 uV allows for the solver noise of the interpolated Vtlin, 1e4 below the spread)")
+    a = mismatch_deck(ng, work, models, "mm_rep1", 1, 10, 1, 1, 3, 5)
+    b = mismatch_deck(ng, work, models, "mm_rep2", 1, 10, 1, 1, 3, 5)
+    rep.check("same seed, same result", "derived", abs(a["sigma_vtlin_V"] - b["sigma_vtlin_V"]) + abs(a["sigma_didsat_rel"] - b["sigma_didsat_rel"]),
+              0, 0, "V", 1, "(setseed + reset)")
+
+    print("\nNoise, 3.3 V nFET %(W)g/%(L)g um, Vg %(VG)g V, Vd %(VD)g V (ngspice .noise, 27 C)\n" % ref.NOISE_BIAS)
+    r = noise_deck(ng, work, models, "noise_long", ref.NOISE_BIAS)
+    data["noise long"] = r
+    lo, hi = ref.GAMMA_LONG
+    rep.check("thermal gamma (4kT*gamma*gm) 10/5", "derived", r["gamma_thermal"], lo, hi, "", 1, "(long-channel theory 2/3 .. 1)")
+    lo, hi = ref.NYQUIST
+    rep.check("Nyquist S_id/(4kT*gds) at Vds=0", "derived", r["nyquist_ratio"], lo, hi, "", 1)
+    rep.check("flicker slope 1..100 Hz = -ef", "derived", r["flicker_slope"], -ref.EF - ref.FLICKER_SLOPE_TOL,
+              -ref.EF + ref.FLICKER_SLOPE_TOL, "", 1, "(model ef %.2f)" % ref.EF)
+    rep.info("flicker level at 1 Hz (input, V^2/Hz)", r["sv_flicker_1Hz_V2"], "V2/Hz", 1, "(no published value: gap)")
+    short = noise_deck(ng, work, models, "noise_short", ref.NOISE_BIAS_SHORT)
+    data["noise short"] = short
+    rep.info("thermal gamma 10/0.28", short["gamma_thermal"], "", 1, "(information; no long-channel claim)")
+    nm, absent = noise_scan(models)
+    rep.check("noise scan: MOS model count", "derived", float(nm), ref.NOISE_SCAN_MODELS, ref.NOISE_SCAN_MODELS, "", 1)
+    rep.check("noise scan: models missing noia/ntnoi/ef", "derived", float(absent), ref.NOISE_ABSENT_MODELS, ref.NOISE_ABSENT_MODELS, "", 1,
+              "(the 2 pfet_06v0 lack ntnoi; BSIM4 default equals the others' value)")
+    print("\nGaps (not estimated):")
+    for g in ref.GAPS:
+        print("  - " + g)
 
 
 def run(prefix, ng):
@@ -97,4 +181,5 @@ def run(prefix, ng):
             print()
 
         passives(rep, ng, work, models, data)
+        mismatch_and_noise(rep, data, models, ng, work)
     return rep.summary(), data, rep.rows

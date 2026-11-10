@@ -22,5 +22,9 @@ setup_tr1um() {
   mkdir -p "$ng"
   render "$REPO/ngspice/tr1um/example.sp.in" "$ng/example.sp" \
     "MODELS_DIR=$root/TR-1um/libs.tech/spice/models" "NGSPICE=$NGSPICE"
+  # No mismatch deck: the models carry no statistical parameters (see README).
+  render "$REPO/ngspice/tr1um/noise.sp.in" "$ng/noise.sp" \
+    "MODELS_DIR=$root/TR-1um/libs.tech/spice/models" "NGSPICE=$NGSPICE" \
+    W=30 L=10 VG=2.5 VD=2.5 VGLO=2.498 VGHI=2.502
   stamp "$root" "$id"
 }
