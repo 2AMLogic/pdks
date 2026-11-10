@@ -30,6 +30,6 @@ setup_ihp_sg13cmos5l() {
   ihp_glue ihp-sg13cmos5l "$pdk/libs.tech/ngspice/models" "$root/ngspice/osdi" \
     psp103 psp103_nqs r3_cmc mosvar cap_cmomi cap_cmomf
   log "IHP SG13CMOS5L: installing interconnect table and wire include"
-  ihp_interconnect ihp-sg13cmos5l
+  interconnect_inc ihp-sg13cmos5l
   stamp "$root" "$id"
 }
