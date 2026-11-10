@@ -46,11 +46,40 @@ resistor rows and no MIM):
               spec measures. The spec gives targets only, so TC1 is checked
               within 5 % and TC2 within 10 % of target.
   A.k  CMIMA: capacitance per area at V = 0, 100 kHz, 20 x 20 um.
+
+Interconnect (pdks/<pdk>/interconnect.csv, installed as
+<prefix>/<pdk>/ngspice/interconnect.csv; `interconnect_checks` below):
+  [G2LR]  SG13G2 Layout Rules, Rev. 0.4 (2024-12-19),
+          ihp-sg13g2/libs.doc/doc/SG13G2_os_layout_rules.pdf: 5.16 Metal1
+          (M1.a, M1.b), 5.17 Metal(n=2-5) (Mn.a, Mn.b), 5.19-5.20 Via1 and
+          Via(n=2-4) (V1.a, Vn.a), TopVia1 (TV1.a), TM1.a-b, TopVia2
+          (TV2.a), TM2.a-b.
+  [C5LR]  SG13CMOS5L Layout Rules, Rev. 0.1 (2025-12-08),
+          ihp-sg13cmos5l/libs.doc/doc/SG13CMOS5L_os_layout_rules.pdf: 5.14
+          Metal1, 5.15 Metal(n=2-4), 5.17-5.18 Via1 and Via(n=2-3), TV1.a,
+          TM1.a-b.
+  [G2] 2.13 (sheet resistance RSMETn / RSTMn and TC1RSMETn / TC1RSTMn),
+  2.14 (via resistance RVIAn, RTVn), 2.16 (layer and inter-layer dielectric
+  thickness) and 2.17 (area capacitance); [C5L] 3.1, 3.4, 3.6 and 3.7.
+  Document SHA-256 (the files at the pinned commits) is in the PDK's README.
+The BEOL is the same in both PDKs: every [C5L] row below that exists has the
+value [G2] gives (SG13CMOS5L stops at Metal4 + TopMetal1: no Metal5, no
+TopMetal2). Each table row cites its own document; one reference table
+(BEOL) serves both. Targets (the nominal column) are the values taken; the
+spec's min-max window is not used.
+Derived rows: pitch = width + spacing; via height = the inter-layer
+dielectric thickness the via spans (TILDn, TILDTM1, TILTM2), an
+interpretation, not a printed via height. Gaps: capacitance per length
+(isolated and at minimum pitch; the specs print only area capacitance, with
+no fringe or lateral part) for every metal, and the two quantities the
+SG13CMOS5L spec prints as "tbd" (Metal4 - TopMetal1 area capacitance,
+TopVia1 resistance). They are not estimated.
 """
 
 import math
 import os
 import re
+import csv
 import tempfile
 
 from common import Report, at, mos_sweeps, ngspice, render, results, tc_fit, vt_cc, vt_max_gm
@@ -374,7 +403,116 @@ def hbt_checks(rep, ng, work, models, spiceinit):
     return vals
 
 
-def run(prefix, pdk, models, hbt, meas_src=None):
+# ---------------------------------------------------------------------------
+# Interconnect. Metal layer: width, spacing (nm), thickness (nm), sheet
+# resistance (ohm/sq), its TC1 (1/K), area capacitance to the next layer up
+# (aF/um2, None where no layer is above or the spec prints none). All
+# nominal (target) values; see the module docstring for the rows.
+METALS = {
+    "M1": (160, 180, 420, 0.110, 3400e-6, 68.0),
+    "M2": (200, 210, 490, 0.088, 3500e-6, 68.0),
+    "M3": (200, 210, 490, 0.088, 3500e-6, 68.0),
+    "M4": (200, 210, 490, 0.088, 3500e-6, 68.0),
+    "M5": (200, 210, 490, 0.088, 3500e-6, 42.5),
+    "TM1": (1640, 1640, 2000, 0.018, 3700e-6, 13.0),
+    "TM2": (2000, 2000, 3000, 0.011, 3800e-6, None),
+}
+# Via: width (nm), resistance (ohm per via), dielectric thickness spanned (nm).
+VIAS = {
+    "V1": (190, 9.0, 540), "V2": (190, 9.0, 540), "V3": (190, 9.0, 540), "V4": (190, 9.0, 540),
+    "TV1": (420, 2.2, 850), "TV2": (900, 1.1, 2800),
+}
+# Per PDK: the layers present and what the spec leaves as "tbd" (explicit
+# gaps). SG13CMOS5L has Metal1-4 + TopMetal1 and TopVia1 only; its Metal4 ->
+# TopMetal1 area capacitance and TopVia1 resistance are "tbd" in Rev. 0.2.
+BEOL = {
+    "ihp-sg13g2": dict(metals=("M1", "M2", "M3", "M4", "M5", "TM1", "TM2"), vias=("V1", "V2", "V3", "V4", "TV1", "TV2"),
+                       tbd=set()),
+    "ihp-sg13cmos5l": dict(metals=("M1", "M2", "M3", "M4", "TM1"), vias=("V1", "V2", "V3", "TV1"),
+                           tbd={("M4", "c_area_up"), ("TV1", "r_via")}),
+}
+GAP_PER_METAL = ("c_iso_per_um", "c_pitch_per_um")
+# Aluminium: the lower bound on a film's resistivity is the bulk value,
+# 2.65e-8 ohm m at 20 C (CRC Handbook of Chemistry and Physics, "Electrical
+# resistivity of pure metals"). A thin-film Rs * t cannot be below it.
+RHO_AL_BULK = 2.65e-8
+# Elmore check: l, w, rs, cl, tstop in ngspice notation and as numbers. RSH is
+# read from the table (Metal2); CPL is a test input, not an IHP value.
+ELMORE = dict(l="1m", w="200n", cpl="0.2n", rs="100", cl="1f", tstop="2n")
+ELMORE_L, ELMORE_W, ELMORE_CPL, ELMORE_RS, ELMORE_CL = 1e-3, 200e-9, 0.2e-9, 100.0, 1e-15
+ELMORE_SEGMENTS = (1, 4, 64)
+ELMORE_TOL = 1e-3  # trapezoidal integral on a 2 ps step, ~30 time constants
+WIRE_DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks", "wire_elmore.sp")
+
+
+def elmore(ng, wire_inc, work, nseg, rsh):
+    e = ELMORE
+    r = results(ngspice(ng, render(WIRE_DECK, work, "wire_elmore_%d" % nseg, WIRE_INC=wire_inc, N=nseg, L=e["l"],
+                                   W=e["w"], RSH=rsh, CPL=e["cpl"], RS=e["rs"], CL=e["cl"], TSTOP=e["tstop"])))
+    R = rsh * ELMORE_L / ELMORE_W
+    C = ELMORE_CPL * ELMORE_L
+    return r["elmore"], ELMORE_RS * (C + ELMORE_CL) + R * (C / 2 + ELMORE_CL)
+
+
+def interconnect_checks(rep, ng, work, ngdir, pdk_beol):
+    table, wire_inc = os.path.join(ngdir, "interconnect.csv"), os.path.join(ngdir, "wire.inc")
+    inc = os.path.join(ngdir, "interconnect.inc")
+    for f in (table, wire_inc, inc):
+        if not os.path.exists(f):
+            raise SystemExit("not found: %s (run bootstrap.sh for this PDK)" % f)
+    with open(table) as f:
+        rows = list(csv.DictReader(f))
+    val = {(r["layer"], r["quantity"]): r for r in rows}
+    num = lambda lay, q: float(val[lay, q]["value"])  # noqa: E731
+    data = {}
+
+    def chk(name, kind, lay, q, want, unit, scale, tol=1e-9):
+        got = num(lay, q)
+        rep.check(name, kind, got, want * (1 - tol), want * (1 + tol), unit, scale)
+        assert val[lay, q]["status"] == kind, "%s %s: status %s, expected %s" % (lay, q, val[lay, q]["status"], kind)
+
+    for lay in pdk_beol["metals"]:
+        w, s, t, rsh, tc, cup = METALS[lay]
+        chk("%s width" % lay, "published", lay, "width_min", w, "nm", 1)
+        chk("%s spacing" % lay, "published", lay, "spacing_min", s, "nm", 1)
+        chk("%s pitch = width + spacing" % lay, "derived", lay, "pitch", w + s, "nm", 1)
+        chk("%s thickness" % lay, "published", lay, "thickness", t, "nm", 1)
+        chk("%s sheet resistance" % lay, "published", lay, "rsheet", rsh, "mohm/sq", 1e3)
+        chk("%s TC1 of sheet resistance" % lay, "published", lay, "rsheet_tcr", tc, "ppm/K", 1e6)
+        if cup is not None and (lay, "c_area_up") not in pdk_beol["tbd"]:
+            chk("%s area cap to layer above" % lay, "published", lay, "c_area_up", cup, "aF/um2", 1)
+        # Bound: Rs * t is the film's effective resistivity; it cannot be
+        # below bulk aluminium's.
+        rho = num(lay, "rsheet") * num(lay, "thickness") * 1e-9
+        rep.check("%s effective resistivity >= bulk Al" % lay, "bound", rho, RHO_AL_BULK, float("inf"), "uohm cm", 1e8)
+    for lay in pdk_beol["vias"]:
+        w, r, h = VIAS[lay]
+        chk("%s width" % lay, "published", lay, "width_min", w, "nm", 1)
+        chk("%s height = dielectric spanned" % lay, "derived", lay, "height", h, "nm", 1)
+        if (lay, "r_via") not in pdk_beol["tbd"]:
+            chk("%s resistance" % lay, "published", lay, "r_via", r, "ohm", 1)
+    gaps = {k for k, r in val.items() if r["status"] == "gap"}
+    expect = {(m, q) for m in pdk_beol["metals"] for q in GAP_PER_METAL} | pdk_beol["tbd"]
+    # A number appearing where the spec prints none must come with a source
+    # added here, so a gap turning into a value fails this check.
+    rep.check("unpublished quantities stay explicit gaps (%d)" % len(gaps), "derived", float(gaps == expect), 1, 1, "", 1)
+    rep.check("every row cites a source", "derived", float(all(r["source"].strip() for r in rows)), 1, 1, "", 1)
+    layers = {r["layer"] for r in rows}
+    rep.check("table has exactly the PDK's layers", "derived",
+              float(layers == set(pdk_beol["metals"]) | set(pdk_beol["vias"])), 1, 1, "", 1)
+    data["interconnect_gaps"] = sorted("%s.%s" % k for k in gaps)
+    print()
+    rsh = num("M2", "rsheet")
+    for n in ELMORE_SEGMENTS:
+        sim, closed = elmore(ng, wire_inc, work, n, rsh)
+        data["wire_elmore_%d" % n] = dict(simulated=sim, closed_form=closed)
+        rep.check("wire ladder Elmore delay, %d segment%s" % (n, "" if n == 1 else "s"), "derived", sim,
+                  closed * (1 - ELMORE_TOL), closed * (1 + ELMORE_TOL), "ps", 1e12,
+                  "(closed form %.3f ps)" % (closed * 1e12))
+    return data
+
+
+def run(prefix, pdk, models, hbt, meas_src=None, beol=None):
     osdi = os.path.join(prefix, pdk, "ngspice", "spiceinit")
     if not os.path.exists(osdi):
         raise SystemExit("not found: %s (run bootstrap.sh --pdk %s)" % (osdi, pdk))
@@ -399,4 +537,7 @@ def run(prefix, pdk, models, hbt, meas_src=None):
         if hbt:
             print()
             data["hbt"] = hbt_checks(rep, ng, work, models, spiceinit)
+        if beol:
+            print("\nInterconnect: layer table vs the process specification and layout rules\n")
+            data["interconnect"] = interconnect_checks(rep, ng, work, os.path.join(prefix, pdk, "ngspice"), beol)
     return rep.summary(), data, rep.rows

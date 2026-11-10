@@ -10,4 +10,4 @@ import ihp_spec
 
 def run(prefix, ng):
     models = os.path.join(prefix, "ihp-sg13cmos5l", "IHP-Open-PDK", "ihp-sg13cmos5l", "libs.tech", "ngspice", "models")
-    return ihp_spec.run(prefix, "ihp-sg13cmos5l", models, hbt=False)
+    return ihp_spec.run(prefix, "ihp-sg13cmos5l", models, hbt=False, beol=ihp_spec.BEOL["ihp-sg13cmos5l"])

@@ -88,3 +88,92 @@ TOL = dict(
     idsat=0.02,  # relative; printed to 3 significant figures
     vth0=0.010,  # V; printed to 2 decimals (+-5 mV) plus 5 mV margin
 )
+
+
+# ---------------------------------------------------------------------------
+# Mismatch (Monte Carlo) and noise. Added for issue #43.
+#
+# What GF publishes. [MRG] (google/gf180mcu-pdk de3240d7, docs/analog/
+# model_parameters/LV/LV_9_4.rst, "9.4 Mismatch MOSFET Modeling Results")
+# shows the 3.3 V NMOS/PMOS mismatch as plots of sigma(delta Vtlin) (mV) and
+# sigma(delta Idsat) (%) against 1/sqrt(W*L) (images/5_Mismatch1.png): simulated
+# and measured points, with a straight-line fit through each. It prints no
+# coefficient. Reading the fitted line at 1/sqrt(WL) = 2.85 1/um (the right
+# end of the x axis, pixel digitisation, about +-5 %):
+#   3.3 V NMOS: sigma(dVtlin) 25.5 mV -> 8.9 mV um;  sigma(dIdsat) 1.65 % -> 0.58 % um
+# Definitions (LV_9_4.rst): Vtlin = Vg at Vds = 0.1 V and Id = 0.1 uA * W/L;
+# Idsat = Id at Vg = Vd = 3.3 V. These are published (digitised), as the TR-1um
+# curves are. Noise: LV_2_3.rst ("1/f Noise Measurement conditions") and
+# 17_Noise.csv give only the bias conditions (3.3 V nFET 10x0.28 um, Vgs 0.8,
+# 1.8, 3.3 V, Vds 0.1, 1.8, 3.3 V) and say the BSIM unified flicker model was
+# fitted to the median of measured dies. No noise level, no thermal-noise
+# figure and no Pelgrom coefficient is printed anywhere in docs/ (searched
+# every .rst, .md and .csv for flicker, noise, pelgrom). So the noise checks
+# are derived, and the level is a gap.
+#
+# Mismatch model (pinned tree gf180mcu_fd_pr b6866b82, models/ngspice/).
+# design.spice line 63 sets `.param sw_stat_mismatch=0` (default: no mismatch);
+# line 62-63 context: sw_stat_global (process variation) is separate and is not
+# used here. `.lib typical` (sm141064.spice line 105) includes `.lib fets_mm`
+# (line 134), whose X-prefix subcircuits (line 46930 ff.) wrap the BSIM4 card:
+#   delvto = agauss(0,var_vth,1)*sw_stat_mismatch    (line 46943)
+#   mulu0  = 1 - agauss(0,var_k,1)*sw_stat_mismatch
+#   var_vth = 0.7071*par_vth*1e-6/sqrt((l-par_l)*par*(w-par_w))   (lines 46936-46941)
+# Devices: nfet_03v3, pfet_03v3, nfet_05v0, nfet_06v0, pfet_05v0, pfet_06v0
+# (par_vth, par_k: lines 46932-46933 for nfet_03v3). nfet_06v0_nvt and the
+# resistors, BJTs and MIM capacitors have their own statistical hooks or none;
+# checked here: nfet_03v3 only. An M-prefix card (as in example.sp) has NO
+# mismatch. The factor 0.7071 makes par_vth the pair-difference coefficient:
+# sigma(dVth of a pair) = par_vth/sqrt(leff*weff), sigma(Vth single) = 0.7071 x that.
+PAR_VTH = 7.148     # mV um, nfet_03v3 par_vth, line 46932
+PAR_K = 0.7008      # % um, nfet_03v3 par_k (0.007008 um), line 46933
+PAR_L = 0.15        # um, par_l, line 46934
+PAR_W = -0.1        # um, par_w, line 46935
+# Published (digitised) nFET coefficients, drawn W*L (see above).
+PUB_AVT = 8.9       # mV um, sigma(dVtlin)*sqrt(WL)
+PUB_AIDSAT = 0.58   # % um, sigma(dIdsat)*sqrt(WL)
+PUB_TOL = 0.15      # digitisation (5 %) plus the sampling error of 100 pairs (7 %)
+# Samples: N pairs per area, 2N single devices. Area is scaled with `par` at
+# fixed W/L = 10/1 um (par multiplies the width in the spread only; the nominal
+# device and its model bin stay the same), (W, L um, par, seed).
+MISMATCH_N = 100
+MISMATCH_AREAS = [(10.0, 1.0, 1, 11), (10.0, 1.0, 4, 12), (10.0, 1.0, 16, 13)]
+# Sampling error of a standard deviation from n samples: 1/sqrt(2(n-1)); the
+# area-invariance checks allow 3 of them (as sanity/sky130/reference.py).
+def mc_tol(n):
+    return 3.0 / (2.0 * (n - 1)) ** 0.5
+
+# Thermal and flicker noise: nFET 10/5 um, Vg 1.8 V, Vd 1.65 V, saturation
+# (ngspice .noise, 27 C). BSIM4 fnoimod=1 (flicker from noia, noib, noic, em,
+# ef = 0.95; noia = 3.2e41, noib = 1.2e20, noic = 6.0e8 at fnoicor = 0; lines
+# 763-835 and 675-678 of sm141064.spice) and tnoimod=0 (thermal from ntnoi = 1).
+EF = 0.95
+FLICKER_SLOPE_TOL = 0.01      # the term is exactly f^-ef; allowance is numerical
+# Long-channel theory (van der Ziel; Tsividis): gamma = 2/3 in strong inversion
+# saturation, rising to 1 as Vds -> 0; a 5 um channel is expected inside that range.
+GAMMA_LONG = (2.0 / 3.0, 1.0)
+# Nyquist: a conductor in equilibrium has channel noise current 4kT*gds; with
+# the drain at 0 V the ratio is exactly 1 (2 % allows for the 1 mV gds0 step).
+NYQUIST = (0.98, 1.02)
+NOISE_BIAS = dict(W=10, L=5, VG=1.8, VD=1.65)
+NOISE_BIAS_SHORT = dict(W=10, L=0.28, VG=1.8, VD=1.65)   # [MRG] noise-device geometry; information only
+
+# Noise-parameter scan of every MOS .model in sm141064.spice: 198 models
+# (nfet_03v3 96, pfet_03v3 96, nfet_06v0 2, nfet_06v0_nvt 2, pfet_06v0 2).
+# Every one sets noia (a parameter from `.lib noise_corner`, nonzero),
+# fnoimod = 1 and tnoimod = 0, so tnoia, tnoib, rnoia, rnoib (tnoimod = 1 only)
+# and kf, af are absent everywhere and unused. Absent where the nFETs carry it:
+# ntnoi and em in the 2 pfet_06v0 models (BSIM4 defaults ntnoi = 1, em = 4.1e7
+# equal the values the other models set).
+NOISE_SCAN_MODELS = 198
+NOISE_ABSENT_MODELS = 2
+
+GAPS = [
+    "noise level (flicker and thermal): GF publishes only the measurement conditions, no numbers; the model's level is printed as information only",
+    "published Pelgrom coefficients exist only as plotted fit lines (digitised above, nFET Vtlin and Idsat); no pFET, 5 V or 6 V values were digitised",
+    "mismatch of resistors, BJTs and MIM capacitors; mismatch and noise of the other MOS devices (checked here: nfet_03v3 only)",
+]
+MISMATCH_KNOWN = {
+    "avt": "the model's coefficient (par_vth 7.148 mV um, effective area (l-0.15)(w+0.1)) is about 20 % below the plotted nFET fit (8.9 mV um at drawn W*L); the plot's simulated points scatter about its line",
+    "aidsat": "the model gives about 0.8 %um (Vth mismatch plus par_k mobility mismatch) against the plotted 0.58 %um; not traced",
+}
