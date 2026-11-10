@@ -9,7 +9,34 @@
 | Used here | `asap5PDK_r0p4/models/hspice/allvt_cgp44_210623a/nwfet/*_210623a.pm`: BSIM-CMG 107 cards for SRAM/RVT/LVT/SLVT n- and p-FETs in TT/FF/SS/FS/SF. Adapted for ngspice as recorded in `ngspice/ADAPTATIONS.md`, without changing any result. |
 
 Not fetched: the Cadence libraries, the standard-cell views, the journal
-paper in `docs/`, and the Calibre decks (not yet released upstream).
+paper in `docs/` (read once to transcribe the interconnect table below; its
+SHA-256 is recorded in `sanity/asap5/reference.py`), and the Calibre decks
+(not yet released upstream).
+
+## Interconnect
+
+Bootstrap installs, next to the models in `<prefix>/asap5/ngspice/`:
+
+- `interconnect.csv`: per layer (M1-M12, V1-V12), one row per quantity with
+  its status (`published`, `derived` or `gap`) and source. Width and pitch
+  are from the paper's Table 5; spacing is pitch - width; thickness (metal)
+  and height (via) are 2 x width from the stated 2:1 aspect ratio (section
+  5.1). V1-V3 list "21/13" in the table; the 13 nm width the text gives is
+  used. **Sheet resistance, its temperature coefficient, via resistance and
+  capacitance per length are gaps**: the paper only plots line resistivity
+  (Fig. 8) and the Calibre decks are not released. They are not estimated.
+  If you have them from a source you may use, pass them to the ladder
+  yourself.
+- `interconnect.inc`: the published and derived geometry as
+  `.param asap5_<layer>_<w|s|t|p|h>` (m1_w, m1_s, v1_w, ...).
+- `wire.inc`: `wire`, `wire1` ... `wire64`, an N-segment pi ladder:
+  `X1 a b wire16 l=100u w={asap5_m2_w} rsh=<ohm/sq> cpl=<F/m>`. R = rsh*l/w
+  and C = cpl*l. `rsh` and `cpl` have no default, so a deck cannot pick up
+  a made-up wire by accident. The far-end Elmore delay of an open wire is
+  R*C/2 for any segment count.
+
+Nothing here adapts upstream files, so `ngspice/ADAPTATIONS.md` has no
+hashed entry; the table is transcribed from the paper.
 
 Please cite the PDK when you publish results that use it:
 

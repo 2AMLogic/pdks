@@ -9,7 +9,7 @@ results are checked against each foundry's or author's published values.
 | `--pdk` | Process | Models | Fetched | Sanity checks | Mismatch (Monte Carlo) | Noise |
 |---|---|---|---|---|---|---|
 | `asap7` | ASAP7 r1p7: 7 nm predictive FinFET (ASU / Arm) | BSIM-CMG 107, compiled to OSDI | 9 MB | 121/121 against the PDK paper (73 device, 48 interconnect) | not yet (#37) | not yet (#37) |
-| `asap5` | ASAP5 r0p4: 5 nm predictive gate-all-around nanowire FET (ASU) | BSIM-CMG 107, compiled to OSDI | 0.3 MB | 47/47 against the PDK paper, plus 1 known deviation | not yet (#37) | not yet (#37) |
+| `asap5` | ASAP5 r0p4: 5 nm predictive gate-all-around nanowire FET (ASU) | BSIM-CMG 107, compiled to OSDI | 0.3 MB | 111/111 against the PDK paper (47 device, 64 interconnect), plus 1 known deviation | not yet (#37) | not yet (#37) |
 | `sky130` | SkyWater SKY130 (`sky130A`; `sky130B`'s ngspice libraries are identical in this release) | BSIM4, built in | 21 MB | 61/61 against SkyWater's e-test windows, device tables (continuous models) and corner tables, and the derived mismatch and noise checks below, plus 8 known deviations | `mc_mm_switch` via the `*_mm` corners; `mismatch.sp` example; Pelgrom area scaling checked (derived; SkyWater publishes no coefficient) | `noise.sp` example; flicker exponent and thermal noise checked (no published level: gap) |
 | `gf180mcu` | GlobalFoundries GF180MCU | BSIM4, built in | 1.4 MB | 54/54 against GF's slow/typical/fast EP targets and spec limits, incl. passives and their temperature coefficients, plus 1 known deviation | not yet (#37) | not yet (#37) |
 | `ihp-sg13g2` | IHP SG13G2 SiGe BiCMOS | PSP 103 (OSDI), VBIC HBT | 3 MB | 83/83 against IHP's process spec (1.2 V and 3.3 V MOS, corners, resistors and MIM with their temperature coefficients, the HBT) and IHP's measured silicon over temperature, plus 7 known deviations | not yet (#37) | not yet (#37) |
@@ -105,6 +105,12 @@ definition used is documented next to the reference values.
   - SS reads 0.6–0.9 mV/dec low; the paper doesn't state its definition.
   - nmos_sram's DIBL (22.1 vs 20.06) is a known deviation. The paper
     says its SRAM models came from an earlier calibration.
+  - Interconnect: the layer table (`interconnect.csv`) is checked against
+    the paper's Table 5 (width, pitch; spacing and thickness derived from
+    them and the stated 2:1 aspect ratio), and the `wire.inc` RC ladder
+    against the closed-form Elmore delay. Sheet resistance, via
+    resistance and capacitance per length are not published as numbers,
+    so they are explicit gaps, not estimates.
 - **SKY130.** Vt, Idsat and leakage of the 1.8 V FETs (standard, plus
   the LVT nFET and LVT/HVT pFETs), against SkyWater's e-test MIN–MAX
   windows ("Device Details" tables):
