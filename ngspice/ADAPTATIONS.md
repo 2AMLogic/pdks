@@ -37,6 +37,10 @@ edits, none of the Berkeley source.
 | B1 | Prefix 26 parameters with `(*type="instance"*)`: `L D TFIN FPITCH NF NFIN NGCON ASEO ADEO PSEO PDEO ASEJ ADEJ PSEJ PDEJ COVS COVD CGSP CGDP CDSP NRS NRD LRSD DTEMP DELVTRAND U0MULT`. | OpenVAF makes a parameter an OSDI instance parameter only when it carries this attribute; untagged parameters are model-only. BSIM-CMG 107 predates the convention (110+ tag them through `IPRxx` macros), so without it `l=` and `nfin=` could not be set per device. The list is the set Xyce marks as instance parameters in its BSIM-CMG 107 port, plus NF (finger count) and DTEMP (device temperature offset), which are per-device by nature. Values and ranges are unchanged. |
 | B2 | `EOTACC` lower bound `[0.1n:inf)` → `[1e-10:inf)`. | OpenVAF evaluates `0.1n` as `0.1 × 1e-9 = 1.0000000000000002e-10`, one ulp above `1e-10`. The ASAP7 cards set `eotacc = 1e-10`, which the bound allows. Without this edit, ngspice rejects it ("Parameter EOTACC is out of bounds") and aborts model setup. Writing the bound as the exact literal restores the intended inclusive limit. Fixing it here rather than nudging the card keeps the ASAP7 values untouched. (EOTACC is only used when `CAPMOD ≠ 0`; the ASAP7 cards use `capmod = 0`.) |
 
+ASAP7 interconnect (`pdks/asap7/interconnect.csv`, `asap7/wire.inc`) adapts
+no upstream file: the table is transcribed from the paper's Table 1, and
+`interconnect.inc` is generated from it by `setup.sh`. Nothing to hash.
+
 ## ASAP5 model cards (`asap5/adapt-models.sh`)
 
 Input: the 40 cards `models/hspice/allvt_cgp44_210623a/nwfet/<device>_<corner>_hc_nwfet_asap5_210623a.pm`

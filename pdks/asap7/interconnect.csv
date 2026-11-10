@@ -1,0 +1,97 @@
+layer,quantity,value,unit,status,source
+M1,width_min,18,nm,published,[MEJ16] Table 1 (Width/drawn: 18/18)
+M1,pitch,36,nm,published,[MEJ16] Table 1
+M1,spacing_min,18,nm,derived,pitch - width ([MEJ16] Table 1)
+M1,thickness,36,nm,derived,2 x width: [MEJ16] sec. 4.4 (metal and via aspect ratio 2:1)
+M1,rsheet,gap,ohm/sq,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M1,rsheet_tcr,gap,1/K,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M1,c_iso_per_um,gap,aF/um,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M1,c_pitch_per_um,gap,aF/um,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M2,width_min,18,nm,published,[MEJ16] Table 1 (Width/drawn: 18/18)
+M2,pitch,36,nm,published,[MEJ16] Table 1
+M2,spacing_min,18,nm,derived,pitch - width ([MEJ16] Table 1)
+M2,thickness,36,nm,derived,2 x width: [MEJ16] sec. 4.4 (metal and via aspect ratio 2:1)
+M2,rsheet,gap,ohm/sq,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M2,rsheet_tcr,gap,1/K,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M2,c_iso_per_um,gap,aF/um,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M2,c_pitch_per_um,gap,aF/um,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M3,width_min,18,nm,published,[MEJ16] Table 1 (Width/drawn: 18/18)
+M3,pitch,36,nm,published,[MEJ16] Table 1
+M3,spacing_min,18,nm,derived,pitch - width ([MEJ16] Table 1)
+M3,thickness,36,nm,derived,2 x width: [MEJ16] sec. 4.4 (metal and via aspect ratio 2:1)
+M3,rsheet,gap,ohm/sq,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M3,rsheet_tcr,gap,1/K,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M3,c_iso_per_um,gap,aF/um,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M3,c_pitch_per_um,gap,aF/um,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M4,width_min,24,nm,published,[MEJ16] Table 1 (Width/drawn: 24/24)
+M4,pitch,48,nm,published,[MEJ16] Table 1
+M4,spacing_min,24,nm,derived,pitch - width ([MEJ16] Table 1)
+M4,thickness,48,nm,derived,2 x width: [MEJ16] sec. 4.4 (metal and via aspect ratio 2:1)
+M4,rsheet,gap,ohm/sq,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M4,rsheet_tcr,gap,1/K,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M4,c_iso_per_um,gap,aF/um,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M4,c_pitch_per_um,gap,aF/um,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M5,width_min,24,nm,published,[MEJ16] Table 1 (Width/drawn: 24/24)
+M5,pitch,48,nm,published,[MEJ16] Table 1
+M5,spacing_min,24,nm,derived,pitch - width ([MEJ16] Table 1)
+M5,thickness,48,nm,derived,2 x width: [MEJ16] sec. 4.4 (metal and via aspect ratio 2:1)
+M5,rsheet,gap,ohm/sq,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M5,rsheet_tcr,gap,1/K,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M5,c_iso_per_um,gap,aF/um,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M5,c_pitch_per_um,gap,aF/um,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M6,width_min,32,nm,published,[MEJ16] Table 1 (Width/drawn: 32/32)
+M6,pitch,64,nm,published,[MEJ16] Table 1
+M6,spacing_min,32,nm,derived,pitch - width ([MEJ16] Table 1)
+M6,thickness,64,nm,derived,2 x width: [MEJ16] sec. 4.4 (metal and via aspect ratio 2:1)
+M6,rsheet,gap,ohm/sq,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M6,rsheet_tcr,gap,1/K,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M6,c_iso_per_um,gap,aF/um,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M6,c_pitch_per_um,gap,aF/um,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M7,width_min,32,nm,published,[MEJ16] Table 1 (Width/drawn: 32/32)
+M7,pitch,64,nm,published,[MEJ16] Table 1
+M7,spacing_min,32,nm,derived,pitch - width ([MEJ16] Table 1)
+M7,thickness,64,nm,derived,2 x width: [MEJ16] sec. 4.4 (metal and via aspect ratio 2:1)
+M7,rsheet,gap,ohm/sq,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M7,rsheet_tcr,gap,1/K,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M7,c_iso_per_um,gap,aF/um,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M7,c_pitch_per_um,gap,aF/um,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M8,width_min,40,nm,published,[MEJ16] Table 1 (Width/drawn: 40/40)
+M8,pitch,80,nm,published,[MEJ16] Table 1
+M8,spacing_min,40,nm,derived,pitch - width ([MEJ16] Table 1)
+M8,thickness,80,nm,derived,2 x width: [MEJ16] sec. 4.4 (metal and via aspect ratio 2:1)
+M8,rsheet,gap,ohm/sq,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M8,rsheet_tcr,gap,1/K,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M8,c_iso_per_um,gap,aF/um,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M8,c_pitch_per_um,gap,aF/um,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M9,width_min,40,nm,published,[MEJ16] Table 1 (Width/drawn: 40/40)
+M9,pitch,80,nm,published,[MEJ16] Table 1
+M9,spacing_min,40,nm,derived,pitch - width ([MEJ16] Table 1)
+M9,thickness,80,nm,derived,2 x width: [MEJ16] sec. 4.4 (metal and via aspect ratio 2:1)
+M9,rsheet,gap,ohm/sq,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M9,rsheet_tcr,gap,1/K,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M9,c_iso_per_um,gap,aF/um,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+M9,c_pitch_per_um,gap,aF/um,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+V1,width_min,18,nm,published,[MEJ16] Table 1 (VIA width/drawn)
+V1,height,36,nm,derived,2 x width: [MEJ16] sec. 4.4 (metal and via aspect ratio 2:1)
+V1,r_via,gap,ohm,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+V2,width_min,18,nm,published,[MEJ16] Table 1 (VIA width/drawn)
+V2,height,36,nm,derived,2 x width: [MEJ16] sec. 4.4 (metal and via aspect ratio 2:1)
+V2,r_via,gap,ohm,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+V3,width_min,18,nm,published,[MEJ16] Table 1 (VIA width/drawn)
+V3,height,36,nm,derived,2 x width: [MEJ16] sec. 4.4 (metal and via aspect ratio 2:1)
+V3,r_via,gap,ohm,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+V4,width_min,24,nm,published,[MEJ16] Table 1 (VIA width/drawn)
+V4,height,48,nm,derived,2 x width: [MEJ16] sec. 4.4 (metal and via aspect ratio 2:1)
+V4,r_via,gap,ohm,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+V5,width_min,24,nm,published,[MEJ16] Table 1 (VIA width/drawn)
+V5,height,48,nm,derived,2 x width: [MEJ16] sec. 4.4 (metal and via aspect ratio 2:1)
+V5,r_via,gap,ohm,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+V6,width_min,32,nm,published,[MEJ16] Table 1 (VIA width/drawn)
+V6,height,64,nm,derived,2 x width: [MEJ16] sec. 4.4 (metal and via aspect ratio 2:1)
+V6,r_via,gap,ohm,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+V7,width_min,32,nm,published,[MEJ16] Table 1 (VIA width/drawn)
+V7,height,64,nm,derived,2 x width: [MEJ16] sec. 4.4 (metal and via aspect ratio 2:1)
+V7,r_via,gap,ohm,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
+V8,width_min,40,nm,published,[MEJ16] Table 1 (VIA width/drawn)
+V8,height,80,nm,derived,2 x width: [MEJ16] sec. 4.4 (metal and via aspect ratio 2:1)
+V8,r_via,gap,ohm,gap,not published in [MEJ16] or the DRM (docs/asap7_drm.pdf); the extraction (Calibre RCX) deck is distributed separately by ASU and is not fetched
