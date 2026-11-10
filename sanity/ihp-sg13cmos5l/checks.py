@@ -1,6 +1,7 @@
 """IHP SG13CMOS5L sanity checks: LV MOS against the SG13CMOS5L process
-specification (same rows and definitions as SG13G2's). Sources and
-definitions: sanity/ihp_spec.py. Run via sanity/run.py --pdk ihp-sg13cmos5l.
+specification (same rows and definitions as SG13G2's), plus the same derived
+mismatch and noise checks of the nMOS model cards. Sources and definitions:
+sanity/ihp_spec.py. Run via sanity/run.py --pdk ihp-sg13cmos5l.
 """
 
 import os

@@ -47,6 +47,42 @@ resistor rows and no MIM):
               within 5 % and TC2 within 10 % of target.
   A.k  CMIMA: capacitance per area at V = 0, 100 kHz, 20 x 20 um.
 
+Mismatch and noise (derived from the model cards; IHP publishes no value):
+  Neither specification publishes a MOS Pelgrom coefficient or a noise level.
+  [G2] Attachment A.am defines the "MOS Transistor Matching Coefficient k"
+  (least-squares fit of s(dVT) against A^-0.5, Vds = 0.1 V, Id = 2 uA W/L) and
+  A.al the HBT one, but no table row of [G2] section 2 or 3 carries a value
+  for either; [C5L] has no MOS or HBT matching row at all (only resistors,
+  A.ac). No spec row mentions flicker or thermal noise. These quantities are
+  therefore gaps, not estimates; the checks are derived from the model files
+  of the pinned trees (ihp-sg13g2/libs.tech/ngspice/models/), cited by line:
+    sg13g2_moslv_mismatch.lib 20-23 (n), 25-28 (p); sg13g2_moshv_mismatch.lib
+    20-23, 25-28: delvto_mm and factuo_mm (V um, um) and dw_mm, dl_mm (m).
+    sg13g2_mos{lv,hv}_mod_mismatch.lib, subckt sg13_{lv,hv}_nmos (line 66):
+    delvto = agauss(0, delvto_mm/sqrt(m*l*w*1e12), mm_ok), factuo likewise
+    about 1, w and l = agauss(w, dw_mm, mm_ok), agauss(l, dl_mm, mm_ok).
+    cornerMOS{lv,hv}.lib, .LIB mos_tt_mismatch includes both files.
+    sg13g2_mos{lv,hv}_parm.lib, the PSP cards: fnto (thermal), nfalw/nfblw/
+    nfclw/efo (flicker), lines 124-127 (LV nMOS), 405-410 (LV pMOS, HV pMOS),
+    125-127 (HV nMOS).
+  SG13CMOS5L links to the same files in its own pinned tree. The mismatch
+  and parm values are identical to SG13G2's; one difference matters: the
+  default of the instance parameter mm_ok is 1 in SG13G2's
+  sg13g2_mos{lv,hv}_mod_mismatch.lib and 0 in SG13CMOS5L's (lines 67, 156),
+  so the decks pass mm_ok explicitly.
+  Definitions (ngspice/ihp/mismatch.sp.in, noise.sp.in):
+    Vt (mismatch)  Vgs at Id = 2 uA * W/L (m multiplies both), Vds = 0.05 V
+                   (LV) / 0.1 V (HV), linear interpolation on a 2 mV sweep.
+    beta           peak gm / Vds, relative spread.
+    sigma(dVt)     standard deviation of Vt1 - Vt2 for the two devices of one
+                   Monte Carlo sample.
+    gamma          S_id = 4kT*gamma*gm, S_id from the channel thermal source
+                   (_idid) at 1 kHz, gm from a +-2 mV gate step.
+    Nyquist ratio  S_id / (4kT*gds) with the drain at 0 V; gds from +-1 mV.
+    flicker slope  d ln S / d ln f of the _flicker source between 1 and 100 Hz.
+  Sampling error: the relative standard error of a standard deviation from n
+  samples is 1/sqrt(2(n-1)); tolerances are 3 of those.
+
 Interconnect (pdks/<pdk>/interconnect.csv, installed as
 <prefix>/<pdk>/ngspice/interconnect.csv; `interconnect_checks` below):
   [G2LR]  SG13G2 Layout Rules, Rev. 0.4 (2024-12-19),
@@ -404,6 +440,195 @@ def hbt_checks(rep, ng, work, models, spiceinit):
 
 
 # ---------------------------------------------------------------------------
+# Mismatch (Monte Carlo) and noise: see the module docstring.
+MISMATCH_DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "ngspice", "ihp", "mismatch.sp.in")
+NOISE_DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "ngspice", "ihp", "noise.sp.in")
+MM_CLASSES = {
+    "lv": dict(dev="sg13_lv_nmos", vdd=1.2, vds=0.05, tag="LV"),
+    "hv": dict(dev="sg13_hv_nmos", vdd=3.3, vds=0.1, tag="HV"),
+}
+MM_AREAS = [(2.0, 2.0, 11), (4.0, 4.0, 12), (8.0, 8.0, 13)]   # (W, L um, seed); W*L = 4, 16, 64 um^2
+MM_N = 200            # pairs per area; 2N single devices
+# noise bias: 10/10 um, strong inversion, saturation (Vgs - Vt about 0.5 V LV, 0.8 V HV);
+# 10/L_min is information only.
+NOISE_BIAS = {"lv": dict(W=10, L=10, VG=0.7, VD=1.2), "hv": dict(W=10, L=10, VG=1.5, VD=3.3)}
+NOISE_BIAS_SHORT = {"lv": dict(W=10, L=0.13, VG=0.7, VD=1.2), "hv": dict(W=10, L=0.45, VG=1.5, VD=3.3)}
+# Long-channel theory (van der Ziel; Tsividis, "Operation and Modeling of the MOS
+# Transistor"): gamma = 2/3 in strong-inversion saturation, rising to 1 as Vds -> 0.
+GAMMA_LONG = (2.0 / 3.0, 1.0)
+# A conductor in equilibrium has S_id = 4kT*gds exactly; 2 % allows for the 1 mV
+# finite-difference gds.
+NYQUIST = (0.98, 1.02)
+NYQUIST_KNOWN = {
+    "lv": "the PSP 103 channel thermal source at Vds = 0 is 2.6 % above 4kT*gds at LV 10/10 um "
+          "(HV 10/10 um: 0.9 %); the cause was not traced",
+}
+FLICKER_SLOPE_TOL = 0.01       # the term is f^-efo; the allowance is numerical
+NOISE_SCAN_MODELS = 10         # PSP cards in sg13g2_moslv_parm.lib (6) and sg13g2_moshv_parm.lib (4)
+NOISE_KEYS = ("fnto", "nfalw", "nfblw", "nfclw", "efo")
+MM_GAPS = [
+    "Pelgrom coefficients AVT, ABeta of the MOS devices: neither process specification publishes a value "
+    "([G2] A.am defines the matching coefficient, no table row carries it; [C5L] has no MOS matching row); "
+    "the model's own delvto_mm / factuo_mm are used as a floor and as the expectation, never as a published value",
+    "flicker-noise level of the MOS devices: no published value; the model's level is printed as information only",
+    "published thermal-noise gamma: none; only the long-channel theory range is used",
+    "SG13G2 HBT mismatch and noise: [G2] A.al defines a matching coefficient and sg13g2_hbt_mod_mismatch.lib exists, "
+    "but no value is published; not exercised",
+    "pMOS, passives (resistors, MIM, MOS and varactor caps): mismatch libraries exist "
+    "(*_mod_mismatch.lib), outside this deck's scope; not exercised",
+    "excess thermal noise: fntexcl = 0 in every PSP card, so no length-dependent excess is modelled",
+]
+
+
+def _mm_param(models, lib, name):
+    """Value of '.param <name> = <number>' in a model file of the pinned tree."""
+    with open(os.path.join(models, lib)) as f:
+        m = re.search(r"(?im)^\.param\s+%s\s*=\s*([-0-9.e+]+)" % re.escape(name), f.read())
+    return float(m.group(1))
+
+
+def _mm_ok_default(models, lib):
+    with open(os.path.join(models, lib)) as f:
+        return int(re.search(r"mm_ok=(\d)", f.read()).group(1))
+
+
+def _mc_tol(n):
+    return 3.0 / (2.0 * (n - 1)) ** 0.5
+
+
+def _mismatch_run(ng, work, models, spiceinit, pdk, cls, name, w, l, n, mm, seed, m=1):
+    c = MM_CLASSES[cls]
+    deck = render(MISMATCH_DECK, work, name, PDK=pdk, CLASS=c["tag"], DECK=name + ".sp", MODELS_DIR=models,
+                  NGSPICE=ng, LIBTAG=cls, DEV=c["dev"], VDD=c["vdd"], VDS=c["vds"], W=w, L=l, M=m, N=n, MM=mm, SEED=seed)
+    return results(ngspice(ng, deck, cwd=work, spiceinit=spiceinit))
+
+
+def _noise_run(ng, work, models, spiceinit, pdk, cls, name, bias):
+    c = MM_CLASSES[cls]
+    deck = render(NOISE_DECK, work, name, PDK=pdk, CLASS=c["tag"], DECK=name + ".sp", MODELS_DIR=models,
+                  NGSPICE=ng, LIBTAG=cls, DEV=c["dev"], VGLO=bias["VG"] - 0.002, VGHI=bias["VG"] + 0.002, **bias)
+    return results(ngspice(ng, deck, cwd=work, spiceinit=spiceinit))
+
+
+def noise_scan(models):
+    """PSP cards in sg13g2_mos{lv,hv}_parm.lib: (count, cards missing any of
+    NOISE_KEYS, cards with nfalw = 0)."""
+    n = missing = zero = 0
+    for lib in ("sg13g2_moslv_parm.lib", "sg13g2_moshv_parm.lib"):
+        with open(os.path.join(models, lib)) as f:
+            text = f.read().replace("\n+", " ")
+        for blk in re.split(r"(?im)^\.model\s+", text)[1:]:
+            if not re.match(r"\S+\s+psp", blk, re.I):
+                continue
+            n += 1
+            vals = {k: re.search(r"(?i)(?<![a-z0-9_])%s\s*=\s*(\S+)" % k, blk) for k in NOISE_KEYS}
+            missing += any(v is None for v in vals.values())
+            zero += bool(vals["nfalw"]) and float(vals["nfalw"].group(1)) == 0
+    return n, missing, zero
+
+
+def mismatch_checks(rep, ng, work, models, spiceinit, pdk, cls):
+    c = MM_CLASSES[cls]
+    n = MM_N
+    p = "sg13g2_%s_nmos" % cls
+    lib = "sg13g2_mos%s_mismatch.lib" % cls
+    avt = _mm_param(models, lib, p + "_delvto_mm") * 1e3      # mV um
+    abeta = _mm_param(models, lib, p + "_factuo_mm") * 100    # % um
+    dw = _mm_param(models, lib, p + "_dw_mm") * 1e6           # um
+    dl = _mm_param(models, lib, p + "_dl_mm") * 1e6
+    print("\n%s nMOS %s mismatch (Monte Carlo, mos_tt_mismatch, mm_ok = 1), %d pairs per area; model: "
+          "delvto_mm %.3g mV um, factuo_mm %.3g %%um, dw %.0f nm, dl %.0f nm\n"
+          % (pdk, c["dev"], n, avt, abeta, dw * 1e3, dl * 1e3))
+    data = {}
+    t_s, t_d = _mc_tol(2 * n), _mc_tol(n)
+    for w, l, seed in MM_AREAS:
+        tag = "%s %g/%g" % (c["tag"], w, l)
+        r = _mismatch_run(ng, work, models, spiceinit, pdk, cls, "mm_%s_%g_%g" % (cls, w, l), w, l, n, 1, seed)
+        data["mismatch " + tag] = r
+        area = w * l
+        rep.check("AVT(Vt)*sqrt(A) >= delvto_mm %s" % tag, "bound", r["avt_mVum"], avt * (1 - t_s), 1e9, "mV um", 1,
+                  "(model %.3g mV um; measured/model %.2f)" % (avt, r["avt_mVum"] / avt))
+        rep.check("sigma(dVt)/sigma(Vt) %s" % tag, "derived", r["sigma_dvt_V"] / r["sigma_vt_V"],
+                  math.sqrt(2) * (1 - t_s - t_d), math.sqrt(2) * (1 + t_s + t_d), "", 1, "(independent devices: sqrt 2)")
+        # beta ~ W/L: relative variance = factuo term + (dw/W)^2 + (dl/L)^2
+        exp = math.sqrt((abeta / 100) ** 2 / area + (dw / w) ** 2 + (dl / l) ** 2)
+        rep.check("sigma(beta) %s" % tag, "derived", r["sigma_beta_rel"], exp * (1 - t_s), exp * (1 + t_s), "%", 100,
+                  "(sqrt((factuo_mm)^2/A + (dw/W)^2 + (dl/L)^2) = %.3g %%, +-%.0f %%)" % (exp * 100, 100 * t_s))
+    vals = [data["mismatch %s %g/%g" % (c["tag"], w, l)]["avt_mVum"] for w, l, _ in MM_AREAS]
+    mean = sum(vals) / len(vals)
+    for (w, l, _), v in zip(MM_AREAS, vals):
+        rep.check("AVT(Vt)*sqrt(A) area scaling %s %g/%g" % (c["tag"], w, l), "derived", v, mean * (1 - t_s), mean * (1 + t_s),
+                  "mV um", 1, "(1/sqrt(WL) scaling; mean %.3g, +-%.0f %%)" % (mean, 100 * t_s))
+    off = _mismatch_run(ng, work, models, spiceinit, pdk, cls, "mm_off_" + cls, 4, 4, 3, 0, 1)
+    rep.check("mismatch off (mm_ok = 0) %s: sigma(Vt)" % c["tag"], "derived", off["sigma_vt_V"], 0, 1e-6, "V", 1,
+              "(numerical floor)")
+    rep.check("mismatch off (mm_ok = 0) %s: sigma(dVt)" % c["tag"], "derived", off["sigma_dvt_V"], 0, 1e-9, "V", 1)
+    a = _mismatch_run(ng, work, models, spiceinit, pdk, cls, "mm_rep1_" + cls, 4, 4, 3, 1, 5)
+    b = _mismatch_run(ng, work, models, spiceinit, pdk, cls, "mm_rep2_" + cls, 4, 4, 3, 1, 5)
+    rep.check("same seed, same result %s" % c["tag"], "derived",
+              abs(a["sigma_vt_V"] - b["sigma_vt_V"]) + abs(a["sigma_dvt_V"] - b["sigma_dvt_V"]), 0, 0, "V", 1,
+              "(setseed + reset)")
+    return data
+
+
+def noise_checks(rep, ng, work, models, spiceinit, pdk, cls):
+    c = MM_CLASSES[cls]
+    bias = NOISE_BIAS[cls]
+    efo = _mm_param_model(models, "sg13g2_mos%s_parm.lib" % cls, "sg13g2_%s_nmos_psp" % cls, "efo")
+    print("\n%s nMOS %s noise, %g/%g um, Vg %g V, Vd %g V (ngspice .noise, 27 C)\n"
+          % (pdk, c["dev"], bias["W"], bias["L"], bias["VG"], bias["VD"]))
+    r = _noise_run(ng, work, models, spiceinit, pdk, cls, "noise_" + cls, bias)
+    data = {"noise " + cls: r}
+    lo, hi = GAMMA_LONG
+    rep.check("%s thermal gamma (4kT*gamma*gm) 2/3..1" % c["tag"], "derived", r["gamma_thermal"], lo, hi, "", 1,
+              "(long-channel theory)")
+    lo, hi = NYQUIST
+    name = "%s Nyquist S_id/(4kT*gds) at Vds=0" % c["tag"]
+    if cls in NYQUIST_KNOWN:
+        rep.known(name, r["nyquist_ratio"], lo, hi, "", 1, NYQUIST_KNOWN[cls])
+    else:
+        rep.check(name, "derived", r["nyquist_ratio"], lo, hi, "", 1)
+    rep.check("%s flicker slope 1..100 Hz = -efo" % c["tag"], "derived", r["flicker_slope"],
+              -efo - FLICKER_SLOPE_TOL, -efo + FLICKER_SLOPE_TOL, "", 1, "(model efo %.3g)" % efo)
+    rep.info("%s flicker level at 1 Hz (input, V^2/Hz)" % c["tag"], r["sv_flicker_1Hz_V2"], "V2/Hz", 1,
+             "(no published value: gap)")
+    sb = NOISE_BIAS_SHORT[cls]
+    short = _noise_run(ng, work, models, spiceinit, pdk, cls, "noise_short_" + cls, sb)
+    data["noise short " + cls] = short
+    rep.info("%s thermal gamma %g/%g" % (c["tag"], sb["W"], sb["L"]), short["gamma_thermal"], "", 1,
+             "(information; no long-channel claim)")
+    return data
+
+
+def _mm_param_model(models, lib, model, key):
+    """Value of a PSP card parameter in a pinned parm library."""
+    with open(os.path.join(models, lib)) as f:
+        text = f.read().replace("\n+", " ")
+    blk = re.split(r"(?im)^\.model\s+", text)
+    blk = next(b for b in blk[1:] if b.split()[0] == model)
+    return float(re.search(r"(?i)(?<![a-z0-9_])%s\s*=\s*([-0-9.e+]+)" % key, blk).group(1))
+
+
+def mismatch_and_noise(rep, ng, work, models, spiceinit, pdk):
+    data = {}
+    mm_def = _mm_ok_default(models, "sg13g2_moslv_mod_mismatch.lib")
+    rep.info("mm_ok default in sg13g2_mos{lv,hv}_mod_mismatch.lib", mm_def, "", 1, "(decks pass mm_ok explicitly)")
+    for cls in ("lv", "hv"):
+        data["mismatch_" + cls] = mismatch_checks(rep, ng, work, models, spiceinit, pdk, cls)
+        data["noise_" + cls] = noise_checks(rep, ng, work, models, spiceinit, pdk, cls)
+    nm, miss, zero = noise_scan(models)
+    rep.check("noise scan: PSP cards in sg13g2_mos{lv,hv}_parm.lib", "derived", float(nm), NOISE_SCAN_MODELS,
+              NOISE_SCAN_MODELS, "", 1)
+    rep.check("noise scan: cards missing fnto/nfalw/nfblw/nfclw/efo", "derived", float(miss), 0, 0, "", 1,
+              "(%d cards)" % nm)
+    rep.check("noise scan: cards with nfalw = 0", "bound", float(zero), 0, 0, "", 1)
+    print("\nGaps (not estimated):")
+    for g in MM_GAPS:
+        print("  - " + g)
+    return data
+
+
+# ---------------------------------------------------------------------------
 # Interconnect. Metal layer: width, spacing (nm), thickness (nm), sheet
 # resistance (ohm/sq), its TC1 (1/K), area capacitance to the next layer up
 # (aF/um2, None where no layer is above or the spec prints none). All
@@ -525,6 +750,7 @@ def run(prefix, pdk, models, hbt, meas_src=None, beol=None):
         if hbt:
             print()
             data["hbt"] = hbt_checks(rep, ng, work, models, spiceinit)
+        data["mismatch_noise"] = mismatch_and_noise(rep, ng, work, models, spiceinit, pdk)
         if beol:
             print("\nInterconnect: layer table vs the process specification and layout rules\n")
             data["interconnect"] = interconnect_checks(rep, ng, work, os.path.join(prefix, pdk, "ngspice"), beol)
