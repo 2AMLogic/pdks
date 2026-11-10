@@ -59,6 +59,10 @@ Devices are instantiated with `nfin=2`: the paper's "fin" is a stack of two
 nanowires, and BSIM-CMG's cylindrical geometry (`geomod = 3`) counts
 cylinders. `l` is left at the cards' 14 nm.
 
+ASAP5 interconnect (`pdks/asap5/interconnect.csv`, `asap5/wire.inc`) adapts
+no upstream file: the table is transcribed from the paper's Table 5, and
+`interconnect.inc` is generated from it by `setup.sh`. Nothing to hash.
+
 ## macOS: OpenVAF-reloaded signature
 
 The macOS release binaries of OpenVAF-reloaded v24.0.2mob carry
