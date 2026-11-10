@@ -19,3 +19,19 @@ Caveats:
   Instantiating CSIO fails; the other models load fine.
 - **RR resistor unchecked.** It reads about 36 % below its table value
   for a reason we haven't identified, so it isn't checked.
+
+## Mismatch and noise
+
+There is no mismatch model and no published noise model. The reference
+manual's Table I-1-2 (p. 6) lists "Noise model" and "Matching" as not
+provided (無), and the model cards carry no statistical terms (the only
+variation hooks are the global `vthMN`/`vthMP`/`vthMNE`/`vthMPE`
+shifts, which are 0 and move every instance alike). So there is no
+`mismatch.sp` and no Pelgrom check.
+
+`noise.sp` shows what the BSIM3v3 defaults give, since the four MOS cards set
+no noise parameter: `noimod=1` with `kf=0` means **zero flicker noise**, and the
+thermal noise is `2/3*4kT*(gm+gmbs+gds)` (gamma 0.94 of the 30/10 µm NMOS,
+theory 2/3 to 1; the Nyquist ratio at Vds = 0 is 0.667, a known deviation).
+None of it is a Tokai Rika value: do not use it for noise budgets.
+`sanity/tr1um/reference.py` lists the gaps.
