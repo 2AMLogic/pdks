@@ -1,11 +1,12 @@
-* Wire ladder vs the closed-form Elmore delay, IHP SG13G2 and SG13CMOS5L (template; filled in by sanity/ihp_spec.py)
+* Wire ladder vs the closed-form Elmore delay (template; filled in by sanity/common.py elmore())
 *
 * An ideal unit step drives source resistance RS into a wire of @N@ pi
 * segments (wire.inc), loaded by CL. The simulated Elmore delay is the first
 * moment of the step response, integral of (vin - vout) dt over the whole
 * settling; the closed form is
 *     RS (C + CL) + R (C / 2 + CL),  R = rsh l / w,  C = cpl l.
-* RSH is the published Metal2 sheet resistance read from interconnect.csv; CPL is a test input (IHP publishes no per-length capacitance), see ihp_spec.py.
+* RSH and CPL are test inputs stated by the calling PDK's reference constants
+* (sanity/<pdk>/reference.py or sanity/ihp_spec.py), not process values unless it says so there.
 .include @WIRE_INC@
 vin in 0 pulse(0 1 0 1p 1p 1 2)
 rs in a @RS@

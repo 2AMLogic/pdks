@@ -171,3 +171,19 @@ def mos_sweeps(ng, work, name, header, instance, pol, vdd, vlin, vaux, voff,
     ngspice(ng, deck, cwd=work, spiceinit=spiceinit)
     return {s: read_xy("%s.%s" % (out, s), pol)
             for s in ("vg_lin", "vg_aux", "vg_sat", "vg_off", "vd_full")}
+
+
+WIRE_DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks", "wire_elmore.sp")
+
+
+def elmore(ng, wire_inc, work, nseg, e, rsh, L, W, cpl, rs, cl):
+    """Simulated and closed-form Elmore delay of the wire.inc ladder with nseg
+    segments (sanity/decks/wire_elmore.sp). `e` holds the ngspice-notation
+    strings (l, w, cpl, rs, cl, tstop); rsh, L, W, cpl, rs, cl are the same
+    quantities as numbers, from the caller's reference constants. Closed form:
+    rs (C + cl) + R (C / 2 + cl), R = rsh L / W, C = cpl L."""
+    r = results(ngspice(ng, render(WIRE_DECK, work, "wire_elmore_%d" % nseg, WIRE_INC=wire_inc, N=nseg, L=e["l"],
+                                   W=e["w"], RSH=rsh, CPL=e["cpl"], RS=e["rs"], CL=e["cl"], TSTOP=e["tstop"])))
+    R = rsh * L / W
+    C = cpl * L
+    return r["elmore"], rs * (C + cl) + R * (C / 2 + cl)

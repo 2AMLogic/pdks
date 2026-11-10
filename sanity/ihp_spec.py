@@ -82,7 +82,7 @@ import re
 import csv
 import tempfile
 
-from common import Report, at, mos_sweeps, ngspice, render, results, tc_fit, vt_cc, vt_max_gm
+from common import Report, at, elmore, mos_sweeps, ngspice, render, results, tc_fit, vt_cc, vt_max_gm
 
 TEMP = 27
 VDD = 1.2
@@ -442,18 +442,6 @@ ELMORE = dict(l="1m", w="200n", cpl="0.2n", rs="100", cl="1f", tstop="2n")
 ELMORE_L, ELMORE_W, ELMORE_CPL, ELMORE_RS, ELMORE_CL = 1e-3, 200e-9, 0.2e-9, 100.0, 1e-15
 ELMORE_SEGMENTS = (1, 4, 64)
 ELMORE_TOL = 1e-3  # trapezoidal integral on a 2 ps step, ~30 time constants
-WIRE_DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks", "wire_elmore.sp")
-
-
-def elmore(ng, wire_inc, work, nseg, rsh):
-    e = ELMORE
-    r = results(ngspice(ng, render(WIRE_DECK, work, "wire_elmore_%d" % nseg, WIRE_INC=wire_inc, N=nseg, L=e["l"],
-                                   W=e["w"], RSH=rsh, CPL=e["cpl"], RS=e["rs"], CL=e["cl"], TSTOP=e["tstop"])))
-    R = rsh * ELMORE_L / ELMORE_W
-    C = ELMORE_CPL * ELMORE_L
-    return r["elmore"], ELMORE_RS * (C + ELMORE_CL) + R * (C / 2 + ELMORE_CL)
-
-
 def interconnect_checks(rep, ng, work, ngdir, pdk_beol):
     table, wire_inc = os.path.join(ngdir, "interconnect.csv"), os.path.join(ngdir, "wire.inc")
     inc = os.path.join(ngdir, "interconnect.inc")
@@ -504,7 +492,7 @@ def interconnect_checks(rep, ng, work, ngdir, pdk_beol):
     print()
     rsh = num("M2", "rsheet")
     for n in ELMORE_SEGMENTS:
-        sim, closed = elmore(ng, wire_inc, work, n, rsh)
+        sim, closed = elmore(ng, wire_inc, work, n, ELMORE, rsh, ELMORE_L, ELMORE_W, ELMORE_CPL, ELMORE_RS, ELMORE_CL)
         data["wire_elmore_%d" % n] = dict(simulated=sim, closed_form=closed)
         rep.check("wire ladder Elmore delay, %d segment%s" % (n, "" if n == 1 else "s"), "derived", sim,
                   closed * (1 - ELMORE_TOL), closed * (1 + ELMORE_TOL), "ps", 1e12,
