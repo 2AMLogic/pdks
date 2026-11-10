@@ -10,9 +10,8 @@ import tempfile
 import re
 
 import reference as ref
-from common import Report, at, mos_sweeps, ngspice, render, require_wire_w, results, ss_min, tc_fit, vt_max_gm
+from common import Report, at, elmore, mos_sweeps, ngspice, render, require_wire_w, results, ss_min, tc_fit, vt_max_gm
 
-WIRE_DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks", "wire_elmore.sp")
 DECKS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "ngspice", "gf180mcu")
 PASSIVE_DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks", "passive_t.sp")
 
@@ -52,17 +51,6 @@ def passives(rep, ng, work, models, data):
                       -1e9 if lo is None else lo, hi, "ppm/K", 1, "(typ %g)" % typ)
 
 
-def elmore(ng, wire_inc, work, nseg, rsh, w):
-    e = ref.ELMORE
-    r = results(ngspice(ng, render(WIRE_DECK, work, "wire_elmore_%d" % nseg,
-                                   WIRE_INC=wire_inc, N=nseg, L=e["l"], W=w, RSH=rsh, CPL=e["cpl"],
-                                   RS=e["rs"], CL=e["cl"], TSTOP=e["tstop"])))
-    R = rsh * ref.ELMORE_L / w
-    C = ref.ELMORE_CPL * ref.ELMORE_L
-    closed = ref.ELMORE_RS * (C + ref.ELMORE_CL) + R * (C / 2 + ref.ELMORE_CL)
-    return r["elmore"], closed
-
-
 def interconnect(rep, ngdir, ng, work, data):
     table = os.path.join(ngdir, "interconnect.csv")
     wire_inc = os.path.join(ngdir, "wire.inc")
@@ -100,7 +88,9 @@ def interconnect(rep, ngdir, ng, work, data):
     rsh, w = num(lay, "rsheet"), num(lay, "width_min") * 1e-9
     require_wire_w(ng, wire_inc, work)
     for n in ref.ELMORE_SEGMENTS:
-        sim, closed = elmore(ng, wire_inc, work, n, rsh, w)
+        e = dict(ref.ELMORE, w=w)
+        sim, closed = elmore(ng, wire_inc, work, n, e, rsh, ref.ELMORE_L, w, ref.ELMORE_CPL,
+                             ref.ELMORE_RS, ref.ELMORE_CL)
         data["wire_elmore_%d" % n] = dict(simulated=sim, closed_form=closed)
         rep.check("wire ladder Elmore delay, %d segment%s" % (n, "" if n == 1 else "s"), "derived", sim,
                   closed * (1 - ref.ELMORE_TOL), closed * (1 + ref.ELMORE_TOL), "ps", 1e12,
