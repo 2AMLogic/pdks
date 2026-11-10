@@ -3,11 +3,15 @@ nanowire FETs against Vashishtha and Clark 2022, Tables 8-9. Sources,
 definitions and tolerances: reference.py. Run via sanity/run.py --pdk asap5.
 """
 
+import glob
 import os
 import tempfile
 
+import predictive
 import reference as ref
 from common import Report, at, mos_sweeps, vt_cc
+
+NGSPICE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "ngspice", "asap5")
 
 
 def run(prefix, ng):
@@ -68,4 +72,8 @@ def run(prefix, ng):
             rep.check("%s Idsat ss<%s<tt<%s<ff" % (dev, slow, fast), "derived",
                       float(all(a < b for a, b in zip(order, order[1:]))), 1, 1, "", 1,
                       "(%s uA)" % " / ".join("%.1f" % v for v in order))
+
+        cards = sorted(glob.glob(os.path.join(prefix, "asap5", "asap5", ref.CARD_DIR, "*_210623a.pm")))
+        predictive.checks(rep, data, ref, cards, os.path.join(prefix, "asap5", "ngspice"),
+                          os.path.join(NGSPICE_DIR, "noise.sp.in"), osdi, ng, work)
     return rep.summary(), data, rep.rows

@@ -8,8 +8,8 @@ results are checked against each foundry's or author's published values.
 
 | `--pdk` | Process | Models | Fetched | Sanity checks | Mismatch (Monte Carlo) | Noise |
 |---|---|---|---|---|---|---|
-| `asap7` | ASAP7 r1p7: 7 nm predictive FinFET (ASU / Arm) | BSIM-CMG 107, compiled to OSDI | 9 MB | 121/121 against the PDK paper (73 device, 48 interconnect) | not yet (#37) | not yet (#37) |
-| `asap5` | ASAP5 r0p4: 5 nm predictive gate-all-around nanowire FET (ASU) | BSIM-CMG 107, compiled to OSDI | 0.3 MB | 47/47 against the PDK paper, plus 1 known deviation | not yet (#37) | not yet (#37) |
+| `asap7` | ASAP7 r1p7: 7 nm predictive FinFET (ASU / Arm) | BSIM-CMG 107, compiled to OSDI | 9 MB | 126/126: 73 device checks against the PDK paper, 48 interconnect, 5 derived card and noise checks | not modelled: predictive, cards carry no statistical parameters (authors recommend none) | `noise.sp` example; Nyquist thermal and flicker exponent checked (BSIM-CMG defaults, no extracted level: gap) |
+| `asap5` | ASAP5 r0p4: 5 nm predictive gate-all-around nanowire FET (ASU) | BSIM-CMG 107, compiled to OSDI | 0.3 MB | 52/52: 47 against the PDK paper, 5 derived card and noise checks, plus 1 known deviation | not modelled: predictive, cards carry no statistical parameters (authors recommend none) | `noise.sp` example; Nyquist thermal and flicker exponent checked (BSIM-CMG defaults, no extracted level: gap) |
 | `sky130` | SkyWater SKY130 (`sky130A`; `sky130B`'s ngspice libraries are identical in this release) | BSIM4, built in | 21 MB | 61/61 against SkyWater's e-test windows, device tables (continuous models) and corner tables, and the derived mismatch and noise checks below, plus 8 known deviations | `mc_mm_switch` via the `*_mm` corners; `mismatch.sp` example; Pelgrom area scaling checked (derived; SkyWater publishes no coefficient) | `noise.sp` example; flicker exponent and thermal noise checked (no published level: gap) |
 | `gf180mcu` | GlobalFoundries GF180MCU | BSIM4, built in | 1.4 MB | 54/54 against GF's slow/typical/fast EP targets and spec limits, incl. passives and their temperature coefficients, plus 1 known deviation | not yet (#37) | not yet (#37) |
 | `ihp-sg13g2` | IHP SG13G2 SiGe BiCMOS | PSP 103 (OSDI), VBIC HBT | 3 MB | 83/83 against IHP's process spec (1.2 V and 3.3 V MOS, corners, resistors and MIM with their temperature coefficients, the HBT) and IHP's measured silicon over temperature, plus 7 known deviations | not yet (#37) | not yet (#37) |
@@ -170,6 +170,16 @@ each check is depends on what was published:
     `noia = 0`. They are listed in `sanity/sky130/reference.py`.
   - The mismatch and noise checks add several minutes of single-core ngspice, because the
     Monte Carlo loop re-reads the library for every sample.
+- **ASAP7 and ASAP5 mismatch and noise (predictive: no measured statistics).**
+  Neither paper nor the PDK notes give a variability, mismatch or noise
+  recommendation for the devices (ASAP5's paper treats lithography
+  variability for the layout rules only), so the mismatch column reads "not
+  modelled" and no Monte Carlo deck exists; no variability value is estimated.
+  The checks scan the pinned cards (0 statistical constructs, 0 noise
+  parameters set: BSIM-CMG 107's generic defaults apply), and run `.noise` on
+  an `nmos_rvt` (10 fins): the drain noise at Vds = 0 equals `4kT*gds` within
+  2 % (derived; read at a bias where gate-current shot noise is small) and the
+  flicker exponent equals the default `ef` = 1. Details: `pdks/<pdk>/README.md`.
 - **IHP (published limits).** The specification gives MIN–MAX windows, and
   the `mos_ss` and `mos_ff` corners are built on their edges.
   - Each ss/ff corner lands on its limit within 10 mV or 5 %, for the

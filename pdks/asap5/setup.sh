@@ -30,5 +30,8 @@ setup_asap5() {
       "MODELS_DIR=$ng/models" "OSDI=$BSIMCMG_OSDI" "NGSPICE=$NGSPICE"
   done
   mv "$ng/asap5.lib" "$ng/models/asap5.lib"
+  render "$REPO/ngspice/asap5/noise.sp.in" "$ng/noise.sp" \
+    "MODELS_DIR=$ng/models" "OSDI=$BSIMCMG_OSDI" "NGSPICE=$NGSPICE" \
+    NFIN=10 VG=0.35 VD=0.7 VGLO=0.348 VGHI=0.352
   stamp "$root" "$id"
 }

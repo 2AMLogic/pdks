@@ -157,3 +157,61 @@ ELMORE_SEGMENTS = (1, 4, 64)
 # ~1e-5) over 10 ns, about 58 time constants, so truncation is negligible;
 # 1e-3 leaves margin for a different ngspice build.
 ELMORE_TOL = 1e-3
+
+# ---- Mismatch and noise (#45, part of #37) ------------------------------
+# Nothing here is published for ASAP7, so every check below is derived from
+# the pinned cards and the BSIM-CMG 107 source the OSDI is built from.
+#
+# What the authors say. The paper [MEJ16] (Clark et al. 2016) and the design manual
+# (asap7_drm_201207a.pdf) give no variability, mismatch or noise statistics for
+# the devices, nor a recommended method: searched the extracted text for
+# variab, mismatch, monte, noise, flicker, statist. The only hits are
+# process-variation remarks in the lithography discussion and a statement that
+# Ge channels were rejected "when variability was evaluated" [73]; neither
+# defines a device model. Recommendation: none stated.
+# Verified against the pinned cards by sanity/predictive.py scan_cards (comment
+# lines skipped): the three checksummed cards 7nm_{TT,FF,SS}_160803.pm (24 models).
+#   - no statistical or mismatch construct (agauss, gauss, aunif, unif, mc_*,
+#     mismatch*, monte*, sigma*, vary, lot, dev) in any card: 0 hits. So there is
+#     no Monte Carlo deck and no Pelgrom check; the mismatch cell is "not modelled".
+#   - no noise parameter (noia, noib, noic, ntnoi, ef, em, kf, af, lintnoi,
+#     tnoimod) is set in any card (the "noise" section of each card is empty), so
+#     BSIM-CMG 107's generic defaults apply (bsimcmg_body.include of the pinned
+#     BSIM-CMG 107 source, lines 610-618): ef 1.0, em 4.1e7, noia 6.25e39,
+#     noib 3.125e24, noic 8.75e7, ntnoi 1.0. They are not values fitted for ASAP7.
+#     BSIM-CMG 107 has no tnoimod parameter; its thermal noise is the
+#     charge-based expression sid = 4kT * ntnoi * ueff*qinv / (leff^2 + ueff*qinv*rds)
+#     (BSIM4 tnoimod=0), shot noise of the gate currents, and thermal noise of
+#     the source and drain resistances.
+CARD_MODELS = 24
+
+# Noise deck (ngspice/asap7/noise.sp.in): nmos_rvt, nfin = 10, Vds = 0.7 V,
+# 25 C, drain through an ideal inductor so the drain current noise appears across
+# the device's own output impedance. Output-referred noise divided by the AC gain
+# gives the input-referred spectrum; the drain current noise is that times gm.
+NOISE_BIAS = dict(nfin=10, vg=0.3, vd=0.7)
+EF = 1.0                     # BSIM-CMG 107 default (the cards set none)
+FLICKER_SLOPE_TOL = 0.01     # the model term is exactly f^-ef; allowance is numerical
+# Nyquist (derived): a conductor in equilibrium has drain current noise
+# 4kT*gds. With the drain at 0 V, the model's thermal term is
+# 4kT*ntnoi*ueff*qinv/(leff^2 + ueff*qinv*rds), which equals 4kT*gds for
+# ntnoi = 1 when gds comes from the channel alone, so S_id/(4kT*gds0) = 1.
+# Read at 1 kHz (above the flicker term, which is zero at Vds = 0 anyway),
+# gds0 from a +-1 mV drain step; 2 % allows for the finite difference.
+# The ratio departs from 1 where something other than the channel enters the
+# drain conductance or noise: the gate-current shot noise (2q*Ig), which grows
+# with gate bias, and the junction/GIDL conductances, which carry no thermal
+# term (the cause of any departure is not traced). Vg = 0.3 V here keeps the gate current negligible (measured at nfin 10: ratio 1.001 at 0.2 V, 1.010 at 0.3 V, 1.054 at 0.5 V).
+NYQUIST = (0.98, 1.02)
+# gamma (4kT*gamma*gm) is printed for information only. Long-channel theory
+# (van der Ziel; Tsividis) gives 2/3 in strong-inversion saturation, but the
+# total here also holds gate-current shot noise and resistor noise, and these
+# short-channel devices are not in that regime, so no pass/fail band is claimed.
+
+# Quantities for which no value could be found or derived; listed, not estimated.
+GAPS = [
+    "mismatch (threshold, current factor, Pelgrom coefficients): not modelled; the cards carry no statistical parameters and ASAP7 publishes none",
+    "flicker-noise level: no published value; the model's BSIM-CMG default (noia, noib, noic) is printed as information only",
+    "published thermal-noise gamma: none",
+    "noise and mismatch of devices other than nmos_rvt (checked here: nmos_rvt only), and of resistors, capacitors and interconnect",
+]

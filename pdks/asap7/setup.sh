@@ -30,6 +30,9 @@ setup_asap7() {
       "MODELS_DIR=$ng/models" "OSDI=$BSIMCMG_OSDI" "NGSPICE=$NGSPICE"
   done
   mv "$ng/asap7.lib" "$ng/models/asap7.lib"
+  render "$REPO/ngspice/asap7/noise.sp.in" "$ng/noise.sp" \
+    "MODELS_DIR=$ng/models" "OSDI=$BSIMCMG_OSDI" "NGSPICE=$NGSPICE" \
+    NFIN=10 VG=0.3 VD=0.7 VGLO=0.298 VGHI=0.302
 
   log "ASAP7 r1p7: installing interconnect table and wire include"
   cp "$REPO/pdks/asap7/interconnect.csv" "$REPO/ngspice/asap7/wire.inc" "$ng/"
