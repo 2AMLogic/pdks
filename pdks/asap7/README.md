@@ -14,6 +14,31 @@ standard-cell libraries (`asap7sc7p5t_28` and others, several GB, used for
 digital place-and-route rather than device simulation) or the Calibre
 DRC/LVS decks, which ASU distributes separately from asap.asu.edu.
 
+## Interconnect
+
+Bootstrap installs, next to the models in `<prefix>/asap7/ngspice/`:
+
+- `interconnect.csv`: per layer (M1–M9, V1–V8), one row per quantity with
+  its status (`published`, `derived` or `gap`) and source. Width and pitch
+  are from the paper's Table 1; spacing is pitch − width; thickness (metal)
+  and height (via) are 2 × width from the paper's stated 2:1 aspect ratio.
+  **Sheet resistance, its temperature coefficient, via resistance and
+  capacitance per length (isolated and at minimum pitch) are gaps**: the
+  paper and the PDK's design manual do not print them, and the Calibre RCX
+  deck that holds them is distributed separately by ASU. They are not
+  estimated. If you have them from a source you may use, pass them to the
+  ladder yourself.
+- `interconnect.inc`: the published and derived geometry as
+  `.param asap7_<layer>_<w|s|t|p|h>` (m1_w, m1_s, v1_w, …).
+- `wire.inc`: `wire`, `wire1` … `wire64`, an N-segment pi ladder:
+  `X1 a b wire16 l=100u w={asap7_m2_w} rsh=<ohm/sq> cpl=<F/m>`. R = rsh·l/w
+  and C = cpl·l. `rsh` and `cpl` have no default, so a deck cannot pick up
+  a made-up wire by accident. The far-end Elmore delay of an open wire is
+  R·C/2 for any segment count.
+
+Nothing here adapts upstream files, so `ngspice/ADAPTATIONS.md` has no
+entry; the table is transcribed from the paper and carries no upstream file.
+
 Please cite the PDK when you publish results that use it:
 
 > L. T. Clark, V. Vashishtha, L. Shifren, A. Gujja, S. Sinha, B. Cline,

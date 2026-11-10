@@ -8,7 +8,7 @@ results are checked against each foundry's or author's published values.
 
 | `--pdk` | Process | Models | Fetched | Sanity checks | Mismatch (Monte Carlo) | Noise |
 |---|---|---|---|---|---|---|
-| `asap7` | ASAP7 r1p7: 7 nm predictive FinFET (ASU / Arm) | BSIM-CMG 107, compiled to OSDI | 9 MB | 73/73 against the PDK paper | not yet (#37) | not yet (#37) |
+| `asap7` | ASAP7 r1p7: 7 nm predictive FinFET (ASU / Arm) | BSIM-CMG 107, compiled to OSDI | 9 MB | 121/121 against the PDK paper (73 device, 48 interconnect) | not yet (#37) | not yet (#37) |
 | `asap5` | ASAP5 r0p4: 5 nm predictive gate-all-around nanowire FET (ASU) | BSIM-CMG 107, compiled to OSDI | 0.3 MB | 47/47 against the PDK paper, plus 1 known deviation | not yet (#37) | not yet (#37) |
 | `sky130` | SkyWater SKY130 (`sky130A`; `sky130B`'s ngspice libraries are identical in this release) | BSIM4, built in | 21 MB | 61/61 against SkyWater's e-test windows, device tables (continuous models) and corner tables, and the derived mismatch and noise checks below, plus 8 known deviations | `mc_mm_switch` via the `*_mm` corners; `mismatch.sp` example; Pelgrom area scaling checked (derived; SkyWater publishes no coefficient) | `noise.sp` example; flicker exponent and thermal noise checked (no published level: gap) |
 | `gf180mcu` | GlobalFoundries GF180MCU | BSIM4, built in | 1.4 MB | 54/54 against GF's slow/typical/fast EP targets and spec limits, incl. passives and their temperature coefficients, plus 1 known deviation | not yet (#37) | not yet (#37) |
@@ -91,6 +91,12 @@ definition used is documented next to the reference values.
     current, which excludes GIDL; Vt is taken at 10 nA per fin; SS is the
     10–100 nA decade. DIBL is printed for information only, because ours
     is a uniform 1.32× the paper's column.
+  - Interconnect: the layer table (`interconnect.csv`) is checked against
+    the paper's Table 1 (width, pitch; spacing and thickness derived from
+    them and the stated 2:1 aspect ratio), and the `wire.inc` RC ladder
+    against the closed-form Elmore delay. Sheet resistance, via
+    resistance and capacitance per length are not published in the pinned
+    repository, so they are explicit gaps, not estimates.
 - **ASAP5.** All eight nanowire FETs against Vashishtha and Clark 2022,
   Tables 8–9:
   - Idsat and Vtsat match every printed digit. Vtsat uses the paper's
