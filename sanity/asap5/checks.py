@@ -13,7 +13,6 @@ from common import Report, at, mos_sweeps, ngspice, vt_cc
 
 CITATION = "[MEJ22] Table 5 and section 5.1"
 DECKS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks")
-NGSPICE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "ngspice", "asap5")
 
 
 def run(prefix, ng):
@@ -76,8 +75,7 @@ def run(prefix, ng):
                       "(%s uA)" % " / ".join("%.1f" % v for v in order))
 
         cards = sorted(glob.glob(os.path.join(prefix, "asap5", "asap5", ref.CARD_DIR, "*_210623a.pm")))
-        predictive.checks(rep, data, ref, cards, os.path.join(prefix, "asap5", "ngspice"),
-                          os.path.join(NGSPICE_DIR, "noise.sp.in"), osdi, ng, work)
+        predictive.checks(rep, data, ref, cards, os.path.join(prefix, "asap5", "ngspice"), osdi, ng, work)
         predictive.interconnect(ref, "asap5", CITATION, rep, os.path.join(prefix, "asap5", "ngspice"), ng, work, data)
 
     return rep.summary(), data, rep.rows

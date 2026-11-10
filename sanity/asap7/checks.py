@@ -134,7 +134,6 @@ def run(prefix, ng):
 
         cards = sorted(glob.glob(os.path.join(prefix, "asap7", "asap7_pdk_r1p7", "models", "hspice", "7nm_*_160803.pm")))
         ngdir = os.path.join(prefix, "asap7", "ngspice")
-        predictive.checks(rep, data, ref, cards, ngdir, os.path.join(DECKS, "..", "..", "..", "ngspice", "asap7", "noise.sp.in"),
-                          osdi, ng, work)
+        predictive.checks(rep, data, ref, cards, ngdir, osdi, ng, work)
 
     return rep.summary(), data, rep.rows
