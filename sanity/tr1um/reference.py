@@ -88,3 +88,52 @@ GAPS = [
     "mismatch: no model (Table I-1-2 \"Matching\": none; no statistical parameter in any card); no Pelgrom coefficient",
     "noise: no published model or level (Table I-1-2 \"Noise model\": none); the cards set no noise parameter, so flicker is 0 and thermal is the BSIM3v3 default",
 ]
+
+# ---------------------------------------------------------------------------
+# Interconnect (pdks/tr1um/interconnect.csv, installed as
+# <prefix>/tr1um/ngspice/interconnect.csv)
+#
+# [DR] = Document/TR-1um_Drawing_Layer_DR_Table.csv in OpenSUSI/TR-1um at
+# c5bcc378 (SHA-256 in pdks/tr1um/files.sha256, fetched by bootstrap.sh).
+# Units are um (GC.W1, the 1.0 minimum gate length, fixes the scale). It is
+# the only file at the pin that prints per-layer metal geometry:
+#     M1.W1 width min 1.8   M1.S1 space min 1.4   (M1.W2/M1.SW wide metal
+#     M2.W1 width min 3.0   M2.S1 space min 2.0    rules are not used)
+#     V1.W1 width fixed 1.4
+# Pitch is width + spacing, a derived value. The reference manual [OS00]
+# (and the circuit-simulation guideline OS02 at the same path) was searched
+# for sheet resistance, capacitance, thickness and via resistance: its
+# tables I-2-4 and I-2-5 print sheet resistance and capacitance for the
+# diffusion and poly-Si resistors and the CSIO capacitor only, table I-3-1
+# prints electromigration current limits (M1 2 um 900 uA, M2 3 um 3.7 mA),
+# and the process cross-section figures are marked 非公開 (not disclosed).
+# Nothing there is a metal sheet resistance, a wire capacitance or a via
+# resistance, so those are explicit gaps in the table. The resistor/capacitor
+# calculator workbook (抵抗・容量計算ツール) is for devices and is not
+# fetched. Poly-Si (RS, 120 ohm/sq) is a resistor layer, not a wire in this
+# table.
+#
+# Rule name -> MIN column of [DR] (um); checked against the fetched file.
+DR_RULES = {"M1.W1": 1.8, "M1.S1": 1.4, "M2.W1": 3.0, "M2.S1": 2.0, "V1.W1": 1.4}
+# Metal layer: (width, spacing) in um, [DR].
+METALS = {"M1": (DR_RULES["M1.W1"], DR_RULES["M1.S1"]), "M2": (DR_RULES["M2.W1"], DR_RULES["M2.S1"])}
+VIAS = {"V1": DR_RULES["V1.W1"]}  # width in um, [DR] V1.W1 (fixed)
+GAP_QUANTITIES = ("thickness", "rsheet", "rsheet_tcr", "c_iso_per_um", "c_pitch_per_um")  # per metal
+GAP_VIA_QUANTITIES = ("height", "r_via")
+
+# Wire-ladder check (derived: it tests our include against the closed form,
+# not a published number). The deck drives an ideal step through RS into a
+# wire of N pi segments loaded by CL. The simulated value is the first
+# moment of the step response, integral of (vin - vout) dt, and the closed
+# form is the Elmore delay
+#     RS (C + CL) + R (C / 2 + CL),   R = RSH L / W,   C = CPL L.
+# For a pi ladder this holds for every N (the distributed line's R C / 2).
+# RSH and CPL below are TEST INPUTS chosen so the wire dominates; they are
+# not TR-1um values (TR-1um publishes none, see above). W is the M1 width.
+ELMORE = dict(l="20u", w="1.8u", rsh=5000.0, cpl="0.2n", rs="1k", cl="1f", tstop="10n")
+ELMORE_L, ELMORE_W, ELMORE_RSH, ELMORE_CPL = 20e-6, 1.8e-6, 5000.0, 0.2e-9
+ELMORE_RS, ELMORE_CL = 1e3, 1e-15
+ELMORE_SEGMENTS = (1, 4, 64)
+# Tolerance: same time scale as the ASAP7 check (R 55.6 kohm, C 4 fF), so
+# its measured trapezoid error (~1e-5) applies; 1e-3 leaves margin.
+ELMORE_TOL = 1e-3

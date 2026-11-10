@@ -1,0 +1,20 @@
+layer,quantity,value,unit,status,source
+M1,width_min,1.8,um,published,[DR] M1.W1 (IP62 ER0021)
+M1,spacing_min,1.4,um,published,[DR] M1.S1 (ER0045)
+M1,pitch,3.2,um,derived,width_min + spacing_min ([DR] M1.W1 and M1.S1)
+M1,thickness,gap,um,gap,not printed in [OS00] or [DR]; the layer cross-section figures are marked non-disclosed; not estimated
+M1,rsheet,gap,ohm/sq,gap,not printed in [OS00] or [DR]; the layer cross-section figures are marked non-disclosed; not estimated
+M1,rsheet_tcr,gap,1/K,gap,not printed in [OS00] or [DR]; the layer cross-section figures are marked non-disclosed; not estimated
+M1,c_iso_per_um,gap,aF/um,gap,not printed in [OS00] or [DR]; the layer cross-section figures are marked non-disclosed; not estimated
+M1,c_pitch_per_um,gap,aF/um,gap,not printed in [OS00] or [DR]; the layer cross-section figures are marked non-disclosed; not estimated
+M2,width_min,3.0,um,published,[DR] M2.W1 (ER0023)
+M2,spacing_min,2.0,um,published,[DR] M2.S1 (ER0047)
+M2,pitch,5.0,um,derived,width_min + spacing_min ([DR] M2.W1 and M2.S1)
+M2,thickness,gap,um,gap,not printed in [OS00] or [DR]; the layer cross-section figures are marked non-disclosed; not estimated
+M2,rsheet,gap,ohm/sq,gap,not printed in [OS00] or [DR]; the layer cross-section figures are marked non-disclosed; not estimated
+M2,rsheet_tcr,gap,1/K,gap,not printed in [OS00] or [DR]; the layer cross-section figures are marked non-disclosed; not estimated
+M2,c_iso_per_um,gap,aF/um,gap,not printed in [OS00] or [DR]; the layer cross-section figures are marked non-disclosed; not estimated
+M2,c_pitch_per_um,gap,aF/um,gap,not printed in [OS00] or [DR]; the layer cross-section figures are marked non-disclosed; not estimated
+V1,width_min,1.4,um,published,[DR] V1.W1 (Wfix 1.4; ER0022)
+V1,height,gap,um,gap,not printed in [OS00] or [DR]; the layer cross-section figures are marked non-disclosed; not estimated
+V1,r_via,gap,ohm,gap,not printed in [OS00] or [DR]; the layer cross-section figures are marked non-disclosed; not estimated

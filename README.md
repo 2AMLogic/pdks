@@ -14,7 +14,7 @@ results are checked against each foundry's or author's published values.
 | `gf180mcu` | GlobalFoundries GF180MCU | BSIM4, built in | 1.4 MB | 54/54 against GF's slow/typical/fast EP targets and spec limits, incl. passives and their temperature coefficients, and the derived mismatch and noise checks below, plus 3 known deviations | `sw_stat_mismatch` (default 0) with the `X` subcircuits of `fets_mm`; `mismatch.sp` example; Pelgrom area scaling checked (derived), nFET compared with GF's plotted fit lines (digitised; known deviations) | `noise.sp` example; flicker exponent and thermal noise checked (GF publishes only the measurement conditions, no level: gap) |
 | `ihp-sg13g2` | IHP SG13G2 SiGe BiCMOS | PSP 103 (OSDI), VBIC HBT | 3 MB | 162/162 against IHP's process spec and layout rules (1.2 V and 3.3 V MOS, corners, resistors and MIM with their temperature coefficients, the HBT, 79 interconnect) and IHP's measured silicon over temperature, plus 7 known deviations | not yet (#37) | not yet (#37) |
 | `ihp-sg13cmos5l` | IHP SG13CMOS5L CMOS | PSP 103 (OSDI) | 5 MB | 115/115 against IHP's process spec and layout rules: 1.2 V and 3.3 V MOS, corners, resistors and their temperature coefficients, 56 interconnect, plus 1 known deviation | not yet (#37) | not yet (#37) |
-| `tr1um` | Tokai Rika TR-1um 1 µm CMOS (OpenSUSI) | BSIM3v3, built in | 30 KB | 22/22 against Tokai Rika's published I-V curves (digitised) and the derived noise and model-scan checks below, plus 2 known deviations | none: the manual lists "Matching" as not provided and the cards have no statistical parameters (gap) | `noise.sp` example on the BSIM3v3 defaults (no noise model published; flicker is 0) |
+| `tr1um` | Tokai Rika TR-1um 1 µm CMOS (OpenSUSI) | BSIM3v3, built in | 35 KB | 34/34 against Tokai Rika's published I-V curves (digitised, 16) and design rules (interconnect, 12), and the derived noise, model-scan and wire-ladder checks, plus 2 known deviations | none: the manual lists "Matching" as not provided and the cards have no statistical parameters (gap) | `noise.sp` example on the BSIM3v3 defaults (no noise model published; flicker is 0) |
 
 ## Quick start
 
@@ -150,6 +150,12 @@ definition used is documented next to the reference values.
     known deviation.
   - The silicon measurements in the same figure are printed for
     information.
+  - Interconnect: the layer table (`interconnect.csv`) is checked against
+    the design-rule table in the repository (M1, M2 and V1 width and
+    spacing; pitch derived), and the `wire.inc` RC ladder against the
+    closed-form Elmore delay. Thickness, sheet resistance, capacitance
+    per length and via resistance are printed by no public document, so
+    they are explicit gaps, not estimates.
 
 ### Corners
 
