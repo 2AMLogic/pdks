@@ -4,9 +4,11 @@ definitions and tolerances: reference.py. Run via sanity/run.py --pdk asap5.
 """
 
 import csv
+import glob
 import os
 import tempfile
 
+import predictive
 import reference as ref
 from common import Report, at, mos_sweeps, ngspice, render, results, vt_cc
 
@@ -57,6 +59,8 @@ def interconnect(rep, ngdir, ng, work, data):
                   closed * (1 - ref.ELMORE_TOL), closed * (1 + ref.ELMORE_TOL), "ps", 1e12,
                   "(closed form %.3f ps)" % (closed * 1e12))
     print()
+
+NGSPICE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "ngspice", "asap5")
 
 
 def run(prefix, ng):
@@ -118,6 +122,9 @@ def run(prefix, ng):
                       float(all(a < b for a, b in zip(order, order[1:]))), 1, 1, "", 1,
                       "(%s uA)" % " / ".join("%.1f" % v for v in order))
 
+        cards = sorted(glob.glob(os.path.join(prefix, "asap5", "asap5", ref.CARD_DIR, "*_210623a.pm")))
+        predictive.checks(rep, data, ref, cards, os.path.join(prefix, "asap5", "ngspice"),
+                          os.path.join(NGSPICE_DIR, "noise.sp.in"), osdi, ng, work)
         interconnect(rep, os.path.join(prefix, "asap5", "ngspice"), ng, work, data)
 
     return rep.summary(), data, rep.rows

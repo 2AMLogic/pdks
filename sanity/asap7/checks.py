@@ -1,12 +1,15 @@
 """ASAP7 r1p7 sanity checks: device I-V against Clark et al. 2016, plus
-inverter VTC, FO4 and an 11-stage ring oscillator. Sources, extraction
+inverter VTC, FO4, an 11-stage ring oscillator, the interconnect table
+and derived noise checks (no mismatch statistics exist). Sources, extraction
 definitions and tolerances: reference.py. Run via sanity/run.py --pdk asap7.
 """
 
 import csv
+import glob
 import os
 import tempfile
 
+import predictive
 import reference as ref
 from common import Report, at, mos_sweeps, ngspice, read_xy, render, results, ss_decade, vt_cc
 
@@ -173,5 +176,10 @@ def run(prefix, ng):
                       "(Idsat %.1f / %.1f / %.1f uA)" % tuple(cs[c]["idsat"] * 1e6 for c in ("SS", "TT", "FF")))
 
         interconnect(rep, os.path.join(prefix, "asap7", "ngspice"), ng, work, data)
+
+        cards = sorted(glob.glob(os.path.join(prefix, "asap7", "asap7_pdk_r1p7", "models", "hspice", "7nm_*_160803.pm")))
+        ngdir = os.path.join(prefix, "asap7", "ngspice")
+        predictive.checks(rep, data, ref, cards, ngdir, os.path.join(DECKS, "..", "..", "..", "ngspice", "asap7", "noise.sp.in"),
+                          osdi, ng, work)
 
     return rep.summary(), data, rep.rows

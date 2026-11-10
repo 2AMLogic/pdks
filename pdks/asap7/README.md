@@ -39,6 +39,19 @@ Bootstrap installs, next to the models in `<prefix>/asap7/ngspice/`:
 Nothing here adapts upstream files, so `ngspice/ADAPTATIONS.md` has no
 entry; the table is transcribed from the paper and carries no upstream file.
 
+## Mismatch and noise
+
+ASAP7 is a predictive PDK, so there are no measured mismatch or noise
+statistics. At the pinned commit:
+
+| | |
+|---|---|
+| Authors' recommendation | None stated. ASAP7's paper and design manual state no device variability or noise. |
+| Mismatch | Not modelled. The cards (the three checked TT/FF/SS files) contain no statistical construct, so there is no mismatch switch, no Monte Carlo deck and no Pelgrom check. No coefficient is estimated. |
+| Noise parameters | None set: the "noise" section of every card is empty, so BSIM-CMG 107's defaults apply (`ef` 1.0, `em` 4.1e7, `noia` 6.25e39, `noib` 3.125e24, `noic` 8.75e7, `ntnoi` 1.0). `tnoimod` does not exist in this release. These are the model's generic values, not extracted for ASAP7. |
+| Example | `<prefix>/asap7/ngspice/noise.sp`: `.noise` on `nmos_rvt`, 10 fins, with the drain through an ideal inductor |
+| Checks | Drain noise at Vds = 0 equals `4kT*gds` within 2 % (derived); flicker slope 1 to 100 Hz equals `-ef` (derived). Flicker level and thermal gamma are printed as information; their published values are gaps. Definitions: `sanity/asap7/reference.py`. |
+
 Please cite the PDK when you publish results that use it:
 
 > L. T. Clark, V. Vashishtha, L. Shifren, A. Gujja, S. Sinha, B. Cline,
