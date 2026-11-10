@@ -3,14 +3,16 @@ subthreshold slope against the electrical spec limits. Sources, extraction
 definitions and tolerances: reference.py. Run via sanity/run.py --pdk gf180mcu.
 """
 
+import csv
 import os
 import tempfile
 
 import re
 
 import reference as ref
-from common import Report, at, mos_sweeps, ngspice, render, ss_min, tc_fit, vt_max_gm
+from common import Report, at, mos_sweeps, ngspice, render, results, ss_min, tc_fit, vt_max_gm
 
+WIRE_DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks", "wire_elmore.sp")
 PASSIVE_DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks", "passive_t.sp")
 
 
@@ -47,6 +49,61 @@ def passives(rep, ng, work, models, data):
         else:
             rep.check(name, "published" if lo is not None else "bound", tc1,
                       -1e9 if lo is None else lo, hi, "ppm/K", 1, "(typ %g)" % typ)
+
+
+def elmore(ng, wire_inc, work, nseg, rsh, w):
+    e = ref.ELMORE
+    r = results(ngspice(ng, render(WIRE_DECK, work, "wire_elmore_%d" % nseg,
+                                   WIRE_INC=wire_inc, N=nseg, L=e["l"], W=w, RSH=rsh, CPL=e["cpl"],
+                                   RS=e["rs"], CL=e["cl"], TSTOP=e["tstop"])))
+    R = rsh * ref.ELMORE_L / w
+    C = ref.ELMORE_CPL * ref.ELMORE_L
+    closed = ref.ELMORE_RS * (C + ref.ELMORE_CL) + R * (C / 2 + ref.ELMORE_CL)
+    return r["elmore"], closed
+
+
+def interconnect(rep, ngdir, ng, work, data):
+    table = os.path.join(ngdir, "interconnect.csv")
+    wire_inc = os.path.join(ngdir, "wire.inc")
+    for f in (table, wire_inc):
+        if not os.path.exists(f):
+            raise SystemExit("not found: %s (run bootstrap.sh --pdk gf180mcu)" % f)
+    with open(table) as f:
+        rows = list(csv.DictReader(f))
+    val = {(r["layer"], r["quantity"]): r for r in rows}
+    num = lambda lay, q: float(val[lay, q]["value"])  # noqa: E731
+    print("\nInterconnect: layer table vs [DRM], [EPS], [IA] (reference.py)\n")
+    lo, hi = ref.RSHEET_WINDOW
+    for lay, (w, s) in ref.METALS.items():
+        rep.check("%s width" % lay, "published", num(lay, "width_min"), w, w, "nm", 1)
+        rep.check("%s spacing" % lay, "published", num(lay, "spacing_min"), s, s, "nm", 1)
+        rep.check("%s pitch = width + spacing" % lay, "derived", num(lay, "pitch"), w + s, w + s, "nm", 1)
+        rep.check("%s thickness" % lay, "published", num(lay, "thickness"), ref.THICKNESS, ref.THICKNESS, "nm", 1)
+        rep.check("%s sheet resistance" % lay, "published", num(lay, "rsheet"), lo, hi, "ohm/sq", 1,
+                  "(typ %g)" % ref.RSHEET)
+        rep.check("%s sheet resistance temperature coefficient" % lay, "published", num(lay, "rsheet_tcr"),
+                  ref.RSHEET_TC, ref.RSHEET_TC, "%/degC", 1)
+    for lay, w in ref.VIAS.items():
+        rep.check("%s width" % lay, "published", num(lay, "width_min"), w, w, "nm", 1)
+        rep.check("%s spacing" % lay, "published", num(lay, "spacing_min"), w, w, "nm", 1)
+        rep.check("%s resistance per via" % lay, "published", num(lay, "r_via"), ref.R_VIA, ref.R_VIA, "ohm", 1)
+    gaps = [k for k, r in val.items() if r["status"] == "gap"]
+    expect = {(m, q) for m in ref.METALS for q in ref.GAP_QUANTITIES} | {(v, q) for v in ref.VIAS for q in ref.GAP_VIA_QUANTITIES}
+    # A value appearing where the documents publish none must come with a
+    # source added to reference.py, so a gap turning into a number fails here.
+    rep.check("unpublished quantities stay explicit gaps (%d)" % len(gaps), "derived",
+              float(set(gaps) == expect), 1, 1, "", 1)
+    data["interconnect_gaps"] = sorted("%s.%s" % k for k in gaps)
+    print()
+    lay = ref.ELMORE_LAYER
+    rsh, w = num(lay, "rsheet"), num(lay, "width_min") * 1e-9
+    for n in ref.ELMORE_SEGMENTS:
+        sim, closed = elmore(ng, wire_inc, work, n, rsh, w)
+        data["wire_elmore_%d" % n] = dict(simulated=sim, closed_form=closed)
+        rep.check("wire ladder Elmore delay, %d segment%s" % (n, "" if n == 1 else "s"), "derived", sim,
+                  closed * (1 - ref.ELMORE_TOL), closed * (1 + ref.ELMORE_TOL), "ps", 1e12,
+                  "(closed form %.3f ps)" % (closed * 1e12))
+    print()
 
 
 def run(prefix, ng):
@@ -97,4 +154,5 @@ def run(prefix, ng):
             print()
 
         passives(rep, ng, work, models, data)
+        interconnect(rep, os.path.join(prefix, "gf180mcu", "ngspice"), ng, work, data)
     return rep.summary(), data, rep.rows

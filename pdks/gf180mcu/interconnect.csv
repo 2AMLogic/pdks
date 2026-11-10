@@ -1,0 +1,61 @@
+layer,quantity,value,unit,status,source
+M1,width_min,230,nm,published,[DRM] docs/physical_verification/design_manual/tables_clear/22_Metaln_58.csv Mn.1 (n = 1)
+M1,spacing_min,230,nm,published,[DRM] docs/physical_verification/design_manual/tables_clear/22_Metaln_58.csv Mn.2a (n = 1)
+M1,pitch,460,nm,derived,"width_min + spacing_min (Mn.1, Mn.2a)"
+M1,thickness,550,nm,published,"[IA] docs/analog/layout/inter_specs/tables_clear/3_General_conductor.csv row M1, thickness for typical cap (0.55 um; the Raphael technology parameter, not an EP spec limit)"
+M1,rsheet,0.09,ohm/sq,published,"[EPS] docs/analog/spice/elec_specs/tables_clear/5_General_Specification1.csv row 'Metal 1' typ 90 mohm/sq (min 76, max 104); [IA] docs/analog/layout/inter_specs/tables_clear/5_Sheet_Rho_table.csv row M1 agrees (0.090 +/- 0.014)"
+M1,rsheet_tcr,0.33,%/degC,published,"[EPS] docs/analog/spice/elec_specs/tables_clear/5_General_Specification7.csv row 'TC (Metal 1)' typ 0.33 %/degC (min 0.28, max 0.38)"
+M1,c_iso_per_um,gap,aF/um,gap,"not published as a table: [IA] capacitance per length exists only as plots (docs/analog/layout/inter_specs/images/2_cross_section_*.png), not transcribed"
+M1,c_pitch_per_um,gap,aF/um,gap,"not published as a table: [IA] capacitance per length exists only as plots (docs/analog/layout/inter_specs/images/2_cross_section_*.png), not transcribed"
+M2,width_min,280,nm,published,[DRM] docs/physical_verification/design_manual/tables_clear/22_Metaln_58.csv Mn.1 (2 <= n <= 5)
+M2,spacing_min,280,nm,published,[DRM] docs/physical_verification/design_manual/tables_clear/22_Metaln_58.csv Mn.2a (2 <= n <= 5)
+M2,pitch,560,nm,derived,"width_min + spacing_min (Mn.1, Mn.2a)"
+M2,thickness,550,nm,published,"[IA] docs/analog/layout/inter_specs/tables_clear/3_General_conductor.csv row M2, thickness for typical cap (0.55 um; the Raphael technology parameter, not an EP spec limit)"
+M2,rsheet,0.09,ohm/sq,published,"[EPS] docs/analog/spice/elec_specs/tables_clear/5_General_Specification1.csv row 'Metal 2' typ 90 mohm/sq (min 76, max 104); [IA] docs/analog/layout/inter_specs/tables_clear/5_Sheet_Rho_table.csv row M2 agrees (0.090 +/- 0.014)"
+M2,rsheet_tcr,0.33,%/degC,published,"[EPS] docs/analog/spice/elec_specs/tables_clear/5_General_Specification7.csv row 'TC (Metal 2)' typ 0.33 %/degC (min 0.28, max 0.38)"
+M2,c_iso_per_um,gap,aF/um,gap,"not published as a table: [IA] capacitance per length exists only as plots (docs/analog/layout/inter_specs/images/2_cross_section_*.png), not transcribed"
+M2,c_pitch_per_um,gap,aF/um,gap,"not published as a table: [IA] capacitance per length exists only as plots (docs/analog/layout/inter_specs/images/2_cross_section_*.png), not transcribed"
+M3,width_min,280,nm,published,[DRM] docs/physical_verification/design_manual/tables_clear/22_Metaln_58.csv Mn.1 (2 <= n <= 5)
+M3,spacing_min,280,nm,published,[DRM] docs/physical_verification/design_manual/tables_clear/22_Metaln_58.csv Mn.2a (2 <= n <= 5)
+M3,pitch,560,nm,derived,"width_min + spacing_min (Mn.1, Mn.2a)"
+M3,thickness,550,nm,published,"[IA] docs/analog/layout/inter_specs/tables_clear/3_General_conductor.csv row M3, thickness for typical cap (0.55 um; the Raphael technology parameter, not an EP spec limit)"
+M3,rsheet,0.09,ohm/sq,published,"[EPS] docs/analog/spice/elec_specs/tables_clear/5_General_Specification1.csv row 'Metal 3' typ 90 mohm/sq (min 76, max 104); [IA] docs/analog/layout/inter_specs/tables_clear/5_Sheet_Rho_table.csv row M3 agrees (0.090 +/- 0.014)"
+M3,rsheet_tcr,0.33,%/degC,published,"[EPS] docs/analog/spice/elec_specs/tables_clear/5_General_Specification7.csv row 'TC (Metal 3)' typ 0.33 %/degC (min 0.28, max 0.38)"
+M3,c_iso_per_um,gap,aF/um,gap,"not published as a table: [IA] capacitance per length exists only as plots (docs/analog/layout/inter_specs/images/2_cross_section_*.png), not transcribed"
+M3,c_pitch_per_um,gap,aF/um,gap,"not published as a table: [IA] capacitance per length exists only as plots (docs/analog/layout/inter_specs/images/2_cross_section_*.png), not transcribed"
+M4,width_min,280,nm,published,[DRM] docs/physical_verification/design_manual/tables_clear/22_Metaln_58.csv Mn.1 (2 <= n <= 5)
+M4,spacing_min,280,nm,published,[DRM] docs/physical_verification/design_manual/tables_clear/22_Metaln_58.csv Mn.2a (2 <= n <= 5)
+M4,pitch,560,nm,derived,"width_min + spacing_min (Mn.1, Mn.2a)"
+M4,thickness,550,nm,published,"[IA] docs/analog/layout/inter_specs/tables_clear/3_General_conductor.csv row M4, thickness for typical cap (0.55 um; the Raphael technology parameter, not an EP spec limit)"
+M4,rsheet,0.09,ohm/sq,published,"[EPS] docs/analog/spice/elec_specs/tables_clear/5_General_Specification1.csv row 'Metal 4' typ 90 mohm/sq (min 76, max 104); [IA] docs/analog/layout/inter_specs/tables_clear/5_Sheet_Rho_table.csv row M4 agrees (0.090 +/- 0.014)"
+M4,rsheet_tcr,0.33,%/degC,published,"[EPS] docs/analog/spice/elec_specs/tables_clear/5_General_Specification7.csv row 'TC (Metal 4)' typ 0.33 %/degC (min 0.28, max 0.38)"
+M4,c_iso_per_um,gap,aF/um,gap,"not published as a table: [IA] capacitance per length exists only as plots (docs/analog/layout/inter_specs/images/2_cross_section_*.png), not transcribed"
+M4,c_pitch_per_um,gap,aF/um,gap,"not published as a table: [IA] capacitance per length exists only as plots (docs/analog/layout/inter_specs/images/2_cross_section_*.png), not transcribed"
+M5,width_min,280,nm,published,[DRM] docs/physical_verification/design_manual/tables_clear/22_Metaln_58.csv Mn.1 (2 <= n <= 5)
+M5,spacing_min,280,nm,published,[DRM] docs/physical_verification/design_manual/tables_clear/22_Metaln_58.csv Mn.2a (2 <= n <= 5)
+M5,pitch,560,nm,derived,"width_min + spacing_min (Mn.1, Mn.2a)"
+M5,thickness,550,nm,published,"[IA] docs/analog/layout/inter_specs/tables_clear/3_General_conductor.csv row M5, thickness for typical cap (0.55 um; the Raphael technology parameter, not an EP spec limit)"
+M5,rsheet,0.09,ohm/sq,published,"[EPS] docs/analog/spice/elec_specs/tables_clear/5_General_Specification1.csv row 'Metal 5' typ 90 mohm/sq (min 76, max 104); [IA] docs/analog/layout/inter_specs/tables_clear/5_Sheet_Rho_table.csv row M5 agrees (0.090 +/- 0.014)"
+M5,rsheet_tcr,0.33,%/degC,published,"[EPS] docs/analog/spice/elec_specs/tables_clear/5_General_Specification7.csv row 'TC (Metal 5)' typ 0.33 %/degC (min 0.28, max 0.38)"
+M5,c_iso_per_um,gap,aF/um,gap,"not published as a table: [IA] capacitance per length exists only as plots (docs/analog/layout/inter_specs/images/2_cross_section_*.png), not transcribed"
+M5,c_pitch_per_um,gap,aF/um,gap,"not published as a table: [IA] capacitance per length exists only as plots (docs/analog/layout/inter_specs/images/2_cross_section_*.png), not transcribed"
+V1,width_min,260,nm,published,"[DRM] docs/physical_verification/design_manual/tables_clear/23_Vian_59.csv Vn.1 (1 <= n <= 5, min/max size)"
+V1,spacing_min,260,nm,published,[DRM] docs/physical_verification/design_manual/tables_clear/23_Vian_59.csv Vn.2a (1 <= n <= 5)
+V1,height,gap,nm,gap,not published: the via height is not stated (the inter-metal dielectric thickness is in [IA] but is not the via height)
+V1,r_via,4.5,ohm,published,[EPS] docs/analog/spice/elec_specs/tables_clear/5_General_Specification2.csv row 'Via 1' typ 4.5 ohm/via at 0.26 x 0.26 um (max 15)
+V2,width_min,260,nm,published,"[DRM] docs/physical_verification/design_manual/tables_clear/23_Vian_59.csv Vn.1 (1 <= n <= 5, min/max size)"
+V2,spacing_min,260,nm,published,[DRM] docs/physical_verification/design_manual/tables_clear/23_Vian_59.csv Vn.2a (1 <= n <= 5)
+V2,height,gap,nm,gap,not published: the via height is not stated (the inter-metal dielectric thickness is in [IA] but is not the via height)
+V2,r_via,4.5,ohm,published,[EPS] docs/analog/spice/elec_specs/tables_clear/5_General_Specification2.csv row 'Via 2' typ 4.5 ohm/via at 0.26 x 0.26 um (max 15)
+V3,width_min,260,nm,published,"[DRM] docs/physical_verification/design_manual/tables_clear/23_Vian_59.csv Vn.1 (1 <= n <= 5, min/max size)"
+V3,spacing_min,260,nm,published,[DRM] docs/physical_verification/design_manual/tables_clear/23_Vian_59.csv Vn.2a (1 <= n <= 5)
+V3,height,gap,nm,gap,not published: the via height is not stated (the inter-metal dielectric thickness is in [IA] but is not the via height)
+V3,r_via,4.5,ohm,published,[EPS] docs/analog/spice/elec_specs/tables_clear/5_General_Specification2.csv row 'Via 3' typ 4.5 ohm/via at 0.26 x 0.26 um (max 15)
+V4,width_min,260,nm,published,"[DRM] docs/physical_verification/design_manual/tables_clear/23_Vian_59.csv Vn.1 (1 <= n <= 5, min/max size)"
+V4,spacing_min,260,nm,published,[DRM] docs/physical_verification/design_manual/tables_clear/23_Vian_59.csv Vn.2a (1 <= n <= 5)
+V4,height,gap,nm,gap,not published: the via height is not stated (the inter-metal dielectric thickness is in [IA] but is not the via height)
+V4,r_via,4.5,ohm,published,[EPS] docs/analog/spice/elec_specs/tables_clear/5_General_Specification2.csv row 'Via 4' typ 4.5 ohm/via at 0.26 x 0.26 um (max 15)
+V5,width_min,260,nm,published,"[DRM] docs/physical_verification/design_manual/tables_clear/23_Vian_59.csv Vn.1 (1 <= n <= 5, min/max size)"
+V5,spacing_min,260,nm,published,[DRM] docs/physical_verification/design_manual/tables_clear/23_Vian_59.csv Vn.2a (1 <= n <= 5)
+V5,height,gap,nm,gap,not published: the via height is not stated (the inter-metal dielectric thickness is in [IA] but is not the via height)
+V5,r_via,4.5,ohm,published,[EPS] docs/analog/spice/elec_specs/tables_clear/5_General_Specification2.csv row 'Via 5' typ 4.5 ohm/via at 0.26 x 0.26 um (max 15)
