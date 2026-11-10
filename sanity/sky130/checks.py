@@ -3,6 +3,7 @@ the 1.8 V nFET and pFET (plus the LVT nFET and LVT/HVT pFET) against SkyWater's 
 and definitions: reference.py. Run via sanity/run.py --pdk sky130.
 """
 
+import csv
 import math
 import glob
 import os
@@ -14,6 +15,7 @@ from common import Report, at, mos_sweeps, ngspice, render, results, vt_max_gm
 
 SPICEINIT = "set ngbehavior=hsa\nset ng_nomodcheck\n"
 DECKS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "ngspice", "sky130")
+WIRE_DECKS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks")
 
 
 def mismatch_deck(ng, work, prefix, name, corner, w, l, m, n, seed):
@@ -108,6 +110,72 @@ def mismatch_and_noise(rep, data, prefix, ng, work):
 
 
 
+def elmore(ng, wire_inc, work, nseg, rsh, w):
+    e = ref.ELMORE
+    r = results(ngspice(ng, render(os.path.join(WIRE_DECKS, "wire_elmore.sp"), work, "wire_elmore_%d" % nseg,
+                                   WIRE_INC=wire_inc, N=nseg, L=e["l"], W=w, RSH=rsh, CPL=e["cpl"],
+                                   RS=e["rs"], CL=e["cl"], TSTOP=e["tstop"])))
+    R = rsh * ref.ELMORE_L / w
+    C = ref.ELMORE_CPL * ref.ELMORE_L
+    closed = ref.ELMORE_RS * (C + ref.ELMORE_CL) + R * (C / 2 + ref.ELMORE_CL)
+    return r["elmore"], closed
+
+
+def interconnect(rep, ngdir, ng, work, data):
+    table = os.path.join(ngdir, "interconnect.csv")
+    wire_inc = os.path.join(ngdir, "wire.inc")
+    for f in (table, wire_inc):
+        if not os.path.exists(f):
+            raise SystemExit("not found: %s (run bootstrap.sh --pdk sky130)" % f)
+    with open(table) as f:
+        rows = list(csv.DictReader(f))
+    val = {(r["layer"], r["quantity"]): r for r in rows}
+    num = lambda lay, q: float(val[lay, q]["value"])  # noqa: E731
+    print("\nInterconnect: layer table vs [SKYR], [SKYRES], [SKYC] (reference.py)\n")
+    for lay, (w, s) in ref.METALS.items():
+        rep.check("%s width" % lay, "published", num(lay, "width_min"), w, w, "nm", 1)
+        rep.check("%s spacing" % lay, "published", num(lay, "spacing_min"), s, s, "nm", 1)
+        rep.check("%s pitch = width + spacing" % lay, "derived", num(lay, "pitch"), w + s, w + s, "nm", 1)
+        rs = ref.RSHEET[lay]
+        rep.check("%s sheet resistance" % lay, "published", num(lay, "rsheet"), rs, rs, "ohm/sq", 1)
+    for lay, (w, s) in ref.CUTS.items():
+        rep.check("%s width" % lay, "published", num(lay, "width_min"), w, w, "nm", 1)
+        rep.check("%s spacing" % lay, "published", num(lay, "spacing_min"), s, s, "nm", 1)
+    order = [num(l, "rsheet") for l in ("li1", "met1", "met3", "met5")]
+    rep.check("sheet resistance li1 > met1 > met3 > met5", "derived", float(order == sorted(order, reverse=True)
+              and len(set(order)) == 4), 1, 1, "", 1)
+    for name, mat, pre in (("parallel-plate", ref.CAP_AREA, "c_area_to_"), ("fringe up", ref.CAP_FRINGE_UP, "c_fringe_up_to_"),
+                           ("fringe down", ref.CAP_FRINGE_DOWN, "c_fringe_down_to_")):
+        same = all(abs(num(a, pre + b) - float(v)) < 1e-9 for (a, b), v in mat.items())
+        rep.check("%s capacitance table, %d entries" % (name, len(mat)), "published", float(same), 1, 1, "", 1)
+    # Derived physics: the coupling to a farther layer is smaller (parallel
+    # plate falls as 1/d, fringe as the field shields).
+    layers = ["li1", "met1", "met2", "met3", "met4", "met5"]
+    for pre, label in (("c_area_to_", "parallel-plate"), ("c_fringe_up_to_", "fringe-up")):
+        mono = True
+        for i, lo in enumerate(layers[:-2]):
+            c = [num(lo, pre + up) for up in layers[i + 1:]]
+            mono &= all(a > b for a, b in zip(c, c[1:]))
+        rep.check("%s capacitance falls with separation" % label, "derived", float(mono), 1, 1, "", 1)
+    gaps = [k for k, r in val.items() if r["status"] == "gap"]
+    expect = {(m, q) for m in ref.METALS for q in ref.GAP_QUANTITIES} | {(v, q) for v in ref.CUTS for q in ref.GAP_CUT_QUANTITIES}
+    # A value appearing where the documents publish none must come with a
+    # source added to reference.py, so a gap turning into a number fails here.
+    rep.check("unpublished quantities stay explicit gaps (%d)" % len(gaps), "derived",
+              float(set(gaps) == expect), 1, 1, "", 1)
+    data["interconnect_gaps"] = sorted("%s.%s" % k for k in gaps)
+    print()
+    lay = ref.ELMORE_LAYER
+    rsh, w = num(lay, "rsheet"), num(lay, "width_min") * 1e-9
+    for n in ref.ELMORE_SEGMENTS:
+        sim, closed = elmore(ng, wire_inc, work, n, rsh, w)
+        data["wire_elmore_%d" % n] = dict(simulated=sim, closed_form=closed)
+        rep.check("wire ladder Elmore delay, %d segment%s" % (n, "" if n == 1 else "s"), "derived", sim,
+                  closed * (1 - ref.ELMORE_TOL), closed * (1 + ref.ELMORE_TOL), "ps", 1e12,
+                  "(closed form %.3f ps)" % (closed * 1e12))
+    print()
+
+
 def run(prefix, ng):
     lib = os.path.join(prefix, "sky130", "sky130A", "libs.tech", "ngspice", "sky130.lib.spice")
     if not os.path.exists(lib):
@@ -181,4 +249,5 @@ def run(prefix, ng):
                     rep.check(label, "published", v, lo, hi, unit, 1, "(table %+.3f)" % want if qty == "vt" else "(table %.3f)" % want)
         print("")
         mismatch_and_noise(rep, data, prefix, ng, work)
+        interconnect(rep, os.path.join(prefix, "sky130", "ngspice"), ng, work, data)
     return rep.summary(), data, rep.rows

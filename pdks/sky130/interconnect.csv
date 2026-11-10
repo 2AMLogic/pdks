@@ -1,0 +1,109 @@
+layer,quantity,value,unit,status,source
+li1,width_min,170,nm,published,[SKYR] docs/rules/periphery-rules.rst li.1 / li.3
+li1,spacing_min,170,nm,published,[SKYR] docs/rules/periphery-rules.rst li.1 / li.3
+li1,pitch,340,nm,derived,width_min + spacing_min (li.1 / li.3)
+li1,thickness,gap,nm,gap,not published as a number: [SKYR] docs/_static/metal_stack.svg labels elevations and thicknesses in a figure with no per-layer table; not transcribed
+li1,rsheet,12.8,ohm/sq,published,[SKYRES] docs/rules/rcx/resistance-values.tsv row 'Local interconnect 12800' (mohms/sq) / 1000
+li1,rsheet_tcr,gap,1/K,gap,not published in the SkyWater PDK documentation
+li1,c_iso_per_um,gap,aF/um,gap,"not published: [SKYC] tables give layer-to-layer capacitance only, none to the substrate"
+li1,c_pitch_per_um,gap,aF/um,gap,"not published: [SKYC] tables give layer-to-layer capacitance only, none to the substrate"
+met1,width_min,140,nm,published,[SKYR] docs/rules/periphery-rules.rst m1.1 / m1.2
+met1,spacing_min,140,nm,published,[SKYR] docs/rules/periphery-rules.rst m1.1 / m1.2
+met1,pitch,280,nm,derived,width_min + spacing_min (m1.1 / m1.2)
+met1,thickness,gap,nm,gap,not published as a number: [SKYR] docs/_static/metal_stack.svg labels elevations and thicknesses in a figure with no per-layer table; not transcribed
+met1,rsheet,0.125,ohm/sq,published,[SKYRES] docs/rules/rcx/resistance-values.tsv row 'Metal1 125' (mohms/sq) / 1000
+met1,rsheet_tcr,gap,1/K,gap,not published in the SkyWater PDK documentation
+met1,c_iso_per_um,gap,aF/um,gap,"not published: [SKYC] tables give layer-to-layer capacitance only, none to the substrate"
+met1,c_pitch_per_um,gap,aF/um,gap,"not published: [SKYC] tables give layer-to-layer capacitance only, none to the substrate"
+met2,width_min,140,nm,published,[SKYR] docs/rules/periphery-rules.rst m2.1 / m2.2
+met2,spacing_min,140,nm,published,[SKYR] docs/rules/periphery-rules.rst m2.1 / m2.2
+met2,pitch,280,nm,derived,width_min + spacing_min (m2.1 / m2.2)
+met2,thickness,gap,nm,gap,not published as a number: [SKYR] docs/_static/metal_stack.svg labels elevations and thicknesses in a figure with no per-layer table; not transcribed
+met2,rsheet,0.125,ohm/sq,published,[SKYRES] docs/rules/rcx/resistance-values.tsv row 'Metal2 125' (mohms/sq) / 1000
+met2,rsheet_tcr,gap,1/K,gap,not published in the SkyWater PDK documentation
+met2,c_iso_per_um,gap,aF/um,gap,"not published: [SKYC] tables give layer-to-layer capacitance only, none to the substrate"
+met2,c_pitch_per_um,gap,aF/um,gap,"not published: [SKYC] tables give layer-to-layer capacitance only, none to the substrate"
+met3,width_min,300,nm,published,[SKYR] docs/rules/periphery-rules.rst m3.1 / m3.2
+met3,spacing_min,300,nm,published,[SKYR] docs/rules/periphery-rules.rst m3.1 / m3.2
+met3,pitch,600,nm,derived,width_min + spacing_min (m3.1 / m3.2)
+met3,thickness,gap,nm,gap,not published as a number: [SKYR] docs/_static/metal_stack.svg labels elevations and thicknesses in a figure with no per-layer table; not transcribed
+met3,rsheet,0.047,ohm/sq,published,[SKYRES] docs/rules/rcx/resistance-values.tsv row 'Metal3 47' (mohms/sq) / 1000
+met3,rsheet_tcr,gap,1/K,gap,not published in the SkyWater PDK documentation
+met3,c_iso_per_um,gap,aF/um,gap,"not published: [SKYC] tables give layer-to-layer capacitance only, none to the substrate"
+met3,c_pitch_per_um,gap,aF/um,gap,"not published: [SKYC] tables give layer-to-layer capacitance only, none to the substrate"
+met4,width_min,300,nm,published,[SKYR] docs/rules/periphery-rules.rst m4.1 / m4.2
+met4,spacing_min,300,nm,published,[SKYR] docs/rules/periphery-rules.rst m4.1 / m4.2
+met4,pitch,600,nm,derived,width_min + spacing_min (m4.1 / m4.2)
+met4,thickness,gap,nm,gap,not published as a number: [SKYR] docs/_static/metal_stack.svg labels elevations and thicknesses in a figure with no per-layer table; not transcribed
+met4,rsheet,0.047,ohm/sq,published,[SKYRES] docs/rules/rcx/resistance-values.tsv row 'Metal4 47' (mohms/sq) / 1000
+met4,rsheet_tcr,gap,1/K,gap,not published in the SkyWater PDK documentation
+met4,c_iso_per_um,gap,aF/um,gap,"not published: [SKYC] tables give layer-to-layer capacitance only, none to the substrate"
+met4,c_pitch_per_um,gap,aF/um,gap,"not published: [SKYC] tables give layer-to-layer capacitance only, none to the substrate"
+met5,width_min,1600,nm,published,[SKYR] docs/rules/periphery-rules.rst m5.1 / m5.2
+met5,spacing_min,1600,nm,published,[SKYR] docs/rules/periphery-rules.rst m5.1 / m5.2
+met5,pitch,3200,nm,derived,width_min + spacing_min (m5.1 / m5.2)
+met5,thickness,gap,nm,gap,not published as a number: [SKYR] docs/_static/metal_stack.svg labels elevations and thicknesses in a figure with no per-layer table; not transcribed
+met5,rsheet,0.029,ohm/sq,published,[SKYRES] docs/rules/rcx/resistance-values.tsv row 'Metal5 29' (mohms/sq) / 1000
+met5,rsheet_tcr,gap,1/K,gap,not published in the SkyWater PDK documentation
+met5,c_iso_per_um,gap,aF/um,gap,"not published: [SKYC] tables give layer-to-layer capacitance only, none to the substrate"
+met5,c_pitch_per_um,gap,aF/um,gap,"not published: [SKYC] tables give layer-to-layer capacitance only, none to the substrate"
+li1,c_area_to_met1,114.1970,aF/um2,published,"[SKYC] docs/rules/rcx/capacitance-parallel.tsv, li1 row, met1 column"
+li1,c_area_to_met2,37.5647,aF/um2,published,"[SKYC] docs/rules/rcx/capacitance-parallel.tsv, li1 row, met2 column"
+li1,c_area_to_met3,20.7915,aF/um2,published,"[SKYC] docs/rules/rcx/capacitance-parallel.tsv, li1 row, met3 column"
+li1,c_area_to_met4,11.6705,aF/um2,published,"[SKYC] docs/rules/rcx/capacitance-parallel.tsv, li1 row, met4 column"
+li1,c_area_to_met5,8.0265,aF/um2,published,"[SKYC] docs/rules/rcx/capacitance-parallel.tsv, li1 row, met5 column"
+met1,c_area_to_met2,133.8610,aF/um2,published,"[SKYC] docs/rules/rcx/capacitance-parallel.tsv, met1 row, met2 column"
+met1,c_area_to_met3,34.5350,aF/um2,published,"[SKYC] docs/rules/rcx/capacitance-parallel.tsv, met1 row, met3 column"
+met1,c_area_to_met4,15.0275,aF/um2,published,"[SKYC] docs/rules/rcx/capacitance-parallel.tsv, met1 row, met4 column"
+met1,c_area_to_met5,9.4789,aF/um2,published,"[SKYC] docs/rules/rcx/capacitance-parallel.tsv, met1 row, met5 column"
+met2,c_area_to_met3,86.1861,aF/um2,published,"[SKYC] docs/rules/rcx/capacitance-parallel.tsv, met2 row, met3 column"
+met2,c_area_to_met4,20.3321,aF/um2,published,"[SKYC] docs/rules/rcx/capacitance-parallel.tsv, met2 row, met4 column"
+met2,c_area_to_met5,11.3410,aF/um2,published,"[SKYC] docs/rules/rcx/capacitance-parallel.tsv, met2 row, met5 column"
+met3,c_area_to_met4,84.0346,aF/um2,published,"[SKYC] docs/rules/rcx/capacitance-parallel.tsv, met3 row, met4 column"
+met3,c_area_to_met5,19.6269,aF/um2,published,"[SKYC] docs/rules/rcx/capacitance-parallel.tsv, met3 row, met5 column"
+met4,c_area_to_met5,68.3252,aF/um2,published,"[SKYC] docs/rules/rcx/capacitance-parallel.tsv, met4 row, met5 column"
+li1,c_fringe_up_to_met1,34.7,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-upward.tsv, li1 row, met1 column"
+li1,c_fringe_up_to_met2,21.739,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-upward.tsv, li1 row, met2 column"
+li1,c_fringe_up_to_met3,15.078,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-upward.tsv, li1 row, met3 column"
+li1,c_fringe_up_to_met4,10.141,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-upward.tsv, li1 row, met4 column"
+li1,c_fringe_up_to_met5,7.6366,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-upward.tsv, li1 row, met5 column"
+met1,c_fringe_up_to_met2,48.193,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-upward.tsv, met1 row, met2 column"
+met1,c_fringe_up_to_met3,26.676,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-upward.tsv, met1 row, met3 column"
+met1,c_fringe_up_to_met4,16.421,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-upward.tsv, met1 row, met4 column"
+met1,c_fringe_up_to_met5,12.017,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-upward.tsv, met1 row, met5 column"
+met2,c_fringe_up_to_met3,44.432,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-upward.tsv, met2 row, met3 column"
+met2,c_fringe_up_to_met4,22.332,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-upward.tsv, met2 row, met4 column"
+met2,c_fringe_up_to_met5,15.693,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-upward.tsv, met2 row, met5 column"
+met3,c_fringe_up_to_met4,42.643,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-upward.tsv, met3 row, met4 column"
+met3,c_fringe_up_to_met5,27.836,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-upward.tsv, met3 row, met5 column"
+met4,c_fringe_up_to_met5,46.976,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-upward.tsv, met4 row, met5 column"
+met1,c_fringe_down_to_li1,59.496,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-downward.tsv, met1 row, li1 column"
+met2,c_fringe_down_to_li1,46.277,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-downward.tsv, met2 row, li1 column"
+met2,c_fringe_down_to_met1,67.045,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-downward.tsv, met2 row, met1 column"
+met3,c_fringe_down_to_li1,46.708,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-downward.tsv, met3 row, li1 column"
+met3,c_fringe_down_to_met1,54.814,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-downward.tsv, met3 row, met1 column"
+met3,c_fringe_down_to_met2,69.846,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-downward.tsv, met3 row, met2 column"
+met4,c_fringe_down_to_li1,39.709,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-downward.tsv, met4 row, li1 column"
+met4,c_fringe_down_to_met1,42.563,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-downward.tsv, met4 row, met1 column"
+met4,c_fringe_down_to_met2,46.382,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-downward.tsv, met4 row, met2 column"
+met4,c_fringe_down_to_met3,70.522,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-downward.tsv, met4 row, met3 column"
+met5,c_fringe_down_to_li1,41.147,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-downward.tsv, met5 row, li1 column"
+met5,c_fringe_down_to_met1,43.188,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-downward.tsv, met5 row, met1 column"
+met5,c_fringe_down_to_met2,45.592,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-downward.tsv, met5 row, met2 column"
+met5,c_fringe_down_to_met3,54.152,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-downward.tsv, met5 row, met3 column"
+met5,c_fringe_down_to_met4,82.819,aF/um,published,"[SKYC] docs/rules/rcx/capacitance-fringe-downward.tsv, met5 row, met4 column"
+mcon,width_min,170,nm,published,[SKYR] docs/rules/periphery-rules.rst ct.1 / ct.2
+mcon,spacing_min,190,nm,published,[SKYR] docs/rules/periphery-rules.rst ct.1 / ct.2
+mcon,r_via,gap,ohm,gap,[SKYRES] prints MCON contact 152000 under the unit label 'mohms/sq' and does not define a per-cut resistance; not used
+via,width_min,150,nm,published,[SKYR] docs/rules/periphery-rules.rst via.1a / via.2
+via,spacing_min,170,nm,published,[SKYR] docs/rules/periphery-rules.rst via.1a / via.2
+via,r_via,gap,ohm,gap,[SKYRES] prints VIA 4500 under the unit label 'mohms/sq' and does not define a per-cut resistance; not used
+via2,width_min,200,nm,published,[SKYR] docs/rules/periphery-rules.rst via2.1a / via2.2
+via2,spacing_min,200,nm,published,[SKYR] docs/rules/periphery-rules.rst via2.1a / via2.2
+via2,r_via,gap,ohm,gap,[SKYRES] prints VIA2 3410 under the unit label 'mohms/sq' and does not define a per-cut resistance; not used
+via3,width_min,200,nm,published,[SKYR] docs/rules/periphery-rules.rst via3.1 / via3.2
+via3,spacing_min,200,nm,published,[SKYR] docs/rules/periphery-rules.rst via3.1 / via3.2
+via3,r_via,gap,ohm,gap,[SKYRES] prints VIA3 3410 under the unit label 'mohms/sq' and does not define a per-cut resistance; not used
+via4,width_min,800,nm,published,[SKYR] docs/rules/periphery-rules.rst via4.1 / via4.2
+via4,spacing_min,800,nm,published,[SKYR] docs/rules/periphery-rules.rst via4.1 / via4.2
+via4,r_via,gap,ohm,gap,[SKYRES] prints VIA4 380 under the unit label 'mohms/sq' and does not define a per-cut resistance; not used
