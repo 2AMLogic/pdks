@@ -30,6 +30,6 @@ setup_ihp_sg13g2() {
     fetch "$IHP_SG13G2_RAW/$f" "$sum" "$src/$f"
   done < "$REPO/pdks/ihp-sg13g2/meas.sha256"
   log "IHP SG13G2: installing interconnect table and wire include"
-  ihp_interconnect ihp-sg13g2
+  interconnect_inc ihp-sg13g2
   stamp "$root" "$id"
 }
