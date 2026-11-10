@@ -22,5 +22,11 @@ setup_gf180mcu() {
   mkdir -p "$ng"
   render "$REPO/ngspice/gf180mcu/example.sp.in" "$ng/example.sp" \
     "MODELS_DIR=$root/gf180mcu_fd_pr/models/ngspice" "NGSPICE=$NGSPICE"
+  render "$REPO/ngspice/gf180mcu/mismatch.sp.in" "$ng/mismatch.sp" \
+    "MODELS_DIR=$root/gf180mcu_fd_pr/models/ngspice" "NGSPICE=$NGSPICE" \
+    MM=1 W=10 L=1 PAR=1 N=100 SEED=1
+  render "$REPO/ngspice/gf180mcu/noise.sp.in" "$ng/noise.sp" \
+    "MODELS_DIR=$root/gf180mcu_fd_pr/models/ngspice" "NGSPICE=$NGSPICE" \
+    W=10 L=5 VG=1.8 VD=1.65 VGLO=1.798 VGHI=1.802
   stamp "$root" "$id"
 }

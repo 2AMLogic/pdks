@@ -3,13 +3,63 @@ Table I-2-7 bias points against Tokai Rika's published simulation curves.
 Sources and caveats: reference.py. Run via sanity/run.py --pdk tr1um.
 """
 
+import glob
 import os
+import re
 import tempfile
 
 import reference as ref
-from common import Report, at, ngspice, read_xy, render
+from common import Report, at, ngspice, read_xy, render, results
 
 DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks", "iv_points.sp")
+NOISE_DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "ngspice", "tr1um", "noise.sp.in")
+
+
+def noise_deck(ng, work, models, name, bias):
+    deck = render(NOISE_DECK, work, name, MODELS_DIR=models, NGSPICE=ng,
+                  VGLO=bias["VG"] - 0.002, VGHI=bias["VG"] + 0.002, **bias)
+    return results(ngspice(ng, deck, cwd=work))
+
+
+def model_scan(models):
+    """(statistical tokens in the model libraries, files scanned, MOS models,
+    MOS models setting any noise parameter)."""
+    hits = files = 0
+    for f in sorted(glob.glob(os.path.join(models, "models_IP62_*.lib"))):
+        files += 1
+        text = open(f).read().lower()
+        hits += sum(len(re.findall(re.escape(k), text)) for k in ref.MISMATCH_TOKENS)
+    text = open(os.path.join(models, "models_IP62_mos_v2.lib")).read()
+    mos = noisy = 0
+    for b in re.split(r"(?im)^\.model\s+", text)[1:]:
+        mos += 1
+        noisy += any(re.search(r"(?im)\b%s\s*=" % k, b) for k in ref.NOISE_PARAMS)
+    return hits, files, mos, noisy
+
+
+def mismatch_and_noise(rep, data, models, ng, work):
+    print("\nMismatch: no model (Tokai Rika Table I-1-2 \"Matching\": none). Scan of the model libraries:\n")
+    hits, files, mos, noisy = model_scan(models)
+    rep.check("mismatch scan: statistical terms in models", "derived", float(hits), 0, 0, "", 1,
+              "(%d files; agauss/gauss/unif/mc_/mismatch)" % files)
+    rep.check("mismatch scan: files scanned", "derived", float(files), ref.MISMATCH_SCAN_FILES, ref.MISMATCH_SCAN_FILES, "", 1)
+    print("\nNoise, 5 V NMOS %(W)g/%(L)g um, Vg %(VG)g V, Vd %(VD)g V (ngspice .noise, 27 C); BSIM3v3 defaults, no published level\n" % ref.NOISE_BIAS)
+    rep.check("noise scan: MOS models", "derived", float(mos), ref.MOS_MODELS, ref.MOS_MODELS, "", 1)
+    rep.check("noise scan: MOS models setting a noise parameter", "derived", float(noisy), 0, 0, "", 1,
+              "(defaults apply: noimod=1, kf=0)")
+    r = noise_deck(ng, work, models, "noise_long", ref.NOISE_BIAS)
+    data["noise long"] = r
+    lo, hi = ref.GAMMA_LONG
+    rep.check("thermal gamma (4kT*gamma*gm) 30/10", "derived", r["gamma_thermal"], lo, hi, "", 1, "(long-channel theory 2/3 .. 1)")
+    lo, hi = ref.NYQUIST
+    rep.known("Nyquist S_id/(4kT*gds) at Vds=0", r["nyquist_ratio"], lo, hi, "", 1, ref.NOISE_KNOWN["nyquist"])
+    rep.check("flicker level at 1 Hz = 0 (kf default 0)", "derived", r["sv_flicker_1Hz_V2"], 0, 0, "V2/Hz", 1)
+    short = noise_deck(ng, work, models, "noise_short", ref.NOISE_BIAS_SHORT)
+    data["noise short"] = short
+    rep.info("thermal gamma 30/1", short["gamma_thermal"], "", 1, "(information; no long-channel claim)")
+    print("\nGaps (not estimated):")
+    for g in ref.GAPS:
+        print("  - " + g)
 
 
 def run(prefix, ng):
@@ -39,4 +89,5 @@ def run(prefix, ng):
                 rep.known(name, i, lo, hi, "mA", 1e3, ref.KNOWN_DEVIATIONS[(dev, curve, vgs)])
             else:
                 rep.check(name, "published", i, lo, hi, "mA", 1e3, note)
+        mismatch_and_noise(rep, data, models, ng, work)
     return rep.summary(), data, rep.rows

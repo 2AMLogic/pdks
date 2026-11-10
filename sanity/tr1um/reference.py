@@ -49,3 +49,42 @@ KNOWN_DEVIATIONS = {
     ("PMOS", "Id-Vd", 3): "PMOS runs 1-6 % below the plotted sim curve, most at low overdrive; "
                           "the figure may come from an earlier card version (NMOS matches within 2 %)",
 }
+
+
+# ---------------------------------------------------------------------------
+# Mismatch and noise. Added for issue #43.
+#
+# What Tokai Rika publishes. [OS00] Table I-1-2 "Document list" (p. 6) lists
+# "Noise model" and "Matching" (マッチング) among the documents with the entry
+# 無 (none): neither exists in the open release. The other manuals (OS02
+# circuit-simulation guideline) mention neither. So there is NO published
+# mismatch coefficient and NO noise level; both are gaps.
+#
+# Mismatch: the model cards have no statistical content. The only variation
+# hooks are the global parameters vthMN, vthMP, vthMNE, vthMPE (ip62_models,
+# set to 0 and added to vth0 of every instance alike: a shift, not a
+# spread), and models_IP62_*.lib contain no agauss, gauss, unif or mc_ term.
+# So there is no mismatch deck for TR-1um, and no Pelgrom check.
+MISMATCH_TOKENS = ("agauss", "gauss", "aunif", "unif", "mc_", "mismatch")
+MISMATCH_SCAN_FILES = 4          # models_IP62_{mos,res,cap,diode}.lib
+
+# Noise: the MOS cards (BSIM3v3, level 49: PMOS_mst, NMOS_mst, MPE_mst,
+# MNE_mst in models_IP62_mos_v2.lib) set none of noimod, noia, noib, noic,
+# em, ef, kf, af, so the BSIM3v3 defaults apply: noimod = 1, kf = 0. The
+# flicker term (noimod = 1: kf-scaled) is therefore exactly 0; the thermal
+# term is the charge-based channel expression, 2/3 * 4kT * (gm + gmbs + gds).
+# The deck (NMOS 30/10 um, Vg = Vd = 2.5 V, ngspice .noise, 27 C) shows that.
+NOISE_PARAMS = ("noimod", "noia", "noib", "noic", "em", "ef", "kf", "af")
+MOS_MODELS = 4
+GAMMA_LONG = (2.0 / 3.0, 1.0)    # long-channel theory, as in sanity/gf180mcu/reference.py
+NYQUIST = (0.98, 1.02)
+NOISE_BIAS = dict(W=30, L=10, VG=2.5, VD=2.5)
+NOISE_BIAS_SHORT = dict(W=30, L=1, VG=2.5, VD=2.5)       # information only
+NOISE_KNOWN = {
+    "nyquist": "S_id/(4kT*gds) at Vds = 0 is 2/3 (0.667): BSIM3v3 thermal noise is a fixed 2/3 * 4kT*(gm+gmbs+gds) "
+               "and does not rise to 4kT*gds in the triode limit",
+}
+GAPS = [
+    "mismatch: no model (Table I-1-2 \"Matching\": none; no statistical parameter in any card); no Pelgrom coefficient",
+    "noise: no published model or level (Table I-1-2 \"Noise model\": none); the cards set no noise parameter, so flicker is 0 and thermal is the BSIM3v3 default",
+]
