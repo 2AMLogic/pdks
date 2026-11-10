@@ -10,7 +10,7 @@ import glob
 import os
 import re
 
-from common import elmore, ngspice, render, results
+from common import elmore, require_wire_w, ngspice, render, results
 
 # Parameters a card could use to describe variability (statistical functions
 # and Monte Carlo hooks of HSPICE/Spectre/ngspice decks).
@@ -93,6 +93,7 @@ def interconnect(ref, pdk, citation, rep, ngdir, ng, work, data):
               float(set(gaps) == expect), 1, 1, "", 1)
     data["interconnect_gaps"] = sorted("%s.%s" % k for k in gaps)
     print()
+    require_wire_w(ng, wire_inc, work)
     for n in ref.ELMORE_SEGMENTS:
         sim, closed = elmore(ng, wire_inc, work, n, ref.ELMORE, ref.ELMORE_RSH, ref.ELMORE_L, ref.ELMORE_W,
                              ref.ELMORE_CPL, ref.ELMORE_RS, ref.ELMORE_CL)

@@ -12,7 +12,7 @@ GUARD_DIRS+=("$TOOLS/bsimcmg107" "$PREFIX/asap7")
 setup_asap7() {
   build_bsimcmg
   local root="$PREFIX/asap7" pdk="$PREFIX/asap7/asap7_pdk_r1p7" ng="$PREFIX/asap7/ngspice"
-  local id; id="asap7 $ASAP7_PDK_COMMIT $(files_id "$REPO/pdks/asap7/setup.sh" "$REPO/pdks/asap7/models.sha256" "$REPO/ngspice/asap7/adapted.sha256" "$REPO/ngspice/asap7/wire.inc" "$REPO/pdks/asap7/interconnect.csv" "$REPO"/ngspice/asap7/*.in)"
+  local id; id="asap7 $ASAP7_PDK_COMMIT $(files_id "$REPO/pdks/asap7/setup.sh" "$REPO/pdks/asap7/models.sha256" "$REPO/ngspice/asap7/adapted.sha256" "$REPO/ngspice/wire.inc" "$REPO/pdks/asap7/interconnect.csv" "$REPO"/ngspice/asap7/*.in)"
   if stamp_ok "$root" "$id" && [ "$(git -C "$pdk" rev-parse HEAD 2>/dev/null)" = "$ASAP7_PDK_COMMIT" ]; then
     log "ASAP7 r1p7: already set up"
     return
@@ -35,7 +35,7 @@ setup_asap7() {
     NFIN=10 VG=0.3 VD=0.7 VGLO=0.298 VGHI=0.302
 
   log "ASAP7 r1p7: installing interconnect table and wire include"
-  cp "$REPO/pdks/asap7/interconnect.csv" "$REPO/ngspice/asap7/wire.inc" "$ng/"
+  cp "$REPO/pdks/asap7/interconnect.csv" "$REPO/ngspice/wire.inc" "$ng/"
   # Geometry as .param asap7_<layer>_<w|s|t|p|h>, in metres. Gaps (no
   # published value) are left out, so using one is an unknown-parameter error.
   awk -F, 'NR > 1 && $5 != "gap" && ($2 in k) {

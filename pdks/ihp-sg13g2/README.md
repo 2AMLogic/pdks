@@ -28,7 +28,7 @@ Bootstrap installs, next to the models in `<prefix>/ihp-sg13g2/ngspice/`:
 - `wire.inc`: `wire`, `wire1` … `wire64`, the same N-segment pi ladder as
   ASAP7's, shared by both IHP PDKs:
   `X1 a b wire16 l=100u w={ihp_sg13g2_m2_w} rsh={ihp_sg13g2_m2_rsh} cpl=<F/m>`.
-  `rsh` and `cpl` have no default, so a deck that omits one stops with an
+  `w`, `rsh` and `cpl` have no default, so a deck that omits one stops with an
   unknown-parameter error. `cpl` is yours to supply from a source you cite.
 
 Sources, at the pinned commit (SHA-256 of each PDF, which bootstrap does not

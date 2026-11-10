@@ -82,7 +82,7 @@ import re
 import csv
 import tempfile
 
-from common import Report, at, elmore, mos_sweeps, ngspice, render, results, tc_fit, vt_cc, vt_max_gm
+from common import Report, at, elmore, mos_sweeps, ngspice, render, require_wire_w, results, tc_fit, vt_cc, vt_max_gm
 
 TEMP = 27
 VDD = 1.2
@@ -491,6 +491,7 @@ def interconnect_checks(rep, ng, work, ngdir, pdk_beol):
     data["interconnect_gaps"] = sorted("%s.%s" % k for k in gaps)
     print()
     rsh = num("M2", "rsheet")
+    require_wire_w(ng, wire_inc, work)
     for n in ELMORE_SEGMENTS:
         sim, closed = elmore(ng, wire_inc, work, n, ELMORE, rsh, ELMORE_L, ELMORE_W, ELMORE_CPL, ELMORE_RS, ELMORE_CL)
         data["wire_elmore_%d" % n] = dict(simulated=sim, closed_form=closed)

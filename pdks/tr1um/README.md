@@ -59,7 +59,7 @@ only). Bootstrap installs, next to the models in `<prefix>/tr1um/ngspice/`:
 - `interconnect.inc`: the published and derived geometry as
   `.param tr1um_<layer>_<w|s|p>` (m1_w, m1_s, v1_w, …), in metres.
 - `wire.inc`: `wire`, `wire1` … `wire64`, the same pi ladder as ASAP7:
-  `X1 a b wire16 l=100u w={tr1um_m1_w} rsh=<ohm/sq> cpl=<F/m>`. `rsh` and
+  `X1 a b wire16 l=100u w={tr1um_m1_w} rsh=<ohm/sq> cpl=<F/m>`. `w`, `rsh` and
   `cpl` have no default, so a deck cannot pick up a made-up wire by accident.
   The far-end Elmore delay of an open wire is R·C/2 for any segment count.
 

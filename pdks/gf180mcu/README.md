@@ -49,7 +49,7 @@ Bootstrap installs, next to the example in `<prefix>/gf180mcu/ngspice/`:
   `.param gf180mcu_<layer>_<w|s|p|t>` (metres) and `gf180mcu_<layer>_rsh` (ohm/sq).
 - `wire.inc`: `wire`, `wire1` … `wire64`, the same pi ladder and interface
   as ASAP7: `X1 a b wire16 l=100u w={gf180mcu_m1_w} rsh={gf180mcu_m1_rsh} cpl=<F/m>`.
-  `cpl` has no default (it is a gap), so omitting `rsh` or `cpl` stops
+  `cpl` has no default (it is a gap), so omitting `w`, `rsh` or `cpl` stops
   ngspice with an unknown-parameter error.
 
 Nothing here adapts upstream files, so `ngspice/ADAPTATIONS.md` has no

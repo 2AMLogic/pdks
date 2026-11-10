@@ -9,7 +9,7 @@ GUARD_DIRS+=("$PREFIX/sky130")
 
 setup_sky130() {
   local root="$PREFIX/sky130" ng="$PREFIX/sky130/ngspice"
-  local id; id="sky130 $SKY130_COMMON_SHA256 $SKY130_FD_PR_SHA256 $(files_id "$REPO/pdks/sky130/setup.sh" "$REPO/ngspice/sky130/wire.inc" "$REPO/pdks/sky130/interconnect.csv" "$REPO"/ngspice/sky130/*.in)"
+  local id; id="sky130 $SKY130_COMMON_SHA256 $SKY130_FD_PR_SHA256 $(files_id "$REPO/pdks/sky130/setup.sh" "$REPO/ngspice/wire.inc" "$REPO/pdks/sky130/interconnect.csv" "$REPO"/ngspice/sky130/*.in)"
   if stamp_ok "$root" "$id"; then
     log "SKY130: already set up"
     return
@@ -34,7 +34,7 @@ setup_sky130() {
     W=7 L=8 VG=1.2 VD=0.9 VGLO=1.198 VGHI=1.202
   cp "$ng/spiceinit" "$ng/.spiceinit"
   log "SKY130: installing interconnect table and wire include"
-  cp "$REPO/pdks/sky130/interconnect.csv" "$REPO/ngspice/sky130/wire.inc" "$ng/"
+  cp "$REPO/pdks/sky130/interconnect.csv" "$REPO/ngspice/wire.inc" "$ng/"
   # Geometry as .param sky130_<layer>_<w|s|p> in metres and the sheet
   # resistance as sky130_<layer>_rsh in ohm/sq. Gaps (no published value) are
   # left out, so using one is an unknown-parameter error.

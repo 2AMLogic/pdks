@@ -11,7 +11,7 @@ import re
 import tempfile
 
 import reference as ref
-from common import Report, at, mos_sweeps, ngspice, render, results, vt_max_gm
+from common import Report, at, mos_sweeps, ngspice, render, require_wire_w, results, vt_max_gm
 
 SPICEINIT = "set ngbehavior=hsa\nset ng_nomodcheck\n"
 DECKS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "ngspice", "sky130")
@@ -167,6 +167,7 @@ def interconnect(rep, ngdir, ng, work, data):
     print()
     lay = ref.ELMORE_LAYER
     rsh, w = num(lay, "rsheet"), num(lay, "width_min") * 1e-9
+    require_wire_w(ng, wire_inc, work)
     for n in ref.ELMORE_SEGMENTS:
         sim, closed = elmore(ng, wire_inc, work, n, rsh, w)
         data["wire_elmore_%d" % n] = dict(simulated=sim, closed_form=closed)
