@@ -1,0 +1,59 @@
+layer,quantity,value,unit,status,source
+M1,width_min,160,nm,published,[C5LR] M1.a (min. width); same value as SG13G2 [G2]
+M1,spacing_min,180,nm,published,[C5LR] M1.b (min. space or notch); same value as SG13G2 [G2]
+M1,pitch,340,nm,derived,width + spacing (M1.a and M1.b)
+M1,thickness,420,nm,published,[C5L] 3.6 (p. 19) TMET1 target; same value as SG13G2 [G2]
+M1,rsheet,0.11,ohm/sq,published,[C5L] 3.1 (p. 15) RSMET1 target (min-max in spec); same value as SG13G2 [G2]
+M1,rsheet_tcr,0.0034,1/K,published,[C5L] 3.1 (p. 15) TC1RSMET1 target; same value as SG13G2 [G2]
+M1,c_area_up,68,aF/um2,published,[C5L] 3.7 (p. 20) CAMET1/2 target (area capacitance to the next layer up); same value as SG13G2 [G2]
+M1,c_area_sub,37,aF/um2,published,[C5L] 3.7 (p. 20) CAMET1SUB target; same value as SG13G2 [G2]
+M1,c_iso_per_um,gap,aF/um,gap,not published in [C5L] or [C5LR] (only area capacitances are; no fringe or lateral component)
+M1,c_pitch_per_um,gap,aF/um,gap,not published in [C5L] or [C5LR] (only area capacitances are; no fringe or lateral component)
+M2,width_min,200,nm,published,[C5LR] Mn.a (min. width); same value as SG13G2 [G2]
+M2,spacing_min,210,nm,published,[C5LR] Mn.b (min. space or notch); same value as SG13G2 [G2]
+M2,pitch,410,nm,derived,width + spacing (Mn.a and Mn.b)
+M2,thickness,490,nm,published,[C5L] 3.6 (p. 19) TMET2 target; same value as SG13G2 [G2]
+M2,rsheet,0.088,ohm/sq,published,[C5L] 3.1 (p. 15) RSMET2 target (min-max in spec); same value as SG13G2 [G2]
+M2,rsheet_tcr,0.0035,1/K,published,[C5L] 3.1 (p. 15) TC1RSMET2 target; same value as SG13G2 [G2]
+M2,c_area_up,68,aF/um2,published,[C5L] 3.7 (p. 20) CAMET2/3 target (area capacitance to the next layer up); same value as SG13G2 [G2]
+M2,c_iso_per_um,gap,aF/um,gap,not published in [C5L] or [C5LR] (only area capacitances are; no fringe or lateral component)
+M2,c_pitch_per_um,gap,aF/um,gap,not published in [C5L] or [C5LR] (only area capacitances are; no fringe or lateral component)
+M3,width_min,200,nm,published,[C5LR] Mn.a (min. width); same value as SG13G2 [G2]
+M3,spacing_min,210,nm,published,[C5LR] Mn.b (min. space or notch); same value as SG13G2 [G2]
+M3,pitch,410,nm,derived,width + spacing (Mn.a and Mn.b)
+M3,thickness,490,nm,published,[C5L] 3.6 (p. 19) TMET3 target; same value as SG13G2 [G2]
+M3,rsheet,0.088,ohm/sq,published,[C5L] 3.1 (p. 15) RSMET3 target (min-max in spec); same value as SG13G2 [G2]
+M3,rsheet_tcr,0.0035,1/K,published,[C5L] 3.1 (p. 15) TC1RSMET3 target; same value as SG13G2 [G2]
+M3,c_area_up,68,aF/um2,published,[C5L] 3.7 (p. 20) CAMET3/4 target (area capacitance to the next layer up); same value as SG13G2 [G2]
+M3,c_iso_per_um,gap,aF/um,gap,not published in [C5L] or [C5LR] (only area capacitances are; no fringe or lateral component)
+M3,c_pitch_per_um,gap,aF/um,gap,not published in [C5L] or [C5LR] (only area capacitances are; no fringe or lateral component)
+M4,width_min,200,nm,published,[C5LR] Mn.a (min. width); same value as SG13G2 [G2]
+M4,spacing_min,210,nm,published,[C5LR] Mn.b (min. space or notch); same value as SG13G2 [G2]
+M4,pitch,410,nm,derived,width + spacing (Mn.a and Mn.b)
+M4,thickness,490,nm,published,[C5L] 3.6 (p. 19) TMET4 target; same value as SG13G2 [G2]
+M4,rsheet,0.088,ohm/sq,published,[C5L] 3.1 (p. 15) RSMET4 target (min-max in spec); same value as SG13G2 [G2]
+M4,rsheet_tcr,0.0035,1/K,published,[C5L] 3.1 (p. 15) TC1RSMET4 target; same value as SG13G2 [G2]
+M4,c_area_up,gap,aF/um2,gap,[C5L] 3.7 lists Metal4 - TopMetal1 area capacitance as tbd (Rev. 0.2)
+M4,c_iso_per_um,gap,aF/um,gap,not published in [C5L] or [C5LR] (only area capacitances are; no fringe or lateral component)
+M4,c_pitch_per_um,gap,aF/um,gap,not published in [C5L] or [C5LR] (only area capacitances are; no fringe or lateral component)
+TM1,width_min,1640,nm,published,[C5LR] TM1.a (min. width); same value as SG13G2 [G2]
+TM1,spacing_min,1640,nm,published,[C5LR] TM1.b (min. space or notch); same value as SG13G2 [G2]
+TM1,pitch,3280,nm,derived,width + spacing (TM1.a and TM1.b)
+TM1,thickness,2000,nm,published,[C5L] 3.6 (p. 19) TTM1 target; same value as SG13G2 [G2]
+TM1,rsheet,0.018,ohm/sq,published,[C5L] 3.1 (p. 15) RSTM1 target (min-max in spec); same value as SG13G2 [G2]
+TM1,rsheet_tcr,0.0037,1/K,published,[C5L] 3.1 (p. 15) TC1RSTM1 target; same value as SG13G2 [G2]
+TM1,c_area_up,13,aF/um2,published,[C5L] 3.7 (p. 20) CATOPMET2 target (area capacitance to the next layer up); same value as SG13G2 [G2]
+TM1,c_iso_per_um,gap,aF/um,gap,not published in [C5L] or [C5LR] (only area capacitances are; no fringe or lateral component)
+TM1,c_pitch_per_um,gap,aF/um,gap,not published in [C5L] or [C5LR] (only area capacitances are; no fringe or lateral component)
+V1,width_min,190,nm,published,[C5LR] V1.a (min. and max. width); same value as SG13G2 [G2]
+V1,height,540,nm,derived,inter-layer dielectric thickness the via spans: [C5L] 3.6 (p. 19) TILD1; same value as SG13G2 [G2]
+V1,r_via,9,ohm,published,[C5L] 3.4 (p. 17) RVIA1 target (per via; contact chain); same value as SG13G2 [G2]
+V2,width_min,190,nm,published,[C5LR] Vn.a (min. and max. width); same value as SG13G2 [G2]
+V2,height,540,nm,derived,inter-layer dielectric thickness the via spans: [C5L] 3.6 (p. 19) TILD2; same value as SG13G2 [G2]
+V2,r_via,9,ohm,published,[C5L] 3.4 (p. 17) RVIA2 target (per via; contact chain); same value as SG13G2 [G2]
+V3,width_min,190,nm,published,[C5LR] Vn.a (min. and max. width); same value as SG13G2 [G2]
+V3,height,540,nm,derived,inter-layer dielectric thickness the via spans: [C5L] 3.6 (p. 19) TILD3; same value as SG13G2 [G2]
+V3,r_via,9,ohm,published,[C5L] 3.4 (p. 17) RVIA3 target (per via; contact chain); same value as SG13G2 [G2]
+TV1,width_min,420,nm,published,[C5LR] TV1.a (min. and max. width); same value as SG13G2 [G2]
+TV1,height,850,nm,derived,inter-layer dielectric thickness the via spans: [C5L] 3.6 (p. 19) TILDTM1; same value as SG13G2 [G2]
+TV1,r_via,gap,ohm,gap,[C5L] 3.4 lists TopMetal1 - Metal4 via resistance as tbd (Rev. 0.2)
