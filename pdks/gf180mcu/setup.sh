@@ -24,8 +24,13 @@ setup_gf180mcu() {
     "MODELS_DIR=$root/gf180mcu_fd_pr/models/ngspice" "NGSPICE=$NGSPICE"
   log "GF180MCU: installing interconnect table and wire include"
   interconnect_inc gf180mcu
+  # The mismatch deck is polarity-parameterised (DEV with the matching bias
+  # signs: positive for the nFET, negative for the pFET, Model Reference
+  # Guide 9.4.1). The installed example is the nFET one; the sanity checks
+  # render the same template for pfet_03v3.
   render "$REPO/ngspice/gf180mcu/mismatch.sp.in" "$ng/mismatch.sp" \
     "MODELS_DIR=$root/gf180mcu_fd_pr/models/ngspice" "NGSPICE=$NGSPICE" \
+    DEV=nfet_03v3 VLIN=0.1 VDD=3.3 VSTEP=0.01 \
     MM=1 W=10 L=1 PAR=1 N=100 SEED=1
   render "$REPO/ngspice/gf180mcu/noise.sp.in" "$ng/noise.sp" \
     "MODELS_DIR=$root/gf180mcu_fd_pr/models/ngspice" "NGSPICE=$NGSPICE" \
