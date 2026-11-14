@@ -115,10 +115,10 @@ TopVia1 resistance). They are not estimated.
 import math
 import os
 import re
-import csv
 import tempfile
 
-from common import Report, at, elmore, mos_sweeps, ngspice, render, require_wire_w, results, tc_fit, vt_cc, vt_max_gm
+from common import (Report, at, elmore_ladder, gap_check, load_interconnect, mos_sweeps, ngspice, render,
+                    results, tc_fit, vt_cc, vt_max_gm)
 
 TEMP = 27
 VDD = 1.2
@@ -667,16 +667,8 @@ ELMORE = dict(l="1m", w="200n", cpl="0.2n", rs="100", cl="1f", tstop="2n")
 ELMORE_L, ELMORE_W, ELMORE_CPL, ELMORE_RS, ELMORE_CL = 1e-3, 200e-9, 0.2e-9, 100.0, 1e-15
 ELMORE_SEGMENTS = (1, 4, 64)
 ELMORE_TOL = 1e-3  # trapezoidal integral on a 2 ps step, ~30 time constants
-def interconnect_checks(rep, ng, work, ngdir, pdk_beol):
-    table, wire_inc = os.path.join(ngdir, "interconnect.csv"), os.path.join(ngdir, "wire.inc")
-    inc = os.path.join(ngdir, "interconnect.inc")
-    for f in (table, wire_inc, inc):
-        if not os.path.exists(f):
-            raise SystemExit("not found: %s (run bootstrap.sh for this PDK)" % f)
-    with open(table) as f:
-        rows = list(csv.DictReader(f))
-    val = {(r["layer"], r["quantity"]): r for r in rows}
-    num = lambda lay, q: float(val[lay, q]["value"])  # noqa: E731
+def interconnect_checks(rep, ng, work, ngdir, pdk, pdk_beol):
+    rows, val, num, wire_inc = load_interconnect(ngdir, pdk, extra=(os.path.join(ngdir, "interconnect.inc"),))
     data = {}
 
     def chk(name, kind, lay, q, want, unit, scale, tol=1e-9):
@@ -704,25 +696,15 @@ def interconnect_checks(rep, ng, work, ngdir, pdk_beol):
         chk("%s height = dielectric spanned" % lay, "derived", lay, "height", h, "nm", 1)
         if (lay, "r_via") not in pdk_beol["tbd"]:
             chk("%s resistance" % lay, "published", lay, "r_via", r, "ohm", 1)
-    gaps = {k for k, r in val.items() if r["status"] == "gap"}
     expect = {(m, q) for m in pdk_beol["metals"] for q in GAP_PER_METAL} | pdk_beol["tbd"]
-    # A number appearing where the spec prints none must come with a source
-    # added here, so a gap turning into a value fails this check.
-    rep.check("unpublished quantities stay explicit gaps (%d)" % len(gaps), "derived", float(gaps == expect), 1, 1, "", 1)
+    gap_check(rep, data, val, expect)
     rep.check("every row cites a source", "derived", float(all(r["source"].strip() for r in rows)), 1, 1, "", 1)
     layers = {r["layer"] for r in rows}
     rep.check("table has exactly the PDK's layers", "derived",
               float(layers == set(pdk_beol["metals"]) | set(pdk_beol["vias"])), 1, 1, "", 1)
-    data["interconnect_gaps"] = sorted("%s.%s" % k for k in gaps)
     print()
-    rsh = num("M2", "rsheet")
-    require_wire_w(ng, wire_inc, work)
-    for n in ELMORE_SEGMENTS:
-        sim, closed = elmore(ng, wire_inc, work, n, ELMORE, rsh, ELMORE_L, ELMORE_W, ELMORE_CPL, ELMORE_RS, ELMORE_CL)
-        data["wire_elmore_%d" % n] = dict(simulated=sim, closed_form=closed)
-        rep.check("wire ladder Elmore delay, %d segment%s" % (n, "" if n == 1 else "s"), "derived", sim,
-                  closed * (1 - ELMORE_TOL), closed * (1 + ELMORE_TOL), "ps", 1e12,
-                  "(closed form %.3f ps)" % (closed * 1e12))
+    elmore_ladder(rep, data, ng, wire_inc, work, ELMORE_SEGMENTS, ELMORE, num("M2", "rsheet"),
+                  ELMORE_L, ELMORE_W, ELMORE_CPL, ELMORE_RS, ELMORE_CL, ELMORE_TOL)
     return data
 
 
@@ -754,5 +736,5 @@ def run(prefix, pdk, models, hbt, meas_src=None, beol=None):
         data["mismatch_noise"] = mismatch_and_noise(rep, ng, work, models, spiceinit, pdk)
         if beol:
             print("\nInterconnect: layer table vs the process specification and layout rules\n")
-            data["interconnect"] = interconnect_checks(rep, ng, work, os.path.join(prefix, pdk, "ngspice"), beol)
+            data["interconnect"] = interconnect_checks(rep, ng, work, os.path.join(prefix, pdk, "ngspice"), pdk, beol)
     return rep.summary(), data, rep.rows
