@@ -68,7 +68,7 @@ def mismatch_and_noise(rep, data, models, ng, work):
 
 
 def interconnect(rep, ngdir, drfile, ng, work, data):
-    _, val, _, wire_inc = load_interconnect(ngdir, "tr1um", extra=(drfile,))
+    _, val, num, wire_inc = load_interconnect(ngdir, "tr1um", extra=(drfile,))
     # The constants in reference.py are what the fetched [DR] file prints.
     with open(drfile) as f:
         dr = {r[0]: float(r[4]) for r in csv.reader(f) if len(r) > 4 and r[0] in ref.DR_RULES and r[4]}
@@ -76,12 +76,12 @@ def interconnect(rep, ngdir, drfile, ng, work, data):
     rep.check("reference constants match the fetched [DR] file (%d rules)" % len(ref.DR_RULES), "published",
               float(dr == ref.DR_RULES), 1, 1, "", 1)
     for lay, (w, s) in ref.METALS.items():
-        rep.check("%s width" % lay, "published", float(val[lay, "width_min"]["value"]), w, w, "um", 1)
-        rep.check("%s spacing" % lay, "published", float(val[lay, "spacing_min"]["value"]), s, s, "um", 1)
-        p = float(val[lay, "pitch"]["value"])
+        rep.check("%s width" % lay, "published", num(lay, "width_min"), w, w, "um", 1)
+        rep.check("%s spacing" % lay, "published", num(lay, "spacing_min"), s, s, "um", 1)
+        p = num(lay, "pitch")
         rep.check("%s pitch = width + spacing" % lay, "derived", p, w + s, w + s, "um", 1)
     for lay, w in ref.VIAS.items():
-        rep.check("%s width" % lay, "published", float(val[lay, "width_min"]["value"]), w, w, "um", 1)
+        rep.check("%s width" % lay, "published", num(lay, "width_min"), w, w, "um", 1)
     expect = {(m, q) for m in ref.METALS for q in ref.GAP_QUANTITIES} | {(v, q) for v in ref.VIAS for q in ref.GAP_VIA_QUANTITIES}
     gap_check(rep, data, val, expect)
     print()
