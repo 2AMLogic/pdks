@@ -31,8 +31,9 @@ What landed to get here, all merged:
   ladder and Elmore-delay checks (#33, #34; PRs #36, #46, #47, #48, #52).
 - **Mismatch and noise** examples and checks for all seven, or a documented
   "not modelled" where the cards carry no statistics (#35, #37; PRs #38, #49,
-  #50, #51). SKY130's `pfet_01v8` (#70) and the IHP 1.2 V and 3.3 V pMOS
-  devices (#69) followed, extending mismatch to the pFET side.
+  #50, #51). SKY130's `pfet_01v8` (#70), GF180MCU's `pfet_03v3` against GF's
+  plotted PMOS lines (#68) and the IHP 1.2 V and 3.3 V pMOS devices (#69)
+  followed, extending mismatch to the pFET side.
 - **ASAP7's DIBL normalisation** tested and turned into a checked quantity
   within 1.0 mV/V (#71). What the README used to call its "one untested guess"
   — a 0.9 V supply — gave way to a 0.85 V span, recovered device by device by
@@ -51,38 +52,32 @@ also "Blocked and waiting".
 
 Each item fits one pull request. Check the tracker before starting one: it is
 authoritative for whether an item is already filed, in review or merged, and
-this file does not track that. Item 1 extends coverage the repository's own
-files list as "not covered"; every new reference value is cited, never fitted.
+this file does not track that.
 
-1. **GF180MCU: `pfet_03v3` mismatch check** (#68). `pdks/gf180mcu/README.md`
-   lists pFET mismatch as not covered, and GF's Model Reference Guide 9.4
-   plots the 3.3 V PMOS lines next to the NMOS ones already used. Done when
-   `sanity/gf180mcu` runs the area-scaling check on `pfet_03v3`, compares it
-   with the digitised PMOS lines, and the README count and "Not covered" row
-   are updated.
-2. **README "Repository layout" names a deleted file.** It lists
-   `renovate.json`, which was removed in PR #15; `.github/dependabot.yml`
-   replaced it. Done when the layout block matches `git ls-files` at the top
-   level and names this roadmap.
+1. **README's "Repository layout" block does not name this roadmap.** The
+   block lists the files a reader starts from, and `ROADMAP.md` is a new
+   top-level document it does not mention. Done when the block names
+   `ROADMAP.md`.
 
 ## Next
 
 - **Mismatch for the remaining MOS devices**: GF180MCU 5 V and 6 V FETs, and
   SKY130's LVT, HVT, 3.3 V and 5 V devices that carry the switch. Follows the
-  1.8 V and 3.3 V pFET checks — SKY130's landed above, GF180MCU's is Now 1 —
-  which set the pFET pattern. Done when each device listed in the PDK
+  1.8 V and 3.3 V pFET checks — SKY130's (#70) and GF180MCU's (#68) landed
+  above — which set the pFET pattern. Done when each device listed in the PDK
   README's mismatch "Where" row has a check or a stated reason it has none.
   pMOS noise for both PDKs follows the pattern the IHP pMOS checks set.
-- **Shorten the SKY130 Monte Carlo run.** The README says the loop re-reads
-  the library for every sample and adds several minutes, and the `pfet_01v8`
-  mismatch check that landed above lengthens it further. Done when the SKY130
-  CI leg's sanity time is lower than before with identical
-  `sanity-results.json` values for the same seeds.
+- **Measure where the SKY130 sanity time goes.** The README's own measurement
+  (481 s → 542 s when the `pfet_01v8` check doubled the Monte Carlo sample
+  count) attributes the run to the device and corner sweeps rather than the
+  loop. Done when the dominant component is identified by measurement; any
+  optimisation that follows keeps identical `sanity-results.json` values for
+  the same seeds.
 - **Mismatch of passives and the HBT** where the PDK ships a statistical
   model: IHP resistors, MIM, MOS and varactor capacitors and the SG13G2 HBT
   (`*_mod_mismatch.lib`), GF180MCU resistors, BJTs and MIM capacitors. Follows
-  Now 1 and the IHP MOS mismatch checks above. Done when each has a derived
-  check or a documented gap.
+  the MOS mismatch checks above. Done when each has a derived check or a
+  documented gap.
 
 ## Later
 
