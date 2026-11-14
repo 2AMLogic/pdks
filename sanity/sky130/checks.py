@@ -10,8 +10,8 @@ import re
 import tempfile
 
 import reference as ref
-from common import (Report, at, elmore_ladder, gap_check, load_interconnect, mos_sweeps, ngspice, render,
-                    results, vt_max_gm)
+from common import (Report, at, elmore_ladder, gap_check, load_interconnect, mc_tol, mos_sweeps, ngspice,
+                    render, results, vt_max_gm)
 
 SPICEINIT = "set ngbehavior=hsa\nset ng_nomodcheck\n"
 DECKS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "ngspice", "sky130")
@@ -77,7 +77,7 @@ def mismatch(rep, data, prefix, ng, work, dev):
     # biased off, reports zero spread, which would satisfy the mc_mm_switch=0
     # check below and the area scaling vacuously.
     dvgs_floor = 2 ** 0.5 * slopes["vth0"] * 1e3
-    t = ref.mc_tol(n)
+    t = mc_tol(n)
     for (tag, r) in runs:
         rep.check("AVT(dVgs) floor %s" % tag, "bound", r["avt_dvgs_mVum"], dvgs_floor * (1 - t), 1e9, "mV um", 1,
                   "(sqrt(2)*vth0_slope %.3f mV um; measured/floor %.2f)" % (dvgs_floor, r["avt_dvgs_mVum"] / dvgs_floor))
@@ -88,12 +88,12 @@ def mismatch(rep, data, prefix, ng, work, dev):
     for key, label_s, n_s in (("avt_dvgs_mVum", "AVT(dVgs)", n), ("avt_mVum", "AVT(Vt)", 2 * n), ("abeta_pcum", "ABeta", 2 * n)):
         vals = [r[key] for _, r in runs]
         mean = sum(vals) / len(vals)
-        t = ref.mc_tol(n_s)
+        t = mc_tol(n_s)
         for (tag, r) in runs:
             rep.check("%s*sqrt(A) %s" % (label_s, tag), "derived", r[key], mean * (1 - t), mean * (1 + t),
                       "%s" % ("%um" if key == "abeta_pcum" else "mV um"), 1, "(area scaling; mean %.3g, +-%.0f %%)" % (mean, 100 * t))
     vt_floor = slopes["vth0"] * 1e3
-    t = ref.mc_tol(2 * n)
+    t = mc_tol(2 * n)
     for (tag, r) in runs:
         rep.check("AVT(Vt) floor %s" % tag, "bound", r["avt_mVum"], vt_floor * (1 - t), 1e9, "mV um", 1,
                   "(model vth0_slope %.3f mV um; measured/slope %.2f)" % (vt_floor, r["avt_mVum"] / vt_floor))

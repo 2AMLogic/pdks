@@ -260,17 +260,14 @@ VT_SANITY = {d: (min(r[5] for r in ROWS if r[1] == d and r[4] == "vt") - VT_SANI
 #     Vgs - Id/gm - Vds/2, the same definition as the Vt rows above (the
 #     deck uses a 10 mV gate grid and the derivative ngspice interpolates).
 #   beta = gm,peak / Vds; sigma(beta)/beta = std(gm,peak)/mean(gm,peak).
-# Sampling error of a standard deviation from n samples: 1/sqrt(2(n-1)). The
-# area-invariance checks (sigma * sqrt(WL) equal at every area, which is the
-# Pelgrom area scaling) allow 3 such errors on the deviation of one area from
-# the mean of the three.
+# The area-invariance checks (sigma * sqrt(WL) equal at every area, which is
+# the Pelgrom area scaling) allow 3 sampling errors of a standard deviation on
+# the deviation of one area from the mean of the three: common.mc_tol.
 # sigma(Vt) floor: Vt moves with vth0 one-for-one, and the device's other
 # mismatch terms add independent variance on top (nFET: toxe and voff; pFET:
 # toxe and nfactor, its voff_slope being 0), so sigma(Vt)*sqrt(WL) cannot be
 # below that device's vth0 slope in MISMATCH_SLOPES (a bound, with the same
 # 3-error allowance).
-def mc_tol(n):
-    return 3.0 / (2.0 * (n - 1)) ** 0.5
 
 # Thermal and flicker noise (nFET 7/8 um at Vg 1.2 V, Vd 0.9 V, saturation,
 # Id 44 uA; ngspice .noise, 27 C). The model is BSIM4 with fnoimod=1 and
