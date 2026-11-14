@@ -140,22 +140,74 @@ KNOWN_DEVIATIONS = {
 # Mismatch model (pinned tree, sky130_fd_pr 403964dc as built into open_pdks
 # f6eeac7). The library corners tt_mm, ff_mm, ... (sky130.lib.spice, e.g.
 # `.lib tt_mm` at line 343) set `.param mc_mm_switch=1`; the plain corners set
-# it to 0. In sky130_fd_pr__nfet_01v8__tt.pm3.spice every bin has
-#   toxe = 4.148e-09 + MC_MM_SWITCH*AGAUSS(0,1,1)*(4.148e-09*toxe_slope/sqrt(l*w*mult))   (line 62)
-#   vth0 = 0.5190093 + MC_MM_SWITCH*AGAUSS(0,1,1)*(vth0_slope/sqrt(l*w*mult))              (line 76)
-#   voff = -0.1052686 + MC_MM_SWITCH*AGAUSS(0,1,1)*(voff_slope/sqrt(l*w*mult))             (line 102)
-# with l, w in um and the slopes in sky130_fd_pr__nfet_01v8__mismatch.corner.spice:
-# toxe_slope 3.443e-3 (relative, um), vth0_slope 3.356e-3 (V um), voff_slope
-# 0.007 (V um). Each instance draws its own three Gaussians, independent of
-# each other. The `.lib mc` corner (mc_pr_switch=1) is process variation, not
-# mismatch, and is not used here.
+# it to 0. Each bin of a device's <dev>__tt.pm3.spice adds, to each of its
+# mismatch-carrying parameters,
+#   p = p_nom + MC_MM_SWITCH*AGAUSS(0,1,1)*(<scale>*<dev>__<p>_slope/sqrt(l*w*mult))
+# with l, w in um (<scale> is p_nom for toxe, which is relative, and 1 for the
+# rest). Each instance draws its own independent Gaussian per parameter. In
+# sky130_fd_pr__nfet_01v8__tt.pm3.spice:
+#   toxe = 4.148e-09 + ... (4.148e-09*toxe_slope/sqrt(l*w*mult))   (line 62)
+#   vth0 = 0.5190093 + ... (vth0_slope/sqrt(l*w*mult))             (line 76)
+#   voff = -0.1052686 + ... (voff_slope/sqrt(l*w*mult))            (line 102)
+# The `.lib mc` corner (mc_pr_switch=1) is process variation, not mismatch,
+# and is not used here.
 # Devices carrying the switch (a `<dev>__mismatch.corner.spice` file included
 # by corners/tt.spice): nfet_01v8, nfet_01v8_lvt, pfet_01v8, pfet_01v8_lvt,
 # pfet_01v8_hvt, nfet_03v3_nvt, nfet_05v0_nvt, nfet_g5v0d10v5,
 # pfet_g5v0d10v5. Not covered here: resistors, capacitors, BJTs.
-VTH0_SLOPE = 3.356e-3   # V um, nfet_01v8__mismatch.corner.spice line 20
-TOXE_SLOPE = 3.443e-3   # relative, um, same file line 16
-MISMATCH_AREAS = [(1.0, 0.5, 1, 11), (1.0, 0.5, 4, 12), (1.0, 0.5, 16, 13)]   # (W, L um, mult, seed)
+#
+# Which parameters carry mismatch differs between the two 1.8 V devices,
+# counted over every bin of each tt.pm3.spice (2026-11-14, pinned tree):
+# all 180 nfet_01v8 bins carry it on {toxe, voff, vth0}; all 108 pfet_01v8
+# bins carry it on {toxe, voff, vth0, nfactor}. nfactor (subthreshold-slope
+# factor) is a fourth pFET term; the nFET corner file defines
+# nfet_01v8__nfactor_slope = 0.0 (line 18) and no nFET bin references it.
+# The pFET's voff_slope is 0.0, so for the pFET voff contributes no variance.
+#
+# WHICH SLOPE VALUE APPLIES DEPENDS ON THE BIN. A corner file can define
+# _slope1 and _slope2 variants beside the unsuffixed slope, and a bin
+# references exactly one variant per parameter. The pFET file carries all
+# three variants of all four of its mismatch terms (lines 16-18, 20-22,
+# 23-25, 26-28); the nFET file carries only one extra, vth0_slope1 (line 21),
+# referenced by 2 of its 180 bins. MISMATCH_AREAS uses L = 0.5 um, which is
+# exactly a bin edge in both devices, so the binding was resolved against
+# ngspice itself rather than assumed (2026-11-14: `op` + `showmod` on the
+# pinned tree at w=1 l=0.5 mult=1, which prints the bound bin's vth0/lvth0):
+#   nfet_01v8  vth0 0.587006, lvth0 -3.69211e-09 -> the bin at
+#     nfet_01v8__tt.pm3.spice line 16065, which references the UNSUFFIXED
+#     toxe_slope / voff_slope / vth0_slope.
+#   pfet_01v8  vth0 -1.04411, lvth0 3.42349e-08 -> model.68,
+#     l[5e-07, 1e-06] w[1e-06, 1.26e-06] (pfet_01v8__tt.pm3.spice line
+#     18938), which references the UNSUFFIXED slopes: toxe line 18990,
+#     vth0 line 18998, voff line 19043, nfactor line 19045.
+# The lower bin edge is inclusive: the same probe at l = 0.6 um binds pFET
+# model.68 too, and at l = 0.4 um it binds model.69 (vth0 -0.989407,
+# line 19216), whose terms are the _slope1 variants -- for vth0 that is
+# 7.356e-03, 26 % above model.68's. So the floor below is the smaller,
+# genuinely-applied value, not the conservative one; a change of
+# MISMATCH_AREAS' W or L must re-run that probe.
+MISMATCH_SLOPES = {
+    # device: {parameter: slope as the bound bin applies it}, with the line of
+    # the .param in that device's own <dev>__mismatch.corner.spice.
+    "nfet_01v8": {
+        "toxe": 3.443e-3,      # relative, um; nfet_01v8__mismatch.corner.spice line 16
+        "voff": 0.007,         # V um; same file line 19
+        "vth0": 3.356e-3,      # V um; same file line 20
+    },
+    "pfet_01v8": {
+        "toxe": 4.443e-3,      # relative, um; pfet_01v8__mismatch.corner.spice line 16
+        "nfactor": 0.1,        # um (nfactor is dimensionless); same file line 20
+        "voff": 0.0,           # V um; same file line 23 -- zero, so no variance
+        "vth0": 5.856e-3,      # V um; same file line 26
+    },
+}
+MISMATCH_DEVS = ("nfet_01v8", "pfet_01v8")   # the two standard 1.8 V devices
+MISMATCH_LABEL = {"nfet_01v8": "1.8 V nFET", "pfet_01v8": "1.8 V pFET"}
+MISMATCH_AREAS = {   # (W, L um, mult, seed) per device; seeds differ so the
+                     # two devices are independent sample sets
+    "nfet_01v8": [(1.0, 0.5, 1, 11), (1.0, 0.5, 4, 12), (1.0, 0.5, 16, 13)],
+    "pfet_01v8": [(1.0, 0.5, 1, 21), (1.0, 0.5, 4, 22), (1.0, 0.5, 16, 23)],
+}
 # Area is scaled with mult at fixed W/L: the model divides every mismatch term
 # by sqrt(l*w*mult) and uses mult nowhere else (the device line,
 # nfet_01v8__tt.pm3.spice line 38, has no m=), so the nominal device, its bias
@@ -165,7 +217,42 @@ MISMATCH_AREAS = [(1.0, 0.5, 1, 11), (1.0, 0.5, 4, 12), (1.0, 0.5, 16, 13)]   # 
 # the extracted sigma*sqrt(WL) is not constant across bins (seen: 4/2 um
 # gives AVT(Vt) 6.6 against 4.7 mV um at 1/0.5).
 MISMATCH_N = 100        # pairs per area; 2N single devices
-# Bias: Id = 20 uA * W/L per device (the same at every area); single-device extraction at Vds = 50 mV.
+# Deck bias and sweep (ngspice/sky130/mismatch.sp.in), in device terms
+# (positive = on for either polarity), signed by the deck's POL as
+# sanity/decks/mos_iv.sp does: gate sweep 0 .. MISMATCH_VDD in MISMATCH_VSTEP,
+# single-device extraction at |Vds| = MISMATCH_VDS.
+MISMATCH_VDD = VDD
+MISMATCH_VDS = 0.05
+MISMATCH_VSTEP = 0.002
+# Positive controls. A deck wired for the wrong polarity, or biased off, both
+# measures nothing and reports zero spread -- which would satisfy the
+# mc_mm_switch=0 check and the area-scaling checks vacuously. Two bounds that
+# only a live, correctly biased deck can meet:
+#   sigma(dVgs) floor: at equal current dVgs = (Vt1 - Vt2) + the pair's beta
+#     mismatch referred to the gate, independent contributions, so
+#     sigma(dVgs)^2 >= 2*sigma(Vt)^2 and sigma(Vt)*sqrt(WL) is itself bounded
+#     below by vth0_slope (above). Hence sigma(dVgs)*sqrt(WL) >=
+#     sqrt(2)*vth0_slope, with the same 3-sampling-error allowance. Zero fails.
+#   mean Vt: a polarity error shows up as a Vt of the wrong sign or a
+#     nonsensical magnitude long before it shows up in a sigma. The mismatch
+#     decks' 1/0.5 um geometry has NO e-test window of its own, so this is a
+#     derived bound, not a published one: the full span of that device's
+#     published Vt windows in ROWS (magnitudes; nfet_01v8 0.510 .. 0.852 V,
+#     pfet_01v8 0.554 .. 1.086 V), widened by VT_SANITY_MARGIN either side to
+#     cover a geometry those windows do not cover. It is deliberately loose:
+#     its job is to catch a broken deck, not to grade the model.
+VT_SANITY_MARGIN = 0.25   # V
+VT_SANITY = {d: (min(r[5] for r in ROWS if r[1] == d and r[4] == "vt") - VT_SANITY_MARGIN,
+                 max(r[6] for r in ROWS if r[1] == d and r[4] == "vt") + VT_SANITY_MARGIN)
+             for d in MISMATCH_DEVS}
+# Bias: Id = 20 uA * W/L per device (the same at every area, and the same for
+# both devices); single-device extraction at Vds = 50 mV. The pFET being the
+# weaker device, the same current puts its diode-connected pair at a higher
+# overdrive than the nFET's (|Vgs| about 1.70 V against 1.07 V at 1/0.5 um,
+# both inside the 1.8 V rail), so more of its sigma(dVgs) is beta mismatch and
+# less is Vt mismatch. That shifts no check: the area scaling is a statement
+# about sqrt(area), and Vt and beta are extracted from the separate
+# single-device sweep at peak gm, not at the diode bias.
 # Extraction definitions (the same ones the deck prints):
 #   sigma(dVgs): std of Vgs1 - Vgs2 of two diode-connected devices at equal
 #     current, the input-referred offset of a pair at equal drain currents.
@@ -177,9 +264,11 @@ MISMATCH_N = 100        # pairs per area; 2N single devices
 # area-invariance checks (sigma * sqrt(WL) equal at every area, which is the
 # Pelgrom area scaling) allow 3 such errors on the deviation of one area from
 # the mean of the three.
-# sigma(Vt) floor: Vt moves with vth0 one-for-one, and toxe and voff add
-# independent variance, so sigma(Vt)*sqrt(WL) cannot be below VTH0_SLOPE
-# (a bound, with the same 3-error allowance).
+# sigma(Vt) floor: Vt moves with vth0 one-for-one, and the device's other
+# mismatch terms add independent variance on top (nFET: toxe and voff; pFET:
+# toxe and nfactor, its voff_slope being 0), so sigma(Vt)*sqrt(WL) cannot be
+# below that device's vth0 slope in MISMATCH_SLOPES (a bound, with the same
+# 3-error allowance).
 def mc_tol(n):
     return 3.0 / (2.0 * (n - 1)) ** 0.5
 
@@ -239,7 +328,8 @@ GAPS = [
     "Pelgrom coefficients AVT, ABeta: SkyWater publishes none (only the model's own slopes, used above as a floor and as information)",
     "flicker-noise level of the 1.8 V nFET: no published value; the model's level is printed as information only",
     "published thermal-noise gamma: none; only the long-channel theory range is used",
-    "mismatch of resistors, capacitors and BJTs; mismatch and noise of the other devices (checked here: nfet_01v8 only)",
+    "mismatch of resistors, capacitors and BJTs; mismatch of the other devices "
+    "(checked here: nfet_01v8 and pfet_01v8); noise of every device but nfet_01v8",
     "noise of the models in NOISE_ABSENT: parameters absent, BSIM4 defaults apply",
 ]
 
