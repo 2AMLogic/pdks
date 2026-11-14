@@ -110,10 +110,12 @@ def mismatch(rep, data, prefix, ng, work, dev):
 
 
 def installed_decks_rendered(rep, ngdir):
-    """bootstrap's render() is a plain sed with no unresolved-placeholder
-    check, so a placeholder pdks/sky130/setup.sh forgets to supply is copied
-    into the installed example literally and fails only at ngspice parse time
-    (issue #70). Catch that here instead."""
+    """Report any @PLACEHOLDER@ left in the installed decks (issue #70).
+
+    bootstrap's render() now fails the run itself on an unfilled placeholder
+    (issue #79), so this is a backstop on the installed artifact rather than
+    the only guard: it checks what is on disk, so it still covers a deck that
+    reached <ngdir> by some path other than render()."""
     left = {}
     for f in sorted(glob.glob(os.path.join(ngdir, "*.sp"))):
         m = re.findall(r"@[A-Z_0-9]+@", open(f).read())

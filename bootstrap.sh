@@ -143,12 +143,23 @@ git_pinned() {
   [ "$(git -C "$dir" rev-parse HEAD)" = "$commit" ] || die "$dir is not at $commit"
 }
 
-# render SRC DST KEY=VALUE...: copy a template, replacing @KEY@ with VALUE
+# render SRC DST KEY=VALUE...: copy a template, replacing @KEY@ with VALUE.
+# Every @KEY@ a template carries must be supplied by its call site. An
+# unfilled one is a call-site bug, so it fails the run here instead of being
+# copied into the installed deck literally and surfacing only at ngspice
+# parse time -- the same contract sanity/common.py's render() enforces for
+# the checks' own copies. Keys the template does not use are ignored, and an
+# empty value (L_INST=) is a fill, not a miss.
 render() {
   local src=$1 dst=$2; shift 2
-  local args=() kv
+  local args=() kv left
   for kv in "$@"; do args+=(-e "s|@${kv%%=*}@|${kv#*=}|g"); done
   sed "${args[@]}" "$src" > "$dst"
+  # The || true is load-bearing: grep exits 1 when it matches nothing, and
+  # under set -euo pipefail that status would propagate and kill the run on
+  # the success path, silently, for every PDK.
+  left=$(grep -oE '@[A-Z_0-9]+@' "$dst" | sort -u | tr '\n' ' ') || true
+  [ -z "$left" ] || die "$dst: unfilled placeholders from $src: ${left% }"
 }
 
 # interconnect_inc PDK [norsheet]: install pdks/PDK/interconnect.csv and the
