@@ -12,8 +12,8 @@ results are checked against each foundry's or author's published values.
 | `asap5` | ASAP5 r0p4: 5 nm predictive gate-all-around nanowire FET (ASU) | BSIM-CMG 107, compiled to OSDI | 0.3 MB | 116/116: 47 device checks against the PDK paper, 64 interconnect, 5 derived card and noise checks, plus 1 known deviation | not modelled: predictive, cards carry no statistical parameters (authors recommend none) | `noise.sp` example; Nyquist thermal and flicker exponent checked (BSIM-CMG defaults, no extracted level: gap) |
 | `sky130` | SkyWater SKY130 (`sky130A`; `sky130B`'s ngspice libraries are identical in this release) | BSIM4, built in | 21 MB | 132/132 against SkyWater's e-test windows, device tables (continuous models) and corner tables, the derived mismatch and noise checks, and the interconnect table (44 interconnect) below, plus 8 known deviations | `mc_mm_switch` via the `*_mm` corners; `mismatch.sp` example; Pelgrom area scaling of the 1.8 V nFET and pFET checked (derived; SkyWater publishes no coefficient). The two carry different mismatch terms: the pFET adds `nfactor` and its `voff_slope` is 0 | `noise.sp` example; flicker exponent and thermal noise checked (no published level: gap) |
 | `gf180mcu` | GlobalFoundries GF180MCU | BSIM4, built in | 1.4 MB | 136/136 against GF's slow/typical/fast EP targets and spec limits, incl. passives and their temperature coefficients, the derived mismatch and noise checks below, and the interconnect table (49 interconnect), plus 3 known deviations | `sw_stat_mismatch` (default 0) with the `X` subcircuits of `fets_mm`; `mismatch.sp` example; Pelgrom area scaling checked (derived) for the 3.3 V nFET and pFET, both compared with GF's plotted fit lines (digitised; the pFET matches, the nFET's two are known deviations) | `noise.sp` example; flicker exponent and thermal noise checked (GF publishes only the measurement conditions, no level: gap) |
-| `ihp-sg13g2` | IHP SG13G2 SiGe BiCMOS | PSP 103 (OSDI), VBIC HBT | 3 MB | 200/200 against IHP's process spec and layout rules (1.2 V and 3.3 V MOS, corners, resistors and MIM with their temperature coefficients, the HBT, 79 interconnect), IHP's measured silicon over temperature, and the derived mismatch and noise checks below, plus 8 known deviations | `mm_ok` via the `mos_tt_mismatch` corner; `mismatch.sp` and `mismatch_hv.sp` examples; Pelgrom area scaling checked (derived; IHP publishes no coefficient) | `noise.sp` and `noise_hv.sp` examples; flicker exponent and thermal noise checked (no published level: gap) |
-| `ihp-sg13cmos5l` | IHP SG13CMOS5L CMOS | PSP 103 (OSDI) | 5 MB | 153/153 against IHP's process spec and layout rules: 1.2 V and 3.3 V MOS, corners, resistors and their temperature coefficients, 56 interconnect, and the derived mismatch and noise checks below, plus 2 known deviations | `mm_ok` via the `mos_tt_mismatch` corner (default 0 here: the decks set it); `mismatch.sp` and `mismatch_hv.sp` examples; Pelgrom area scaling checked (derived; IHP publishes no coefficient) | `noise.sp` and `noise_hv.sp` examples; flicker exponent and thermal noise checked (no published level: gap) |
+| `ihp-sg13g2` | IHP SG13G2 SiGe BiCMOS | PSP 103 (OSDI), VBIC HBT | 3 MB | 236/236 against IHP's process spec and layout rules (1.2 V and 3.3 V MOS, corners, resistors and MIM with their temperature coefficients, the HBT, 79 interconnect), IHP's measured silicon over temperature, and the derived mismatch and noise checks below, plus 8 known deviations | `mm_ok` via the `mos_tt_mismatch` corner; `mismatch.sp` and `mismatch_hv.sp` examples; Pelgrom area scaling checked for all four MOS devices, nMOS and pMOS (derived; IHP publishes no coefficient) | `noise.sp` and `noise_hv.sp` examples; flicker exponent and thermal noise checked for all four MOS devices (no published level: gap) |
+| `ihp-sg13cmos5l` | IHP SG13CMOS5L CMOS | PSP 103 (OSDI) | 5 MB | 189/189 against IHP's process spec and layout rules: 1.2 V and 3.3 V MOS, corners, resistors and their temperature coefficients, 56 interconnect, and the derived mismatch and noise checks below, plus 2 known deviations | `mm_ok` via the `mos_tt_mismatch` corner (default 0 here: the decks set it); `mismatch.sp` and `mismatch_hv.sp` examples; Pelgrom area scaling checked for all four MOS devices, nMOS and pMOS (derived; IHP publishes no coefficient) | `noise.sp` and `noise_hv.sp` examples; flicker exponent and thermal noise checked for all four MOS devices (no published level: gap) |
 | `tr1um` | Tokai Rika TR-1um 1 µm CMOS (OpenSUSI) | BSIM3v3, built in | 35 KB | 34/34 against Tokai Rika's published I-V curves (digitised, 16) and design rules (interconnect, 12), and the derived noise, model-scan and wire-ladder checks, plus 2 known deviations | none: the manual lists "Matching" as not provided and the cards have no statistical parameters (gap) | `noise.sp` example on the BSIM3v3 defaults (no noise model published; flicker is 0) |
 
 ## Quick start
@@ -229,21 +229,29 @@ each check is depends on what was published:
   specification gives a MOS Pelgrom coefficient, a flicker level or a
   thermal-noise gamma ([G2] Attachment A.am defines the matching
   coefficient, but no table row carries a value), so these are gaps, not
-  estimates. The checks use the 1.2 V and 3.3 V nMOS model cards, which
+  estimates. The checks use all four 1.2 V and 3.3 V MOS model cards
+  (`sg13_lv_nmos`, `sg13_lv_pmos`, `sg13_hv_nmos`, `sg13_hv_pmos`), which
   SG13CMOS5L shares with SG13G2 (same values, same results):
   - Mismatch is on in `.lib mos_tt_mismatch` for instances with `mm_ok=1`
     (`mm_ok=0` gives zero spread). Each instance draws `delvto` and
     `factuo` spreads that scale as `1/sqrt(m*l*w)` plus absolute `w`/`l`
     spreads. The checks run 200 pairs at three areas and require
     `sigma(Vt)*sqrt(area)` to be constant within 3 sampling errors and at
-    least the model's own `delvto_mm` (3.9 mV µm LV, 7 mV µm HV); the beta
-    spread must match the quadrature sum of `factuo_mm` and the `dw`/`dl`
-    terms. Same seed gives identical output.
-  - Noise: the flicker exponent equals the model's `efo` (1.0), and the
-    thermal gamma lies between 2/3 and 1. One **known deviation** per PDK:
-    the 1.2 V nMOS channel noise at Vds = 0 is 1.026 of the Nyquist value
-    `4kT*gds`.
-  - The mismatch and noise checks add about 35 s of single-core ngspice per PDK.
+    least the model's own `delvto_mm` (1.2 V nMOS 3.9, pMOS 2.2; 3.3 V nMOS
+    7, pMOS 4.5 mV µm); the beta spread must match the quadrature sum of
+    `factuo_mm` and the `dw`/`dl` terms. Same seed gives identical output.
+  - Noise: the flicker exponent equals the model's `efo` — 1.0 on three
+    cards, 1.152 on the 3.3 V pMOS, the only one where it is not 1 — and the
+    thermal gamma lies between 2/3 and 1. The gamma and the Nyquist ratio are
+    checked after division by the card's own `fnto`, PSP 103's "thermal noise
+    coefficient", which both are exactly proportional to; that is a no-op for
+    the three cards with `fnto` = 1.0 and divides out the 1.85 of the 1.2 V
+    pMOS. The raw, un-normalised model levels are reported alongside. One
+    **known deviation** per PDK: the 1.2 V nMOS channel noise at Vds = 0 is
+    1.026 of the Nyquist value `4kT*gds`.
+  - The mismatch and noise checks add about a minute of single-core ngspice
+    per PDK, 1.6 times what the nMOS-only checks took (measured 84 s against
+    52 s on the same host: four devices instead of two).
 - **ASAP7 and ASAP5 mismatch and noise (predictive: no measured statistics).**
   Neither paper nor the PDK notes give a variability, mismatch or noise
   recommendation for the devices (ASAP5's paper treats lithography
