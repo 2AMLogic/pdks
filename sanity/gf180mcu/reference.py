@@ -160,9 +160,23 @@ ELMORE_TOL = 1e-3
 # coefficient. Reading the fitted line at 1/sqrt(WL) = 2.85 1/um (the right
 # end of the x axis, pixel digitisation, about +-5 %):
 #   3.3 V NMOS: sigma(dVtlin) 25.5 mV -> 8.9 mV um;  sigma(dIdsat) 1.65 % -> 0.58 % um
-# Definitions (LV_9_4.rst): Vtlin = Vg at Vds = 0.1 V and Id = 0.1 uA * W/L;
-# Idsat = Id at Vg = Vd = 3.3 V. These are published (digitised), as the TR-1um
-# curves are. Noise: LV_2_3.rst ("1/f Noise Measurement conditions") and
+#   3.3 V PMOS: sigma(dVtlin) 23.6 mV -> 8.3 mV um;  sigma(dIdsat) 1.97 % -> 0.69 % um
+# The PMOS pair were read off the same figure the same way, by a least-squares
+# fit of the dashed fit-line pixels of the two right-hand panels, taken midway
+# between the "Linear (Sim)" and "Linear (Mea)" lines, with each panel's frame
+# mapped to data coordinates and that mapping confirmed against the panel's own
+# gridlines. The confirmation matters: the PMOS Idsat panel's y axis runs to
+# 2.2, not to the 2.0 of its topmost labelled gridline, and reading it as 2.0
+# understates the coefficient by 10 %. Running the same fit on the two NMOS
+# panels returns 8.9 mV um and 0.57 % um, reproducing the hand-read values
+# above to about 2 %, which is what the +-5 % digitisation figure rests on.
+# Figure SHA-256: 426e6dcc63fb7f2d063a9fb33f723f64a4d5ea51201de14416d6e664e2a4c45c
+# Definitions (LV_9_4.rst section 9.4.1): Vtlin = Vg at Vds = 0.1 V and
+# Id = 0.1 uA * W/L; Idsat = Id at Vg = Vd = 3.3 V, Vbulk = 0 V; with
+# "positive sign for NMOS, negative for PMOS". So the pFET deck is the nFET
+# deck with the gate and drain drives negated, source and bulk left at 0 V,
+# and every reported quantity a magnitude. These are published (digitised),
+# as the TR-1um curves are. Noise: LV_2_3.rst ("1/f Noise Measurement conditions") and
 # 17_Noise.csv give only the bias conditions (3.3 V nFET 10x0.28 um, Vgs 0.8,
 # 1.8, 3.3 V, Vds 0.1, 1.8, 3.3 V) and say the BSIM unified flicker model was
 # fitted to the median of measured dies. No noise level, no thermal-noise
@@ -178,25 +192,46 @@ ELMORE_TOL = 1e-3
 #   delvto = agauss(0,var_vth,1)*sw_stat_mismatch    (line 46943)
 #   mulu0  = 1 - agauss(0,var_k,1)*sw_stat_mismatch
 #   var_vth = 0.7071*par_vth*1e-6/sqrt((l-par_l)*par*(w-par_w))   (lines 46936-46941)
-# Devices: nfet_03v3, pfet_03v3, nfet_05v0, nfet_06v0, pfet_05v0, pfet_06v0
-# (par_vth, par_k: lines 46932-46933 for nfet_03v3). nfet_06v0_nvt and the
-# resistors, BJTs and MIM capacitors have their own statistical hooks or none;
-# checked here: nfet_03v3 only. An M-prefix card (as in example.sp) has NO
-# mismatch. The factor 0.7071 makes par_vth the pair-difference coefficient:
-# sigma(dVth of a pair) = par_vth/sqrt(leff*weff), sigma(Vth single) = 0.7071 x that.
-PAR_VTH = 7.148     # mV um, nfet_03v3 par_vth, line 46932
-PAR_K = 0.7008      # % um, nfet_03v3 par_k (0.007008 um), line 46933
-PAR_L = 0.15        # um, par_l, line 46934
-PAR_W = -0.1        # um, par_w, line 46935
-# Published (digitised) nFET coefficients, drawn W*L (see above).
-PUB_AVT = 8.9       # mV um, sigma(dVtlin)*sqrt(WL)
-PUB_AIDSAT = 0.58   # % um, sigma(dIdsat)*sqrt(WL)
+# (nfet_03v3, lines 46931-46944; pfet_03v3 repeats it at 46945-46958)
+# Devices: nfet_03v3, pfet_03v3, nfet_05v0, nfet_06v0, pfet_05v0, pfet_06v0.
+# nfet_06v0_nvt and the resistors, BJTs and MIM capacitors have their own
+# statistical hooks or none; checked here: the two 3.3 V devices. An M-prefix
+# card (as in example.sp) has NO mismatch. The factor 0.7071 makes par_vth the
+# pair-difference coefficient: sigma(dVth of a pair) = par_vth/sqrt(leff*weff),
+# sigma(Vth single) = 0.7071 x that. The two subcircuits are identical but for
+# par_vth and par_k: same par_l, par_w, same 0.7071 pair-difference factor,
+# same delvto/mulu0 wiring, same d g s b node order and par=1 default.
+PAR_L = 0.15        # um, par_l, nfet_03v3 line 46934, pfet_03v3 line 46948
+PAR_W = -0.1        # um, par_w, nfet_03v3 line 46935, pfet_03v3 line 46949
 PUB_TOL = 0.15      # digitisation (5 %) plus the sampling error of 100 pairs (7 %)
+# Per device: the model's own coefficients (the derived reference), the
+# digitised published fit lines, the bias polarity ("positive sign for NMOS,
+# negative for PMOS", LV_9_4.rst 9.4.1), and the seeds of the three areas.
+# Line numbers are in models/ngspice/sm141064.spice at the pin.
+MISMATCH_DEVICES = {
+    "nfet_03v3": dict(
+        sgn=1,
+        par_vth=7.148,    # mV um, par_vth 0.007148, line 46932
+        par_k=0.7008,     # % um, par_k 0.007008, line 46933
+        pub_avt=8.9,      # mV um, sigma(dVtlin)*sqrt(WL), digitised
+        pub_aidsat=0.58,  # % um, sigma(dIdsat)*sqrt(WL), digitised
+        seeds=(11, 12, 13), off_seed=1, rep_seed=5,
+    ),
+    "pfet_03v3": dict(
+        sgn=-1,
+        par_vth=6.66,     # mV um, par_vth 0.00666, line 46946
+        par_k=0.2833,     # % um, par_k 0.002833, line 46947
+        pub_avt=8.3,      # mV um, sigma(dVtlin)*sqrt(WL), digitised
+        pub_aidsat=0.69,  # % um, sigma(dIdsat)*sqrt(WL), digitised
+        seeds=(21, 22, 23), off_seed=2, rep_seed=6,
+    ),
+}
 # Samples: N pairs per area, 2N single devices. Area is scaled with `par` at
 # fixed W/L = 10/1 um (par multiplies the width in the spread only; the nominal
-# device and its model bin stay the same), (W, L um, par, seed).
+# device and its model bin stay the same), (W, L um, par); the seeds are per
+# device above, so the two devices are independent sample sets.
 MISMATCH_N = 100
-MISMATCH_AREAS = [(10.0, 1.0, 1, 11), (10.0, 1.0, 4, 12), (10.0, 1.0, 16, 13)]
+MISMATCH_AREAS = [(10.0, 1.0, 1), (10.0, 1.0, 4), (10.0, 1.0, 16)]
 # Sampling error of a standard deviation from n samples: 1/sqrt(2(n-1)); the
 # area-invariance checks allow 3 of them (as sanity/sky130/reference.py).
 def mc_tol(n):
@@ -229,10 +264,13 @@ NOISE_ABSENT_MODELS = 2
 
 GAPS = [
     "noise level (flicker and thermal): GF publishes only the measurement conditions, no numbers; the model's level is printed as information only",
-    "published Pelgrom coefficients exist only as plotted fit lines (digitised above, nFET Vtlin and Idsat); no pFET, 5 V or 6 V values were digitised",
-    "mismatch of resistors, BJTs and MIM capacitors; mismatch and noise of the other MOS devices (checked here: nfet_03v3 only)",
+    "published Pelgrom coefficients exist only as plotted fit lines (digitised above, the 3.3 V nFET and pFET Vtlin and Idsat); no 5 V or 6 V values were digitised",
+    "mismatch of resistors, BJTs and MIM capacitors; mismatch and noise of the other MOS devices (mismatch checked here: nfet_03v3 and pfet_03v3; noise: nfet_03v3 only)",
 ]
+# (device, deck result key) -> why the measured value misses the digitised
+# line. An entry here makes the comparison a recorded known deviation; a
+# device/quantity absent from it is checked against the line directly.
 MISMATCH_KNOWN = {
-    "avt": "the model's coefficient (par_vth 7.148 mV um, effective area (l-0.15)(w+0.1)) is about 20 % below the plotted nFET fit (8.9 mV um at drawn W*L); the plot's simulated points scatter about its line",
-    "aidsat": "the model gives about 0.8 %um (Vth mismatch plus par_k mobility mismatch) against the plotted 0.58 %um; not traced",
+    ("nfet_03v3", "avt_dvt_mVum"): "the model's coefficient (par_vth 7.148 mV um, effective area (l-0.15)(w+0.1)) is about 20 % below the plotted nFET fit (8.9 mV um at drawn W*L); the plot's simulated points scatter about its line",
+    ("nfet_03v3", "aidsat_pcum"): "the model gives about 0.8 %um (Vth mismatch plus par_k mobility mismatch) against the plotted 0.58 %um; not traced",
 }
