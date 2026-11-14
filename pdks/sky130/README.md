@@ -23,9 +23,12 @@ are derived from the model files, and the gaps are listed there.
 |---|---|
 | Mismatch switch | `.lib tt_mm` (and every other `*_mm` corner) sets `mc_mm_switch=1`; `tt` sets 0. `.lib mc` is process variation (`mc_pr_switch`), not mismatch. |
 | Where | Each `*__mismatch.corner.spice` (nfet_01v8, nfet_01v8_lvt, pfet_01v8, pfet_01v8_lvt, pfet_01v8_hvt, nfet_03v3_nvt, nfet_05v0_nvt, nfet_g5v0d10v5, pfet_g5v0d10v5) carries the `*_slope` parameters; the `*.pm3.spice` bins apply them, e.g. nfet_01v8 `vth0` at line 76 of `sky130_fd_pr__nfet_01v8__tt.pm3.spice` |
-| Model | `param + MC_MM_SWITCH*AGAUSS(0,1,1)*slope/sqrt(l*w*mult)` for `vth0`, `toxe` (relative) and `voff`, `l` and `w` in µm. nFET slopes: 3.356 mV µm, 0.344 %µm, 7 mV µm |
+| Model | `param + MC_MM_SWITCH*AGAUSS(0,1,1)*slope/sqrt(l*w*mult)`, `l` and `w` in µm, one independent Gaussian per parameter per instance |
+| Which parameters | **Not the same set for the two 1.8 V devices.** All 180 `nfet_01v8` bins carry mismatch on `vth0`, `toxe` (relative) and `voff`; all 108 `pfet_01v8` bins carry it on those three **plus `nfactor`**, the subthreshold-slope factor — a fourth term with no nFET counterpart (the nFET corner file defines `nfactor_slope = 0.0` and no nFET bin references it). The pFET's `voff_slope` is **0.0**, so for the pFET `voff` contributes no variance, where for the nFET it is the largest of the three slopes |
+| Slopes | Values as the bin at W/L = 1/0.5 µm applies them. nFET: `vth0` 3.356 mV µm, `toxe` 0.344 %µm, `voff` 7 mV µm. pFET: `vth0` 5.856 mV µm (1.74x the nFET's), `toxe` 0.444 %µm, `nfactor` 0.1 µm, `voff` 0 |
+| Slope variants | Each corner file also defines `_slope1` and `_slope2` variants of every term, and **each model bin references exactly one variant per parameter**, so the value a run sees depends on the bin its W/L selects. At L = 0.5 µm — exactly a bin edge in both devices — ngspice binds the bin whose `lmin` equals 0.5 µm and so applies the unsuffixed slopes; the bin below (pFET `model.69`, L in [0.25, 0.5) µm) applies `_slope1`, whose `vth0_slope1` is 7.356 mV µm, 26 % higher. `sanity/sky130/reference.py` records how that was resolved against ngspice (`op` + `showmod`, which prints the bound bin's `vth0`/`lvth0`) |
 | `mult` | Appears only in these terms; the device line has no `m=` |
-| Examples | `sky130/ngspice/mismatch.sp` (100 samples of a pair, one process, `setseed` + `reset`) and `noise.sp` (`.noise` with per-source spectra) |
+| Examples | `sky130/ngspice/mismatch.sp` (100 samples of an nFET pair, one process, `setseed` + `reset`) and `noise.sp` (`.noise` with per-source spectra). The deck template is parameterised by device and polarity, so the sanity checks render it for both the nFET and the pFET |
 | Noise model | BSIM4 `fnoimod=1`, `tnoimod=1`: flicker `noia=2.5e42`, `ef=0.84`; `kf=0` and unused |
 
 ## Interconnect
