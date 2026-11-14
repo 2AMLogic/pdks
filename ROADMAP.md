@@ -8,7 +8,8 @@ Status as of 2026-11-13, `main` @ `c58e634`.
 ## Where it stands
 
 Seven PDKs install and pass their sanity checks in CI on `ubuntu-24.04` and
-`macos-15` (`ci` is green on `c58e634`). Counts are from the README table.
+`macos-15` (`ci` is green on `c58e634`). The counts below are that snapshot;
+the README table is the live source and grows as new checks land.
 
 | PDK | Checks | Known deviations | Mismatch | Noise |
 |---|---|---|---|---|
@@ -30,7 +31,12 @@ What landed to get here, all merged:
   ladder and Elmore-delay checks (#33, #34; PRs #36, #46, #47, #48, #52).
 - **Mismatch and noise** examples and checks for all seven, or a documented
   "not modelled" where the cards carry no statistics (#35, #37; PRs #38, #49,
-  #50, #51).
+  #50, #51). SKY130's `pfet_01v8` (#70) and the IHP 1.2 V and 3.3 V pMOS
+  devices (#69) followed, extending mismatch to the pFET side.
+- **ASAP7's DIBL normalisation** tested and turned into a checked quantity
+  within 1.0 mV/V (#71). What the README used to call its "one untested guess"
+  — a 0.9 V supply — gave way to a 0.85 V span, recovered device by device by
+  solving the printed column for the denominator it implies.
 - **Deduplication** of the helpers those efforts copied (#53, #54, #57, #60,
   #63).
 - **Pins**: SKY130 and GF180MCU re-pinned to open_pdks `f6eeac7` (#16);
@@ -38,15 +44,15 @@ What landed to get here, all merged:
 - **Upstream reports** filed for three deviations, with the maintainers'
   replies recorded in the README ("Related work and explanations").
 
-The tracker's open feature work is #68 to #71, the issues for Now 1 to 4
-below; see also "Blocked and waiting".
+The tracker carries the open issues and pull requests for the items below; see
+also "Blocked and waiting".
 
 ## Now
 
-Each item can start today and fits one pull request. Items 1 to 4 are filed as
-#68 to #71; item 5 has no issue yet. Items 1 to 3 extend coverage the
-repository's own files list as "not covered" or "not exercised"; every new
-reference value is cited, never fitted.
+Each item fits one pull request. Check the tracker before starting one: it is
+authoritative for whether an item is already filed, in review or merged, and
+this file does not track that. Item 1 extends coverage the repository's own
+files list as "not covered"; every new reference value is cited, never fitted.
 
 1. **GF180MCU: `pfet_03v3` mismatch check** (#68). `pdks/gf180mcu/README.md`
    lists pFET mismatch as not covered, and GF's Model Reference Guide 9.4
@@ -54,23 +60,7 @@ reference value is cited, never fitted.
    `sanity/gf180mcu` runs the area-scaling check on `pfet_03v3`, compares it
    with the digitised PMOS lines, and the README count and "Not covered" row
    are updated.
-2. **IHP: pMOS mismatch and noise checks, 1.2 V and 3.3 V** (#69). The pMOS
-   coefficients sit in lines 25-28 of `sg13g2_mos{lv,hv}_mismatch.lib`;
-   `sanity/ihp_spec.py` lists pMOS as "not exercised". Done when both IHP
-   PDKs run the same area-scaling, floor and noise checks on `sg13_lv_pmos`
-   and `sg13_hv_pmos`, and that gap line is narrowed to the passives.
-3. **SKY130: `pfet_01v8` mismatch check** (#70). `pfet_01v8` carries the
-   mismatch switch (`pdks/sky130/README.md`), but only `nfet_01v8` is
-   checked. Done when the pFET passes the area-scaling and `vth0_slope` floor
-   checks, with the slope values cited by file and line, and the added run
-   time is stated in the README.
-4. **ASAP7: test the DIBL normalisation guess** (#71). The README records
-   "one untested guess": that the paper's DIBL column is normalised to a
-   0.9 V supply. Done when `sanity/asap7/reference.py` records the result for
-   all eight devices, and DIBL either becomes a checked quantity with a
-   stated tolerance or stays information-only with the guess marked as
-   refuted.
-5. **README "Repository layout" names a deleted file.** It lists
+2. **README "Repository layout" names a deleted file.** It lists
    `renovate.json`, which was removed in PR #15; `.github/dependabot.yml`
    replaced it. Done when the layout block matches `git ls-files` at the top
    level and names this roadmap.
@@ -78,26 +68,34 @@ reference value is cited, never fitted.
 ## Next
 
 - **Mismatch for the remaining MOS devices**: GF180MCU 5 V and 6 V FETs, and
-  SKY130's LVT, HVT, 3.3 V and 5 V devices that carry the switch. Follows Now
-  1 and 3, which set the pFET pattern. Done when each device listed in the
-  PDK README's mismatch "Where" row has a check or a stated reason it has
-  none. pMOS noise for both PDKs follows the pattern Now 2 sets for IHP.
+  SKY130's LVT, HVT, 3.3 V and 5 V devices that carry the switch. Follows the
+  1.8 V and 3.3 V pFET checks — SKY130's landed above, GF180MCU's is Now 1 —
+  which set the pFET pattern. Done when each device listed in the PDK
+  README's mismatch "Where" row has a check or a stated reason it has none.
+  pMOS noise for both PDKs follows the pattern the IHP pMOS checks set.
 - **Shorten the SKY130 Monte Carlo run.** The README says the loop re-reads
-  the library for every sample and adds several minutes. Follows Now 3, which
-  lengthens it. Done when the SKY130 CI leg's sanity time is lower than
-  before with identical `sanity-results.json` values for the same seeds.
+  the library for every sample and adds several minutes, and the `pfet_01v8`
+  mismatch check that landed above lengthens it further. Done when the SKY130
+  CI leg's sanity time is lower than before with identical
+  `sanity-results.json` values for the same seeds.
 - **Mismatch of passives and the HBT** where the PDK ships a statistical
   model: IHP resistors, MIM, MOS and varactor capacitors and the SG13G2 HBT
   (`*_mod_mismatch.lib`), GF180MCU resistors, BJTs and MIM capacitors. Follows
-  Now 1 and 2. Done when each has a derived check or a documented gap.
+  Now 1 and the IHP MOS mismatch checks above. Done when each has a derived
+  check or a documented gap.
 
 ## Later
 
 - **The four deviations the README lists as "still unexplained"** (SKY130
   narrow-nFET Vt, the FS/SF transposition, ASAP7's DIBL column, ASAP5's SS
   offset). Question first: is there a published source or maintainer reply
-  that settles each one? Now 4 addresses the ASAP7 one; for FS/SF, the reply
-  to skywater-pdk#450 leaves open which maintained repository owns the tables.
+  that settles each one? ASAP7's is now the narrower question of why the
+  column implies a 0.85 V span at all, given that the paper's own biases span
+  0.65 V, its supply is 0.7 V, and its prose targets "around 30 mV/V" — which
+  the un-normalised numbers match and the printed column does not — with a
+  residual −0.9 % to +1.5 % scatter about the span still open. For FS/SF, the
+  reply to skywater-pdk#450 leaves open which maintained repository owns the
+  tables.
 - **Pin refreshes** (ngspice, OpenVAF-reloaded, each PDK). Question first:
   does the newer release change any checked value? A pin change means a new
   checksum file and a full sanity re-run (`CLAUDE.md`).
@@ -121,8 +119,9 @@ reference value is cited, never fitted.
   noise levels and Pelgrom coefficients everywhere. They stay marked `gap` in
   `interconnect.csv` and the reference files until a source prints a value.
 
-The one open pull request is #67, this roadmap. Now 1 to 4 have issues (#68 to
-#71), so the tracker has feature work to pick up; Now 5 still needs one.
+For what is open right now — issues and pull requests alike — read the tracker
+rather than this file. At this repository's merge rate a checked-in census of
+either is false within hours, so this roadmap deliberately keeps none.
 
 ## Not planned
 
