@@ -9,11 +9,12 @@ import tempfile
 import re
 
 import reference as ref
-from common import (Report, at, elmore_ladder, gap_check, load_interconnect, mos_sweeps, ngspice, render,
-                    results, ss_min, tc_fit, vt_max_gm)
+from common import (Report, at, elmore_ladder, gap_check, load_interconnect, mc_tol, mos_sweeps, ngspice,
+                    noise_deck, render, results, ss_min, tc_fit, vt_max_gm)
 
 DECKS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "ngspice", "gf180mcu")
 PASSIVE_DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks", "passive_t.sp")
+NOISE_DECK = os.path.join(DECKS, "noise.sp.in")
 
 
 def passives(rep, ng, work, models, data):
@@ -83,12 +84,6 @@ def mismatch_deck(ng, work, models, name, mm, w, l, par, n, seed):
     return results(ngspice(ng, deck, cwd=work))
 
 
-def noise_deck(ng, work, models, name, bias):
-    deck = render(os.path.join(DECKS, "noise.sp.in"), work, name, MODELS_DIR=models, NGSPICE=ng,
-                  VGLO=bias["VG"] - 0.002, VGHI=bias["VG"] + 0.002, **bias)
-    return results(ngspice(ng, deck, cwd=work))
-
-
 def noise_scan(models):
     """MOS .models in sm141064.spice: (count, number missing noia/ntnoi/ef)."""
     text = open(os.path.join(models, "sm141064.spice")).read()
@@ -114,15 +109,15 @@ def mismatch_and_noise(rep, data, models, ng, work):
     for key, label, n_s in (("avt_model_mVum", "AVT", 2 * n), ("aidsat_model_pcum", "AIdsat", n)):
         vals = [r[key] for _, r in runs]
         mean = sum(vals) / len(vals)
-        t = ref.mc_tol(n_s)
+        t = mc_tol(n_s)
         for tag, r in runs:
             rep.check("%s*sqrt(Aeff) %s" % (label, tag), "derived", r[key], mean * (1 - t), mean * (1 + t),
                       "mV um" if key.startswith("avt") else "%um", 1, "(area scaling; mean %.3g, +-%.0f %%)" % (mean, 100 * t))
     mean_avt = sum(r["avt_model_mVum"] for _, r in runs) / len(runs)
-    t = ref.mc_tol(6 * n)
+    t = mc_tol(6 * n)
     rep.check("AVT vs model par_vth", "derived", mean_avt, ref.PAR_VTH * (1 - t), ref.PAR_VTH * (1 + t), "mV um", 1,
               "(model par_vth %.3f; 3 sampling errors of 3x2N devices)" % ref.PAR_VTH)
-    t = ref.mc_tol(n)
+    t = mc_tol(n)
     for tag, r in runs:
         rep.check("AIdsat floor %s" % tag, "bound", r["aidsat_model_pcum"], ref.PAR_K * (1 - t), 1e9, "%um", 1,
                   "(model par_k %.3f %%um; Vth mismatch adds to it: measured/par_k %.2f)" % (ref.PAR_K, r["aidsat_model_pcum"] / ref.PAR_K))
@@ -139,7 +134,7 @@ def mismatch_and_noise(rep, data, models, ng, work):
               0, 0, "V", 1, "(setseed + reset)")
 
     print("\nNoise, 3.3 V nFET %(W)g/%(L)g um, Vg %(VG)g V, Vd %(VD)g V (ngspice .noise, 27 C)\n" % ref.NOISE_BIAS)
-    r = noise_deck(ng, work, models, "noise_long", ref.NOISE_BIAS)
+    r = noise_deck(ng, work, models, "noise_long", ref.NOISE_BIAS, NOISE_DECK)
     data["noise long"] = r
     lo, hi = ref.GAMMA_LONG
     rep.check("thermal gamma (4kT*gamma*gm) 10/5", "derived", r["gamma_thermal"], lo, hi, "", 1, "(long-channel theory 2/3 .. 1)")
@@ -148,7 +143,7 @@ def mismatch_and_noise(rep, data, models, ng, work):
     rep.check("flicker slope 1..100 Hz = -ef", "derived", r["flicker_slope"], -ref.EF - ref.FLICKER_SLOPE_TOL,
               -ref.EF + ref.FLICKER_SLOPE_TOL, "", 1, "(model ef %.2f)" % ref.EF)
     rep.info("flicker level at 1 Hz (input, V^2/Hz)", r["sv_flicker_1Hz_V2"], "V2/Hz", 1, "(no published value: gap)")
-    short = noise_deck(ng, work, models, "noise_short", ref.NOISE_BIAS_SHORT)
+    short = noise_deck(ng, work, models, "noise_short", ref.NOISE_BIAS_SHORT, NOISE_DECK)
     data["noise short"] = short
     rep.info("thermal gamma 10/0.28", short["gamma_thermal"], "", 1, "(information; no long-channel claim)")
     nm, absent = noise_scan(models)

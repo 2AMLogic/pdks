@@ -138,8 +138,8 @@ import os
 import re
 import tempfile
 
-from common import (Report, at, elmore_ladder, gap_check, load_interconnect, mos_sweeps, ngspice, render,
-                    results, tc_fit, vt_cc, vt_max_gm)
+from common import (Report, at, elmore_ladder, gap_check, load_interconnect, mc_tol, mos_sweeps, ngspice,
+                    render, results, tc_fit, vt_cc, vt_max_gm)
 
 TEMP = 27
 VDD = 1.2
@@ -534,10 +534,6 @@ def _mm_ok_default(models, lib):
         return int(re.search(r"mm_ok=(\d)", f.read()).group(1))
 
 
-def _mc_tol(n):
-    return 3.0 / (2.0 * (n - 1)) ** 0.5
-
-
 def _mm_dev(cls, pol):
     """Mismatch subcircuit of one (class, polarity): sg13_{lv,hv}_{n,p}mos."""
     return CLASSES[cls]["n" if pol > 0 else "p"]
@@ -610,7 +606,7 @@ def mismatch_checks(rep, ng, work, models, spiceinit, pdk, cls, pol):
           "delvto_mm %.3g mV um, factuo_mm %.3g %%um, dw %.0f nm, dl %.0f nm\n"
           % (pdk, dtag, dev, n, avt, abeta, dw * 1e3, dl * 1e3))
     data = {}
-    t_s, t_d = _mc_tol(2 * n), _mc_tol(n)
+    t_s, t_d = mc_tol(2 * n), mc_tol(n)
     for w, l, seed in MM_AREAS:
         tag = "%s %g/%g" % (dtag, w, l)
         r = _mismatch_run(ng, work, models, spiceinit, pdk, cls, pol,
