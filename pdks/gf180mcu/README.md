@@ -64,6 +64,16 @@ files plus a comparison with the digitised 3.3 V nFET and pFET lines; the
 gaps are listed there. Line numbers are in `models/ngspice/sm141064.spice`
 at the pin.
 
+Of the two devices' Vtlin comparisons with the plotted lines only the nFET's
+is a recorded known deviation, but that asymmetry is a statement about the two
+extractions and not about model-versus-plot agreement: `par_vth` sits about
+20 % below GF's own plotted fit line for both 3.3 V devices, by the same
+factor to within 0.1 % (7.148/8.9 nFET, 6.66/8.3 pFET), with the same geometry
+factor for each. The constant-current Vtlin extraction is what differs,
+running about 1 % below `par_vth` for the nFET and about 6 % above it for the
+pFET; that 7 % swing is what carries the pFET inside the ±15 %
+digitisation-plus-sampling window. It is not traced.
+
 | | |
 |---|---|
 | Mismatch switch | `.param sw_stat_mismatch=0` in `design.spice` (line 63); set it to 1 after the include. `sw_stat_global` is process variation, not mismatch. |

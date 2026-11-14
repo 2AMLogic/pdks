@@ -267,6 +267,20 @@ GAPS = [
     "published Pelgrom coefficients exist only as plotted fit lines (digitised above, the 3.3 V nFET and pFET Vtlin and Idsat); no 5 V or 6 V values were digitised",
     "mismatch of resistors, BJTs and MIM capacitors; mismatch and noise of the other MOS devices (mismatch checked here: nfet_03v3 and pfet_03v3; noise: nfet_03v3 only)",
 ]
+# Of the two devices' `AVT vs plotted line` comparisons only the nFET's is a
+# recorded deviation below, but that asymmetry is a statement about the two
+# Vtlin extractions, not about model-versus-plot agreement. The model's
+# par_vth sits about 20 % below GF's own plotted fit line for BOTH devices,
+# by the same factor to within 0.1 %: 7.148/8.9 = 0.803 (nFET) and
+# 6.66/8.3 = 0.802 (pFET). The drawn-W*L geometry factor sqrt(W*L/Aeff) = 1.079
+# at 10/1 um is identical for the two as well (same par_l, par_w, above).
+# What separates the verdicts is the constant-current Vtlin extraction: the
+# pooled deck avt_model_mVum runs about 1 % below par_vth for the nFET
+# (7.054/7.148) and about 6 % above it for the pFET (7.037/6.66), and it is
+# that ~7 % swing, not a smaller model/plot gap, that carries the pFET's
+# measured 7.648 mV um inside the +-PUB_TOL window centred on 8.3 while the
+# nFET's 7.324 stays outside the window centred on 8.9. The swing itself is
+# not traced. (#85)
 # (device, deck result key) -> why the measured value misses the digitised
 # line. An entry here makes the comparison a recorded known deviation; a
 # device/quantity absent from it is checked against the line directly.
