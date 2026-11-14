@@ -289,9 +289,20 @@ each check is depends on what was published:
     `par_vth` sits about 20 % below the plotted line for both devices, by
     the same factor to within 0.1 % (7.148/8.9 and 6.66/8.3), and the
     geometry factor is the same for both. What differs is the
-    constant-current Vtlin extraction, which runs about 1 % below `par_vth`
-    for the nFET and about 6 % above it for the pFET; that 7 % swing is what
-    carries the pFET inside the ±15 % window. It is not traced.
+    constant-current Vtlin extraction. Its ~7 % swing between the two
+    devices (about 1 % below `par_vth` for the nFET, about 6 % above it for
+    the pFET) is the **pooled** estimate of that systematic offset — three
+    areas, 3 × 2N = 600 devices, one-sigma sampling error of a sigma 2.9 %
+    (1/√(2·599)). The two `vs plotted line` rows come from a single area's
+    run instead — `runs[0]`, the 10/1 µm `par` 1 area, 2N = 200 devices —
+    whose own swing is ~11.5 %, with a one-sigma sampling error of 5.0 %
+    (1/√(2·199)); it is that single-area swing that carries the pFET inside
+    the ±15 % window. As fractions of the measured value, the nFET's
+    7.324 mV µm misses its window floor (8.9 × 0.85 = 7.565) by 3.3 % and
+    the pFET's 7.648 mV µm clears its floor (8.3 × 0.85 = 7.055) by 7.8 %,
+    so the nFET's shortfall sits inside one sigma of its own sample. The
+    runs are seeded and reproducible, so that swing is a fixed property of
+    the sample, not run-to-run noise. The swing itself is not traced.
   - Noise: flicker exponent equals `ef` (0.95), thermal gamma of the 10/5 µm
     nFET is 0.92 (theory 2/3 to 1) and the Nyquist ratio at Vds = 0 is
     1.006. All 198 MOS models set `noia`; 2 (pfet_06v0) lack `ntnoi`.
