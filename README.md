@@ -469,7 +469,7 @@ pdks/<pdk>/               pins, checksums, upstream LICENSE/NOTICE files, README
 ngspice/                  model-loading glue and ADAPTATIONS.md
 sanity/                   run.py, shared helpers and decks; sanity/<pdk>/ per PDK
 .github/workflows/ci.yml  Linux + macOS: bootstrap and sanity for every PDK
-renovate.json             Renovate: update PRs for the pinned GitHub Actions only
+.github/dependabot.yml    Dependabot: update PRs for the pinned GitHub Actions only
 ```
 
 ## Citing
