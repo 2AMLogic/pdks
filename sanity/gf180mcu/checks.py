@@ -97,8 +97,15 @@ def interconnect(rep, ngdir, ng, work, data):
                   "(closed form %.3f ps)" % (closed * 1e12))
     print()
 
-def mismatch_deck(ng, work, models, name, mm, w, l, par, n, seed):
+def mismatch_deck(ng, work, models, name, dev, mm, w, l, par, n, seed):
+    """One Monte Carlo run of ngspice/gf180mcu/mismatch.sp.in. The template
+    serves both 3.3 V devices: `dev` picks the fets_mm subcircuit and its
+    sign negates the gate and drain drives for the pFET ("positive sign for
+    NMOS, negative for PMOS", Model Reference Guide 9.4.1). Source and bulk
+    stay at 0 V for both (GF's Vbulk = 0 V), and the deck reports magnitudes."""
+    sgn = ref.MISMATCH_DEVICES[dev]["sgn"]
     deck = render(os.path.join(DECKS, "mismatch.sp.in"), work, name, MODELS_DIR=models, NGSPICE=ng,
+                  DEV=dev, VLIN=sgn * 0.1, VDD=sgn * 3.3, VSTEP=sgn * 0.01,
                   MM=mm, W=w, L=l, PAR=par, N=n, SEED=seed)
     return results(ngspice(ng, deck, cwd=work))
 
@@ -121,42 +128,68 @@ def noise_scan(models):
     return n, absent
 
 
-def mismatch_and_noise(rep, data, models, ng, work):
+def mismatch_device(rep, data, models, ng, work, dev):
+    """The Monte Carlo mismatch checks for one 3.3 V device. Identical for
+    both: only the fets_mm subcircuit, its two model coefficients, the
+    digitised fit lines and the seeds differ (reference.py MISMATCH_DEVICES)."""
+    p = ref.MISMATCH_DEVICES[dev]
     n = ref.MISMATCH_N
-    print("\nMismatch (Monte Carlo, sw_stat_mismatch=1), 3.3 V nFET, %d pairs per area" % n)
+    print("\nMismatch (Monte Carlo, sw_stat_mismatch=1), 3.3 V %s, %d pairs per area" % (dev, n))
     print("  Published: only plotted fit lines (digitised); the model's own coefficients are the derived reference.\n")
     runs = []
-    for w, l, par, seed in ref.MISMATCH_AREAS:
-        r = mismatch_deck(ng, work, models, "mm_%g_%g_%g" % (w, l, par), 1, w, l, par, n, seed)
-        runs.append(("%g/%g par %g" % (w, l, par), r))
-        data["mismatch %g/%g par %g" % (w, l, par)] = r
-        rep.info("sigma(Vtlin) %g/%g par %g" % (w, l, par), r["sigma_vtlin_V"], "mV", 1e3)
+    for (w, l, par), seed in zip(ref.MISMATCH_AREAS, p["seeds"]):
+        tag = "%g/%g par %g" % (w, l, par)
+        r = mismatch_deck(ng, work, models, "mm_%s_%g_%g_%g" % (dev, w, l, par), dev, 1, w, l, par, n, seed)
+        runs.append((tag, r))
+        data["mismatch %s %s" % (dev, tag)] = r
+        rep.info("%s sigma(Vtlin) %s" % (dev, tag), r["sigma_vtlin_V"], "mV", 1e3)
+    # The constant-current Vtlin is a magnitude for both devices, so a sign
+    # error that stopped the sweep crossing the threshold would leave it at
+    # the deck's 0 sentinel rather than fail outright. Catch that directly.
+    rep.check("%s mean Vtlin magnitude" % dev, "bound", runs[0][1]["mean_vtlin_V"], 0.3, 1.5, "V", 1,
+              "(sane |Vtlin| of a 10/1 um device; catches a polarity error leaving the deck's 0 sentinel)")
     for key, label, n_s in (("avt_model_mVum", "AVT", 2 * n), ("aidsat_model_pcum", "AIdsat", n)):
         vals = [r[key] for _, r in runs]
         mean = sum(vals) / len(vals)
         t = ref.mc_tol(n_s)
         for tag, r in runs:
-            rep.check("%s*sqrt(Aeff) %s" % (label, tag), "derived", r[key], mean * (1 - t), mean * (1 + t),
+            rep.check("%s %s*sqrt(Aeff) %s" % (dev, label, tag), "derived", r[key], mean * (1 - t), mean * (1 + t),
                       "mV um" if key.startswith("avt") else "%um", 1, "(area scaling; mean %.3g, +-%.0f %%)" % (mean, 100 * t))
     mean_avt = sum(r["avt_model_mVum"] for _, r in runs) / len(runs)
     t = ref.mc_tol(6 * n)
-    rep.check("AVT vs model par_vth", "derived", mean_avt, ref.PAR_VTH * (1 - t), ref.PAR_VTH * (1 + t), "mV um", 1,
-              "(model par_vth %.3f; 3 sampling errors of 3x2N devices)" % ref.PAR_VTH)
+    rep.check("%s AVT vs model par_vth" % dev, "derived", mean_avt, p["par_vth"] * (1 - t), p["par_vth"] * (1 + t), "mV um", 1,
+              "(model par_vth %.3f; 3 sampling errors of 3x2N devices)" % p["par_vth"])
     t = ref.mc_tol(n)
     for tag, r in runs:
-        rep.check("AIdsat floor %s" % tag, "bound", r["aidsat_model_pcum"], ref.PAR_K * (1 - t), 1e9, "%um", 1,
-                  "(model par_k %.3f %%um; Vth mismatch adds to it: measured/par_k %.2f)" % (ref.PAR_K, r["aidsat_model_pcum"] / ref.PAR_K))
+        rep.check("%s AIdsat floor %s" % (dev, tag), "bound", r["aidsat_model_pcum"], p["par_k"] * (1 - t), 1e9, "%um", 1,
+                  "(model par_k %.3f %%um; Vth mismatch adds to it: measured/par_k %.2f)" % (p["par_k"], r["aidsat_model_pcum"] / p["par_k"]))
+    # Against the plotted (digitised) fit lines: a check where the measured
+    # value lands inside the digitisation-plus-sampling window, a recorded
+    # known deviation with both numbers where it does not.
     r = runs[0][1]
-    rep.known("sigma(dVtlin)*sqrt(WL) vs published", r["avt_dvt_mVum"], ref.PUB_AVT * (1 - ref.PUB_TOL),
-              ref.PUB_AVT * (1 + ref.PUB_TOL), "mV um", 1, ref.MISMATCH_KNOWN["avt"])
-    rep.known("sigma(dIdsat)*sqrt(WL) vs published", r["aidsat_pcum"], ref.PUB_AIDSAT * (1 - ref.PUB_TOL),
-              ref.PUB_AIDSAT * (1 + ref.PUB_TOL), "%um", 1, ref.MISMATCH_KNOWN["aidsat"])
-    off = mismatch_deck(ng, work, models, "mm_off", 0, 10, 1, 1, 3, 1)
-    rep.check("mismatch off: sigma(Vtlin)", "derived", off["sigma_vtlin_V"], 0, 1e-7, "V", 1, "(sw_stat_mismatch=0; 0.1 uV allows for the solver noise of the interpolated Vtlin, 1e4 below the spread)")
-    a = mismatch_deck(ng, work, models, "mm_rep1", 1, 10, 1, 1, 3, 5)
-    b = mismatch_deck(ng, work, models, "mm_rep2", 1, 10, 1, 1, 3, 5)
-    rep.check("same seed, same result", "derived", abs(a["sigma_vtlin_V"] - b["sigma_vtlin_V"]) + abs(a["sigma_didsat_rel"] - b["sigma_didsat_rel"]),
+    for key, pub, label, unit in (("avt_dvt_mVum", p["pub_avt"], "AVT", "mV um"),
+                                  ("aidsat_pcum", p["pub_aidsat"], "AIdsat", "%um")):
+        name = "%s %s vs plotted line" % (dev, label)
+        lo, hi = pub * (1 - ref.PUB_TOL), pub * (1 + ref.PUB_TOL)
+        reason = ref.MISMATCH_KNOWN.get((dev, key))
+        if reason is None:
+            rep.check(name, "published", r[key], lo, hi, unit, 1,
+                      "(digitised %.3g %s at drawn W*L, +-%.0f %%)" % (pub, unit, 100 * ref.PUB_TOL))
+        else:
+            rep.known(name, r[key], lo, hi, unit, 1, reason)
+    off = mismatch_deck(ng, work, models, "mm_off_" + dev, dev, 0, 10, 1, 1, 3, p["off_seed"])
+    rep.check("%s mismatch off: sigma(Vtlin)" % dev, "derived", off["sigma_vtlin_V"], 0, 1e-7, "V", 1,
+              "(sw_stat_mismatch=0; 0.1 uV allows for the solver noise of the interpolated Vtlin, 1e4 below the spread)")
+    a = mismatch_deck(ng, work, models, "mm_rep1_" + dev, dev, 1, 10, 1, 1, 3, p["rep_seed"])
+    b = mismatch_deck(ng, work, models, "mm_rep2_" + dev, dev, 1, 10, 1, 1, 3, p["rep_seed"])
+    rep.check("%s same seed, same result" % dev, "derived",
+              abs(a["sigma_vtlin_V"] - b["sigma_vtlin_V"]) + abs(a["sigma_didsat_rel"] - b["sigma_didsat_rel"]),
               0, 0, "V", 1, "(setseed + reset)")
+
+
+def mismatch_and_noise(rep, data, models, ng, work):
+    for dev in ref.MISMATCH_DEVICES:
+        mismatch_device(rep, data, models, ng, work, dev)
 
     print("\nNoise, 3.3 V nFET %(W)g/%(L)g um, Vg %(VG)g V, Vd %(VD)g V (ngspice .noise, 27 C)\n" % ref.NOISE_BIAS)
     r = noise_deck(ng, work, models, "noise_long", ref.NOISE_BIAS)
