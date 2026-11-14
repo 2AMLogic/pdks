@@ -46,7 +46,69 @@ VDD = 0.7
 #   16 data points, not a per-device fit.
 # SS: gate-voltage swing across the decade from ICC to 10 * ICC at
 #   |Vds| = VDD. This reproduces all eight published values within 0.4 mV/dec.
+# DIBL: (Vtlin - Vtsat) / DIBL_VDS_SPAN, the same two Vt values. The span is
+#   0.85 V, not the 0.65 V the paper's own bias points span; it was recovered
+#   by solving the published column for it, and it is the weakest-supported
+#   definition in this file. See DIBL_VDS_SPAN below for the measurement, the
+#   two pieces of counter-evidence and what it leaves unexplained.
 ICC = 10e-9
+
+# DIBL denominator, in V. [MEJ16] prints a DIBL column but states no
+# definition, and the obvious one -- its own two drain biases, (0.7 - 0.05) V
+# -- does not reproduce it. Earlier revisions of this file and of the README
+# recorded that gap as "a uniform 1.32x" and "the 1.31x factor" respectively;
+# measured at full precision it is neither, and it is not uniform: 1.2961 to
+# 1.3275, mean 1.3143. Issue #71 therefore solved for the denominator the
+# printed column implies, device by device, instead of testing one candidate:
+#
+#   D = (Vtlin - Vtsat) / DIBL_published      (V, our Vt, the paper's column)
+#
+#   device      Vtlin     Vtsat   Vtlin-Vtsat  published   implied   ours/paper
+#                 (V)       (V)          (mV)     (mV/V)     D (V)    at 0.85 V
+#   nmos_sram  0.268846  0.252646       16.200      19.23    0.8424       0.9911
+#   nmos_rvt   0.187421  0.169098       18.323      21.31    0.8598       1.0116
+#   nmos_lvt   0.119612  0.100681       18.931      22.32    0.8482       0.9979
+#   nmos_slvt  0.057478  0.038228       19.250      22.55    0.8537       1.0043
+#   pmos_sram  0.223214  0.202688       20.525      24.10    0.8517       1.0020
+#   pmos_rvt   0.186762  0.160652       26.110      30.36    0.8600       1.0118
+#   pmos_lvt   0.126849  0.100048       26.801      31.06    0.8629       1.0151
+#   pmos_slvt  0.065381  0.038207       27.174      31.76    0.8556       1.0066
+#
+# The eight implied denominators span 0.8424 to 0.8629 V, mean 0.8543 V: a
+# 2.4 % spread across devices whose Vtlin - Vtsat ranges from 16.2 to 27.2 mV,
+# so the quantity the paper's column differs from ours by is a ratio, not an
+# offset. (Fitting the gap as a constant offset in Vtlin - Vtsat instead needs
+# 3.70 to 6.61 mV, a 56 % spread -- refuted.)
+#
+# 0.9 - 0.05 V = 0.85 V lies inside that range, 0.5 % below the mean, and it is
+# the only round value of the span that does. Sweeping the denominator from
+# 0.60 to 1.00 V in 0.05 V steps, the next candidates either side read 6.8 %
+# high (0.80 V) and 5.1 % low (0.90 V), both outside the implied range -- so a
+# bare 0.9 V supply, with no linear-bias subtraction, is refuted too. This is
+# the README's "normalising to a 0.9 V supply" guess, tested and confirmed: the
+# paper's column is its own Vtlin - Vtsat divided by a 0.85 V span.
+#
+# It is one shared span inferred from 8 data points, not a per-device fit --
+# the same standard as ICC above. Two things it does not settle, both recorded
+# because they point the other way:
+#
+#  - [MEJ16] section 6.1 assumes "drain induced barrier lowering (DIBL) is
+#    around 30 mV/V following the best to date nFET published result". Our
+#    nFETs at the un-normalised 0.65 V span read 24.9, 28.2, 29.1 and
+#    29.6 mV/V, which is "around 30"; the printed nFET column (19.23 to
+#    22.55) is not. So the 0.85 V span reproduces the paper's table while
+#    making that table disagree with the paper's own prose target.
+#  - ASAP5 is the same authors, the same journal and the same 0.7 V supply,
+#    and there the un-normalised (0.7 - 0.05) V span reproduces seven of
+#    eight printed values within 0.1 mV/V (sanity/asap5/reference.py). If
+#    ASAP7's column is normalised, the group changed convention between the
+#    two papers. ASAP5's agreement is also 5x tighter than the best ASAP7
+#    achieves here, so ASAP7's residual scatter is not explained either.
+#
+# Why DIBL is a check anyway: the value is printed in a cited source and only
+# the extraction definition is assumed, which is the same footing as Vtlin,
+# Vtsat and SS -- those rest on an inferred ICC and are labelled "published".
+DIBL_VDS_SPAN = 0.85
 
 # Per-fin device parameters, [MEJ16] Tables 3 (nFET) and 4 (pFET).
 # Units: currents in A, voltages in V, SS in mV/dec, DIBL in mV/V.
@@ -74,15 +136,17 @@ TOL = dict(
     ioff_dec=0.15,  # decades; printed to as little as 1 significant figure
     vt=0.015,       # V; printed to 2 decimals (+-5 mV) plus 10 mV margin
     ss=2.0,         # mV/dec
+    # DIBL: mV/V. The largest residual once DIBL_VDS_SPAN is assumed is
+    # 0.470 mV/V (pmos_lvt, +1.5 %); 1.0 mV/V covers all eight with margin and
+    # is the value sanity/asap5/reference.py already uses for this quantity.
+    # It still bites: it admits only 0.85 mV of error in Vtlin - Vtsat, where
+    # our absolute Vt values match the paper's columns to 4 mV. Perturbing
+    # DIBL_VDS_SPAN by one 0.05 V step fails eight of the eight devices at
+    # 0.80 V and seven of eight at 0.90 V (measured, issue #71).
+    dibl=1.0,
 )
 
 # Reported, not checked:
-#  - DIBL. Our Vtlin and Vtsat each match the paper within 4 mV, yet our
-#    DIBL = (Vtlin - Vtsat) / (0.7 - 0.05) is a uniform 1.32x the paper's
-#    DIBL column for all eight devices, and no natural alternative (other
-#    drain-bias pairs, other current levels) reproduces it. That points to
-#    an unstated normalisation, not a model difference, so DIBL is printed
-#    for information only.
 #  - Idsat / Idlin. [MEJ16] section 6.1 says linear current "was assumed to
 #    be 4.5x smaller than the saturation current", a design target with no
 #    stated bias point. Printed at |Vds| = 50 mV for information.

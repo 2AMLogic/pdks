@@ -8,9 +8,9 @@ results are checked against each foundry's or author's published values.
 
 | `--pdk` | Process | Models | Fetched | Sanity checks | Mismatch (Monte Carlo) | Noise |
 |---|---|---|---|---|---|---|
-| `asap7` | ASAP7 r1p7: 7 nm predictive FinFET (ASU / Arm) | BSIM-CMG 107, compiled to OSDI | 9 MB | 126/126: 73 device checks against the PDK paper, 48 interconnect, 5 derived card and noise checks | not modelled: predictive, cards carry no statistical parameters (authors recommend none) | `noise.sp` example; Nyquist thermal and flicker exponent checked (BSIM-CMG defaults, no extracted level: gap) |
+| `asap7` | ASAP7 r1p7: 7 nm predictive FinFET (ASU / Arm) | BSIM-CMG 107, compiled to OSDI | 9 MB | 134/134: 81 device checks against the PDK paper, 48 interconnect, 5 derived card and noise checks | not modelled: predictive, cards carry no statistical parameters (authors recommend none) | `noise.sp` example; Nyquist thermal and flicker exponent checked (BSIM-CMG defaults, no extracted level: gap) |
 | `asap5` | ASAP5 r0p4: 5 nm predictive gate-all-around nanowire FET (ASU) | BSIM-CMG 107, compiled to OSDI | 0.3 MB | 116/116: 47 device checks against the PDK paper, 64 interconnect, 5 derived card and noise checks, plus 1 known deviation | not modelled: predictive, cards carry no statistical parameters (authors recommend none) | `noise.sp` example; Nyquist thermal and flicker exponent checked (BSIM-CMG defaults, no extracted level: gap) |
-| `sky130` | SkyWater SKY130 (`sky130A`; `sky130B`'s ngspice libraries are identical in this release) | BSIM4, built in | 21 MB | 105/105 against SkyWater's e-test windows, device tables (continuous models) and corner tables, the derived mismatch and noise checks, and the interconnect table (44 interconnect) below, plus 8 known deviations | `mc_mm_switch` via the `*_mm` corners; `mismatch.sp` example; Pelgrom area scaling checked (derived; SkyWater publishes no coefficient) | `noise.sp` example; flicker exponent and thermal noise checked (no published level: gap) |
+| `sky130` | SkyWater SKY130 (`sky130A`; `sky130B`'s ngspice libraries are identical in this release) | BSIM4, built in | 21 MB | 132/132 against SkyWater's e-test windows, device tables (continuous models) and corner tables, the derived mismatch and noise checks, and the interconnect table (44 interconnect) below, plus 8 known deviations | `mc_mm_switch` via the `*_mm` corners; `mismatch.sp` example; Pelgrom area scaling of the 1.8 V nFET and pFET checked (derived; SkyWater publishes no coefficient). The two carry different mismatch terms: the pFET adds `nfactor` and its `voff_slope` is 0 | `noise.sp` example; flicker exponent and thermal noise checked (no published level: gap) |
 | `gf180mcu` | GlobalFoundries GF180MCU | BSIM4, built in | 1.4 MB | 136/136 against GF's slow/typical/fast EP targets and spec limits, incl. passives and their temperature coefficients, the derived mismatch and noise checks below, and the interconnect table (49 interconnect), plus 3 known deviations | `sw_stat_mismatch` (default 0) with the `X` subcircuits of `fets_mm`; `mismatch.sp` example; Pelgrom area scaling checked (derived) for the 3.3 V nFET and pFET, both compared with GF's plotted fit lines (digitised; the pFET matches, the nFET's two are known deviations) | `noise.sp` example; flicker exponent and thermal noise checked (GF publishes only the measurement conditions, no level: gap) |
 | `ihp-sg13g2` | IHP SG13G2 SiGe BiCMOS | PSP 103 (OSDI), VBIC HBT | 3 MB | 200/200 against IHP's process spec and layout rules (1.2 V and 3.3 V MOS, corners, resistors and MIM with their temperature coefficients, the HBT, 79 interconnect), IHP's measured silicon over temperature, and the derived mismatch and noise checks below, plus 8 known deviations | `mm_ok` via the `mos_tt_mismatch` corner; `mismatch.sp` and `mismatch_hv.sp` examples; Pelgrom area scaling checked (derived; IHP publishes no coefficient) | `noise.sp` and `noise_hv.sp` examples; flicker exponent and thermal noise checked (no published level: gap) |
 | `ihp-sg13cmos5l` | IHP SG13CMOS5L CMOS | PSP 103 (OSDI) | 5 MB | 153/153 against IHP's process spec and layout rules: 1.2 V and 3.3 V MOS, corners, resistors and their temperature coefficients, 56 interconnect, and the derived mismatch and noise checks below, plus 2 known deviations | `mm_ok` via the `mos_tt_mismatch` corner (default 0 here: the decks set it); `mismatch.sp` and `mismatch_hv.sp` examples; Pelgrom area scaling checked (derived; IHP publishes no coefficient) | `noise.sp` and `noise_hv.sp` examples; flicker exponent and thermal noise checked (no published level: gap) |
@@ -27,7 +27,7 @@ cd ~/pdks/sky130/ngspice && ngspice -b example.sp
 
 The first run takes about 3 minutes: ngspice is built from source. Each PDK
 then takes seconds to a minute to set up. The SKY130 checks are the slowest,
-at about 2 minutes. A re-run skips finished steps.
+at a little over 2 minutes. A re-run skips finished steps.
 
 You need the Xcode Command Line Tools on macOS, or `build-essential bison
 flex curl git python3 libllvm18` on Debian/Ubuntu, plus `zstd` for SKY130.
@@ -89,8 +89,17 @@ definition used is documented next to the reference values.
   - The paper doesn't state its extraction methods. The definitions that
     reproduce its tables for every device at once are: Ioff is channel
     current, which excludes GIDL; Vt is taken at 10 nA per fin; SS is the
-    10–100 nA decade. DIBL is printed for information only, because ours
-    is a uniform 1.32× the paper's column.
+    10–100 nA decade; DIBL divides Vtlin − Vtsat by 0.85 V, not by the
+    0.65 V its own two drain biases span.
+  - That 0.85 V span was recovered by solving the printed column for the
+    denominator it implies, device by device: the eight come out between
+    0.8424 and 0.8629 V (mean 0.8543 V), and 0.9 − 0.05 V is the only
+    round value inside that range. DIBL is now checked within 1.0 mV/V,
+    the assumption stated next to the reference values. Two things it
+    doesn't settle are recorded in `sanity/asap7/reference.py`: the
+    paper's own prose targets "around 30 mV/V", which our *un*-normalised
+    numbers match and its table doesn't, and ASAP5 uses the
+    un-normalised span.
   - Interconnect: the layer table (`interconnect.csv`) is checked against
     the paper's Table 1 (width, pitch; spacing and thickness derived from
     them and the stated 2:1 aspect ratio), and the `wire.inc` RC ladder
@@ -192,20 +201,30 @@ each check is depends on what was published:
   flicker level and no thermal-noise gamma, so these are gaps, not
   estimates. The checks use the model files and physics:
   - Mismatch is on in the `*_mm` library corners (`mc_mm_switch=1`);
-    `tt` gives zero spread. Each instance draws `vth0`, `toxe` and `voff`
-    spreads that scale as `1/sqrt(l*w*mult)`. The checks run 100 samples
-    at three areas (via `mult`) and require `sigma*sqrt(area)` to be
-    constant within 3 sampling errors, for the pair offset, Vt and beta.
-    `sigma(Vt)*sqrt(area)` is also bounded below by the model's own
-    `vth0_slope` (3.356 mV µm). Same seed gives identical output.
+    `tt` gives zero spread. Each instance draws spreads that scale as
+    `1/sqrt(l*w*mult)`, on `vth0`, `toxe` and `voff` for the nFET and on
+    those plus `nfactor` for the pFET (whose `voff_slope` is 0 — the two
+    1.8 V devices do not carry the same set of terms; see
+    `pdks/sky130/README.md`). The checks run, **for the 1.8 V nFET and the
+    1.8 V pFET**, 100 samples at three areas (via `mult`) and require
+    `sigma*sqrt(area)` to be constant within 3 sampling errors, for the
+    pair offset, Vt and beta. `sigma(Vt)*sqrt(area)` is also bounded below
+    by that device's own `vth0_slope` (nFET 3.356, pFET 5.856 mV µm) and
+    `sigma(dVgs)*sqrt(area)` by `sqrt(2)` times it, which together with a
+    mean-Vt window rules out a dead or wrongly-wired deck reading as a
+    pass. Same seed gives identical output.
   - Noise: the flicker exponent equals the model's `ef` (0.84).
     Two **known deviations**: thermal gamma of the 7/8 µm nFET is 2.05
     (long-channel theory: 2/3 to 1), and the channel noise at Vds = 0 is
     0.91 of the Nyquist value `4kT*gds`.
   - 14 of 1308 MOS models lack `ntnoi`/`tnoia` (or `noia`); none has
     `noia = 0`. They are listed in `sanity/sky130/reference.py`.
-  - The mismatch and noise checks add several minutes of single-core ngspice, because the
-    Monte Carlo loop re-reads the library for every sample.
+  - The mismatch checks run 618 single-core Monte Carlo samples (two
+    devices x three areas x 100 pairs, plus the switch and seed controls),
+    each re-reading the library. Adding the pFET doubled that sample count
+    but raised the whole SKY130 sanity run by only about 13 % (measured
+    481 s -> 542 s on one 8-core Linux box), because the device and corner
+    sweeps, not the Monte Carlo loop, dominate the run.
 - **IHP mismatch and noise (derived; nothing published).** Neither process
   specification gives a MOS Pelgrom coefficient, a flicker level or a
   thermal-noise gamma ([G2] Attachment A.am defines the matching
@@ -377,8 +396,15 @@ The same search explained several deviations:
   - SKY130's narrow-nFET Vt;
   - why SkyWater's FS/SF columns are transposed in two rows (the models
     themselves are consistent);
-  - ASAP7's DIBL column (one untested guess: normalising to a 0.9 V
-    supply gives the 1.31× factor);
+  - why ASAP7's DIBL column is normalised to a 0.85 V drain-bias span
+    when the paper's own biases span 0.65 V and its supply is 0.7 V. The
+    0.9 V guess listed here before has now been tested and confirmed as
+    the arithmetic (above, and `sanity/asap7/reference.py`), so DIBL is a
+    check; what is still unexplained is why, given that the paper's prose
+    targets "around 30 mV/V" — which the un-normalised numbers match and
+    the printed column does not — and that ASAP5 needs no normalisation.
+    A residual scatter about the 0.85 V span also remains, −0.9 % to
+    +1.5 %, which is 5× looser than ASAP5's agreement;
   - ASAP5's SS offset.
 
 ## Licences
@@ -449,7 +475,7 @@ pdks/<pdk>/               pins, checksums, upstream LICENSE/NOTICE files, README
 ngspice/                  model-loading glue and ADAPTATIONS.md
 sanity/                   run.py, shared helpers and decks; sanity/<pdk>/ per PDK
 .github/workflows/ci.yml  Linux + macOS: bootstrap and sanity for every PDK
-renovate.json             Renovate: update PRs for the pinned GitHub Actions only
+.github/dependabot.yml    Dependabot: update PRs for the pinned GitHub Actions only
 ```
 
 ## Citing
