@@ -272,12 +272,28 @@ GAPS = [
 # by the same factor to within 0.1 %: 7.148/8.9 = 0.803 (nFET) and
 # 6.66/8.3 = 0.802 (pFET). The drawn-W*L geometry factor sqrt(W*L/Aeff) = 1.079
 # at 10/1 um is identical for the two as well (same par_l, par_w, above).
-# What separates the verdicts is the constant-current Vtlin extraction: the
+# What separates the verdicts is the constant-current Vtlin extraction. The
 # pooled deck avt_model_mVum runs about 1 % below par_vth for the nFET
-# (7.054/7.148) and about 6 % above it for the pFET (7.037/6.66), and it is
-# that ~7 % swing, not a smaller model/plot gap, that carries the pFET's
-# measured 7.648 mV um inside the +-PUB_TOL window centred on 8.3 while the
-# nFET's 7.324 stays outside the window centred on 8.9. The swing itself is
+# (7.054/7.148) and about 6 % above it for the pFET (7.037/6.66): pooled over
+# the three areas (3 x 2N = 600 devices), that ~7 % swing (0.0698) is the
+# pooled estimate of the systematic offset, with a one-sigma sampling error of
+# 2.9 % of a sigma (1/sqrt(2*599)); the "AVT vs model par_vth" check allows 3
+# of them (mc_tol(600) = 0.0867). The pooled mean is not what the two
+# `vs plotted line` rows test: checks.py takes runs[0], the single 10/1 um
+# par-1 area, 2N = 200 devices, whose own swing is ~11.5 % (0.1146: 6.786/7.148
+# and 7.086/6.66, the runs[0] avt_dvt values 7.324 and 7.648 divided by the
+# 1.079 geometry factor), with a one-sigma sampling error of 5.0 %
+# (1/sqrt(2*199); the area-scaling checks allow 3 of them, mc_tol(200) =
+# 0.1504). It is that single-area sample's swing, not the pooled ~7 %, that
+# carries the pFET's measured 7.648 mV um inside the +-PUB_TOL window centred
+# on 8.3 while the nFET's 7.324 stays outside the window centred on 8.9.
+# Fractions of the measured value, one denominator for both devices: the nFET
+# misses its window floor (8.9*0.85 = 7.565) by 0.241 = 3.3 %, the pFET clears
+# its floor (8.3*0.85 = 7.055) by 0.593 = 7.8 %, so the nFET's shortfall is
+# less than one sigma of its own single-area sample. The runs are seeded
+# (per-area seeds above, setseed in mismatch.sp.in) and the checks verify
+# same-seed same-output, so that swing is this sample's fixed, reproducible
+# value, not run-to-run wobble. The swing itself is
 # not traced. (#85)
 # (device, deck result key) -> why the measured value misses the digitised
 # line. An entry here makes the comparison a recorded known deviation; a
