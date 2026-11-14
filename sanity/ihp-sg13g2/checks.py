@@ -1,6 +1,7 @@
 """IHP SG13G2 sanity checks: LV and HV MOS and npn13G2 HBT against the SG13G2
-process specification, plus derived mismatch and noise checks of the nMOS
-model cards. Sources and definitions: sanity/ihp_spec.py.
+process specification, plus derived mismatch and noise checks of the four MOS
+model cards (LV and HV, nMOS and pMOS). Sources and definitions:
+sanity/ihp_spec.py.
 Run via sanity/run.py --pdk ihp-sg13g2.
 """
 

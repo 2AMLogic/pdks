@@ -35,6 +35,10 @@ ihp_glue() {
   # Mismatch (Monte Carlo) and noise decks for the LV (1.2 V) and HV (3.3 V)
   # nMOS: mismatch.sp / noise.sp and mismatch_hv.sp / noise_hv.sp. The same
   # templates serve both PDKs (their MOS models are the same PSP 103 cards).
+  # Both templates take a polarity (POL): the sanity checks render them for
+  # the pMOS too, the installed examples stay nMOS-only, so POL is 1 here and
+  # every bias is positive. POL and VGSTEP must be passed: bootstrap.sh's
+  # render() is a bare sed and would leave an unfilled @POL@ in the deck.
   local c sfx lt dev vdd vds vg vglo vghi
   for c in LV HV; do
     if [ "$c" = LV ]; then
@@ -44,9 +48,9 @@ ihp_glue() {
     fi
     render "$REPO/ngspice/ihp/mismatch.sp.in" "$ng/mismatch$sfx.sp" "PDK=$pdk" "CLASS=$c" \
       "DECK=mismatch$sfx.sp" "MODELS_DIR=$models" "NGSPICE=$NGSPICE" "LIBTAG=$lt" "DEV=$dev" \
-      "VDD=$vdd" "VDS=$vds" W=4 L=4 M=1 N=100 MM=1 SEED=1
+      POL=1 "VDD=$vdd" "VDS=$vds" VGSTEP=0.002 W=4 L=4 M=1 N=100 MM=1 SEED=1
     render "$REPO/ngspice/ihp/noise.sp.in" "$ng/noise$sfx.sp" "PDK=$pdk" "CLASS=$c" \
       "DECK=noise$sfx.sp" "MODELS_DIR=$models" "NGSPICE=$NGSPICE" "LIBTAG=$lt" "DEV=$dev" \
-      W=10 L=10 "VG=$vg" "VD=$vdd" "VGLO=$vglo" "VGHI=$vghi"
+      POL=1 W=10 L=10 "VG=$vg" "VD=$vdd" "VGLO=$vglo" "VGHI=$vghi"
   done
 }

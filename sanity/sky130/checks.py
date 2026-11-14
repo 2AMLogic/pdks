@@ -3,7 +3,6 @@ the 1.8 V nFET and pFET (plus the LVT nFET and LVT/HVT pFET) against SkyWater's 
 and definitions: reference.py. Run via sanity/run.py --pdk sky130.
 """
 
-import csv
 import math
 import glob
 import os
@@ -11,15 +10,22 @@ import re
 import tempfile
 
 import reference as ref
-from common import Report, at, elmore, mos_sweeps, ngspice, render, require_wire_w, results, vt_max_gm
+from common import (Report, at, elmore_ladder, gap_check, load_interconnect, mos_sweeps, ngspice, render,
+                    results, vt_max_gm)
 
 SPICEINIT = "set ngbehavior=hsa\nset ng_nomodcheck\n"
 DECKS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "ngspice", "sky130")
 
 
-def mismatch_deck(ng, work, prefix, name, corner, w, l, m, n, seed):
+def mismatch_deck(ng, work, prefix, name, dev, corner, w, l, m, n, seed):
+    """One Monte Carlo run of ngspice/sky130/mismatch.sp.in for `dev`. Bias and
+    sweep voltages go in as device-terms magnitudes plus a polarity, as
+    mos_sweeps does for decks/mos_iv.sp; the deck signs them with POL."""
+    pol = -1 if dev.startswith("p") else 1
     deck = render(os.path.join(DECKS, "mismatch.sp.in"), work, name, PDK_DIR=os.path.join(prefix, "sky130", "sky130A"),
-                  NGSPICE=ng, CORNER=corner, W=w, L=l, M=m, N=n, SEED=seed)
+                  NGSPICE=ng, DEV="sky130_fd_pr__" + dev, CLASS=ref.MISMATCH_LABEL[dev], POL=pol,
+                  VDD=ref.MISMATCH_VDD, VDS=ref.MISMATCH_VDS, VSTEP=ref.MISMATCH_VSTEP,
+                  CORNER=corner, W=w, L=l, M=m, N=n, SEED=seed)
     return results(ngspice(ng, deck, cwd=work, spiceinit=SPICEINIT))
 
 
@@ -51,36 +57,76 @@ def noise_scan(prefix):
     return len(files), models, zero, absent, ef
 
 
-def mismatch_and_noise(rep, data, prefix, ng, work):
-    print("\nMismatch (Monte Carlo, library corner tt_mm: mc_mm_switch=1), 1.8 V nFET, %d pairs per area" % ref.MISMATCH_N)
-    print("  No published reference exists (reference.py); checks are derived from the model files.\n")
+def mismatch(rep, data, prefix, ng, work, dev):
+    """Pelgrom area scaling, the sigma(Vt) floor and the switch/seed controls
+    for one device. Everything is derived: SkyWater publishes no coefficient."""
+    label, slopes = ref.MISMATCH_LABEL[dev], ref.MISMATCH_SLOPES[dev]
+    print("\nMismatch (Monte Carlo, library corner tt_mm: mc_mm_switch=1), %s, %d pairs per area"
+          % (label, ref.MISMATCH_N))
+    print("  No published reference exists (reference.py); checks are derived from the model files.")
+    print("  Mismatch terms of this device: %s.\n"
+          % ", ".join("%s_slope %g" % (k, v) for k, v in sorted(slopes.items())))
     n = ref.MISMATCH_N
     runs = []
-    for w, l, m, seed in ref.MISMATCH_AREAS:
-        r = mismatch_deck(ng, work, prefix, "mm_%g_%g_%g" % (w, l, m), "tt_mm", w, l, m, n, seed)
+    for w, l, m, seed in ref.MISMATCH_AREAS[dev]:
+        r = mismatch_deck(ng, work, prefix, "mm_%s_%g_%g_%g" % (dev, w, l, m), dev, "tt_mm", w, l, m, n, seed)
         runs.append(("%g/%g x%g" % (w, l, m), r))
-        data["mismatch %g/%g x%g" % (w, l, m)] = r
-        rep.info("sigma(dVgs) %g/%g x%g" % (w, l, m), r["sigma_dvgs_V"], "mV", 1e3)
-    for key, label, n_s in (("avt_dvgs_mVum", "AVT(dVgs)", n), ("avt_mVum", "AVT(Vt)", 2 * n), ("abeta_pcum", "ABeta", 2 * n)):
+        data["mismatch %s %g/%g x%g" % (dev, w, l, m)] = r
+        rep.info("sigma(dVgs) %s %g/%g x%g" % (dev, w, l, m), r["sigma_dvgs_V"], "mV", 1e3)
+    # Positive controls (reference.py): a deck wired for the wrong polarity, or
+    # biased off, reports zero spread, which would satisfy the mc_mm_switch=0
+    # check below and the area scaling vacuously.
+    dvgs_floor = 2 ** 0.5 * slopes["vth0"] * 1e3
+    t = ref.mc_tol(n)
+    for (tag, r) in runs:
+        rep.check("AVT(dVgs) floor %s" % tag, "bound", r["avt_dvgs_mVum"], dvgs_floor * (1 - t), 1e9, "mV um", 1,
+                  "(sqrt(2)*vth0_slope %.3f mV um; measured/floor %.2f)" % (dvgs_floor, r["avt_dvgs_mVum"] / dvgs_floor))
+    lo, hi = ref.VT_SANITY[dev]
+    for (tag, r) in runs:
+        rep.check("mean Vt, device terms %s" % tag, "bound", r["mean_vt_V"], lo, hi, "V", 1,
+                  "(polarity control; derived span, not a published window)")
+    for key, label_s, n_s in (("avt_dvgs_mVum", "AVT(dVgs)", n), ("avt_mVum", "AVT(Vt)", 2 * n), ("abeta_pcum", "ABeta", 2 * n)):
         vals = [r[key] for _, r in runs]
         mean = sum(vals) / len(vals)
         t = ref.mc_tol(n_s)
         for (tag, r) in runs:
-            rep.check("%s*sqrt(A) %s" % (label, tag), "derived", r[key], mean * (1 - t), mean * (1 + t),
+            rep.check("%s*sqrt(A) %s" % (label_s, tag), "derived", r[key], mean * (1 - t), mean * (1 + t),
                       "%s" % ("%um" if key == "abeta_pcum" else "mV um"), 1, "(area scaling; mean %.3g, +-%.0f %%)" % (mean, 100 * t))
-    vt_floor = ref.VTH0_SLOPE * 1e3
+    vt_floor = slopes["vth0"] * 1e3
     t = ref.mc_tol(2 * n)
     for (tag, r) in runs:
         rep.check("AVT(Vt) floor %s" % tag, "bound", r["avt_mVum"], vt_floor * (1 - t), 1e9, "mV um", 1,
                   "(model vth0_slope %.3f mV um; measured/slope %.2f)" % (vt_floor, r["avt_mVum"] / vt_floor))
     rep.info("ABeta vs model toxe_slope", sum(r["abeta_pcum"] for _, r in runs) / len(runs), "%um", 1,
-             "(model toxe_slope %.3f %%um; beta ~ 1/tox)" % (ref.TOXE_SLOPE * 100))
-    off = mismatch_deck(ng, work, prefix, "mm_off", "tt", 1, 0.5, 1, 3, 1)
-    rep.check("mismatch off (corner tt): sigma(dVgs)", "derived", off["sigma_dvgs_V"], 0, 1e-9, "V", 1, "(mc_mm_switch=0)")
-    a = mismatch_deck(ng, work, prefix, "mm_rep1", "tt_mm", 1, 0.5, 1, 3, 5)
-    b = mismatch_deck(ng, work, prefix, "mm_rep2", "tt_mm", 1, 0.5, 1, 3, 5)
-    rep.check("same seed, same result", "derived", abs(a["sigma_dvgs_V"] - b["sigma_dvgs_V"]) + abs(a["sigma_vt_V"] - b["sigma_vt_V"]),
+             "(model toxe_slope %.3f %%um; beta ~ 1/tox)" % (slopes["toxe"] * 100))
+    off = mismatch_deck(ng, work, prefix, "mm_off_%s" % dev, dev, "tt", 1, 0.5, 1, 3, 1)
+    rep.check("mismatch off (corner tt): sigma(dVgs) %s" % dev, "derived", off["sigma_dvgs_V"], 0, 1e-9, "V", 1,
+              "(mc_mm_switch=0)")
+    a = mismatch_deck(ng, work, prefix, "mm_rep1_%s" % dev, dev, "tt_mm", 1, 0.5, 1, 3, 5)
+    b = mismatch_deck(ng, work, prefix, "mm_rep2_%s" % dev, dev, "tt_mm", 1, 0.5, 1, 3, 5)
+    rep.check("same seed, same result %s" % dev, "derived",
+              abs(a["sigma_dvgs_V"] - b["sigma_dvgs_V"]) + abs(a["sigma_vt_V"] - b["sigma_vt_V"]),
               0, 0, "V", 1, "(setseed + reset)")
+
+
+def installed_decks_rendered(rep, ngdir):
+    """bootstrap's render() is a plain sed with no unresolved-placeholder
+    check, so a placeholder pdks/sky130/setup.sh forgets to supply is copied
+    into the installed example literally and fails only at ngspice parse time
+    (issue #70). Catch that here instead."""
+    left = {}
+    for f in sorted(glob.glob(os.path.join(ngdir, "*.sp"))):
+        m = re.findall(r"@[A-Z_0-9]+@", open(f).read())
+        if m:
+            left[os.path.basename(f)] = sorted(set(m))
+    rep.check("installed decks have no unrendered @PLACEHOLDER@", "derived", float(len(left)), 0, 0, "", 1,
+              "(%s)" % ("; ".join("%s: %s" % (k, " ".join(v)) for k, v in left.items()) if left
+                        else "checked %d deck(s)" % len(glob.glob(os.path.join(ngdir, "*.sp")))))
+
+
+def mismatch_and_noise(rep, data, prefix, ng, work):
+    for dev in ref.MISMATCH_DEVS:
+        mismatch(rep, data, prefix, ng, work, dev)
 
     print("\nNoise, 1.8 V nFET %(W)g/%(L)g um, Vg %(VG)g V, Vd %(VD)g V (ngspice .noise, 27 C)\n" % ref.NOISE_BIAS)
     r = noise_deck(ng, work, prefix, "noise_long", ref.NOISE_BIAS)
@@ -109,15 +155,7 @@ def mismatch_and_noise(rep, data, prefix, ng, work):
 
 
 def interconnect(rep, ngdir, ng, work, data):
-    table = os.path.join(ngdir, "interconnect.csv")
-    wire_inc = os.path.join(ngdir, "wire.inc")
-    for f in (table, wire_inc):
-        if not os.path.exists(f):
-            raise SystemExit("not found: %s (run bootstrap.sh --pdk sky130)" % f)
-    with open(table) as f:
-        rows = list(csv.DictReader(f))
-    val = {(r["layer"], r["quantity"]): r for r in rows}
-    num = lambda lay, q: float(val[lay, q]["value"])  # noqa: E731
+    _, val, num, wire_inc = load_interconnect(ngdir, "sky130")
     print("\nInterconnect: layer table vs [SKYR], [SKYRES], [SKYC] (reference.py)\n")
     for lay, (w, s) in ref.METALS.items():
         rep.check("%s width" % lay, "published", num(lay, "width_min"), w, w, "nm", 1)
@@ -144,25 +182,13 @@ def interconnect(rep, ngdir, ng, work, data):
             c = [num(lo, pre + up) for up in layers[i + 1:]]
             mono &= all(a > b for a, b in zip(c, c[1:]))
         rep.check("%s capacitance falls with separation" % label, "derived", float(mono), 1, 1, "", 1)
-    gaps = [k for k, r in val.items() if r["status"] == "gap"]
     expect = {(m, q) for m in ref.METALS for q in ref.GAP_QUANTITIES} | {(v, q) for v in ref.CUTS for q in ref.GAP_CUT_QUANTITIES}
-    # A value appearing where the documents publish none must come with a
-    # source added to reference.py, so a gap turning into a number fails here.
-    rep.check("unpublished quantities stay explicit gaps (%d)" % len(gaps), "derived",
-              float(set(gaps) == expect), 1, 1, "", 1)
-    data["interconnect_gaps"] = sorted("%s.%s" % k for k in gaps)
+    gap_check(rep, data, val, expect)
     print()
     lay = ref.ELMORE_LAYER
     rsh, w = num(lay, "rsheet"), num(lay, "width_min") * 1e-9
-    require_wire_w(ng, wire_inc, work)
-    for n in ref.ELMORE_SEGMENTS:
-        e = dict(ref.ELMORE, w=w)
-        sim, closed = elmore(ng, wire_inc, work, n, e, rsh, ref.ELMORE_L, w, ref.ELMORE_CPL,
-                             ref.ELMORE_RS, ref.ELMORE_CL)
-        data["wire_elmore_%d" % n] = dict(simulated=sim, closed_form=closed)
-        rep.check("wire ladder Elmore delay, %d segment%s" % (n, "" if n == 1 else "s"), "derived", sim,
-                  closed * (1 - ref.ELMORE_TOL), closed * (1 + ref.ELMORE_TOL), "ps", 1e12,
-                  "(closed form %.3f ps)" % (closed * 1e12))
+    elmore_ladder(rep, data, ng, wire_inc, work, ref.ELMORE_SEGMENTS, dict(ref.ELMORE, w=w), rsh,
+                  ref.ELMORE_L, w, ref.ELMORE_CPL, ref.ELMORE_RS, ref.ELMORE_CL, ref.ELMORE_TOL)
     print()
 
 
@@ -239,5 +265,8 @@ def run(prefix, ng):
                     rep.check(label, "published", v, lo, hi, unit, 1, "(table %+.3f)" % want if qty == "vt" else "(table %.3f)" % want)
         print("")
         mismatch_and_noise(rep, data, prefix, ng, work)
-        interconnect(rep, os.path.join(prefix, "sky130", "ngspice"), ng, work, data)
+        ngdir = os.path.join(prefix, "sky130", "ngspice")
+        print("\nInstalled examples\n")
+        installed_decks_rendered(rep, ngdir)
+        interconnect(rep, ngdir, ng, work, data)
     return rep.summary(), data, rep.rows
