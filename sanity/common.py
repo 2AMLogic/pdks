@@ -74,6 +74,21 @@ def tc_fit(ts, ys, t0=27.0):
     return (sxz * syy - syz * sxy) / det * 1e6, (syz * sxx - sxz * sxy) / det * 1e6
 
 
+def mc_tol(n):
+    """Fractional allowance on a standard deviation estimated from n samples.
+
+    The sampling error of a standard deviation from n samples is
+    1/sqrt(2(n-1)); this returns 3 of them. The area-invariance checks
+    (sigma * sqrt(WL) equal at every area, which is the Pelgrom area scaling)
+    allow 3 such errors on the deviation of one area from the mean of the
+    areas, and the sigma floors allow the same 3 errors on their bound.
+
+    Shared so the multiplier cannot drift between PDKs: sky130, gf180mcu and
+    IHP all state their mismatch tolerances as '3 sampling errors', and the
+    reports only mean the same thing if the number behind those words agrees."""
+    return 3.0 / (2.0 * (n - 1)) ** 0.5
+
+
 def at(xs, ys, x):
     """Linear interpolation of ys at xs == x (xs ascending)."""
     for i in range(1, len(xs)):
@@ -172,6 +187,16 @@ def mos_sweeps(ng, work, name, header, instance, pol, vdd, vlin, vaux, voff,
     ngspice(ng, deck, cwd=work, spiceinit=spiceinit)
     return {s: read_xy("%s.%s" % (out, s), pol)
             for s in ("vg_lin", "vg_aux", "vg_sat", "vg_off", "vd_full")}
+
+
+def noise_deck(ng, work, models, name, bias, deck):
+    """Run a PDK's noise.sp.in template at one bias. `deck` is that PDK's own
+    template path; `bias` holds the deck's remaining @KEY@ values (VG, VD, ...).
+    VGLO/VGHI are the +-2 mV gate pair the deck finite-differences for gds0.
+    Returns the deck's RESULT rows."""
+    path = render(deck, work, name, MODELS_DIR=models, NGSPICE=ng,
+                  VGLO=bias["VG"] - 0.002, VGHI=bias["VG"] + 0.002, **bias)
+    return results(ngspice(ng, path, cwd=work))
 
 
 WIRE_DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks", "wire_elmore.sp")

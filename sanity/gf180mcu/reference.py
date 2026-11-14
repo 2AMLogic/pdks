@@ -232,10 +232,8 @@ MISMATCH_DEVICES = {
 # device above, so the two devices are independent sample sets.
 MISMATCH_N = 100
 MISMATCH_AREAS = [(10.0, 1.0, 1), (10.0, 1.0, 4), (10.0, 1.0, 16)]
-# Sampling error of a standard deviation from n samples: 1/sqrt(2(n-1)); the
-# area-invariance checks allow 3 of them (as sanity/sky130/reference.py).
-def mc_tol(n):
-    return 3.0 / (2.0 * (n - 1)) ** 0.5
+# The area-invariance checks allow 3 sampling errors of a standard deviation
+# (as sanity/sky130/reference.py): common.mc_tol.
 
 # Thermal and flicker noise: nFET 10/5 um, Vg 1.8 V, Vd 1.65 V, saturation
 # (ngspice .noise, 27 C). BSIM4 fnoimod=1 (flicker from noia, noib, noic, em,

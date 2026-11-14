@@ -12,18 +12,12 @@ import re
 import tempfile
 
 import reference as ref
-from common import (Report, at, elmore_ladder, gap_check, load_interconnect, ngspice, read_xy, render,
-                    results)
+from common import (Report, at, elmore_ladder, gap_check, load_interconnect, ngspice, noise_deck,
+                    read_xy, render)
 
 DECKS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks")
 DECK = os.path.join(DECKS, "iv_points.sp")
 NOISE_DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "ngspice", "tr1um", "noise.sp.in")
-
-
-def noise_deck(ng, work, models, name, bias):
-    deck = render(NOISE_DECK, work, name, MODELS_DIR=models, NGSPICE=ng,
-                  VGLO=bias["VG"] - 0.002, VGHI=bias["VG"] + 0.002, **bias)
-    return results(ngspice(ng, deck, cwd=work))
 
 
 def model_scan(models):
@@ -52,14 +46,14 @@ def mismatch_and_noise(rep, data, models, ng, work):
     rep.check("noise scan: MOS models", "derived", float(mos), ref.MOS_MODELS, ref.MOS_MODELS, "", 1)
     rep.check("noise scan: MOS models setting a noise parameter", "derived", float(noisy), 0, 0, "", 1,
               "(defaults apply: noimod=1, kf=0)")
-    r = noise_deck(ng, work, models, "noise_long", ref.NOISE_BIAS)
+    r = noise_deck(ng, work, models, "noise_long", ref.NOISE_BIAS, NOISE_DECK)
     data["noise long"] = r
     lo, hi = ref.GAMMA_LONG
     rep.check("thermal gamma (4kT*gamma*gm) 30/10", "derived", r["gamma_thermal"], lo, hi, "", 1, "(long-channel theory 2/3 .. 1)")
     lo, hi = ref.NYQUIST
     rep.known("Nyquist S_id/(4kT*gds) at Vds=0", r["nyquist_ratio"], lo, hi, "", 1, ref.NOISE_KNOWN["nyquist"])
     rep.check("flicker level at 1 Hz = 0 (kf default 0)", "derived", r["sv_flicker_1Hz_V2"], 0, 0, "V2/Hz", 1)
-    short = noise_deck(ng, work, models, "noise_short", ref.NOISE_BIAS_SHORT)
+    short = noise_deck(ng, work, models, "noise_short", ref.NOISE_BIAS_SHORT, NOISE_DECK)
     data["noise short"] = short
     rep.info("thermal gamma 30/1", short["gamma_thermal"], "", 1, "(information; no long-channel claim)")
     print("\nGaps (not estimated):")
