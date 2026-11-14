@@ -12,7 +12,8 @@ import re
 import tempfile
 
 import reference as ref
-from common import Report, at, elmore, ngspice, read_xy, render, require_wire_w, results
+from common import (Report, at, elmore_ladder, gap_check, load_interconnect, ngspice, read_xy, render,
+                    results)
 
 DECKS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks")
 DECK = os.path.join(DECKS, "iv_points.sp")
@@ -67,14 +68,7 @@ def mismatch_and_noise(rep, data, models, ng, work):
 
 
 def interconnect(rep, ngdir, drfile, ng, work, data):
-    table = os.path.join(ngdir, "interconnect.csv")
-    wire_inc = os.path.join(ngdir, "wire.inc")
-    for f in (table, wire_inc, drfile):
-        if not os.path.exists(f):
-            raise SystemExit("not found: %s (run bootstrap.sh --pdk tr1um)" % f)
-    with open(table) as f:
-        rows = list(csv.DictReader(f))
-    val = {(r["layer"], r["quantity"]): r for r in rows}
+    _, val, _, wire_inc = load_interconnect(ngdir, "tr1um", extra=(drfile,))
     # The constants in reference.py are what the fetched [DR] file prints.
     with open(drfile) as f:
         dr = {r[0]: float(r[4]) for r in csv.reader(f) if len(r) > 4 and r[0] in ref.DR_RULES and r[4]}
@@ -88,22 +82,11 @@ def interconnect(rep, ngdir, drfile, ng, work, data):
         rep.check("%s pitch = width + spacing" % lay, "derived", p, w + s, w + s, "um", 1)
     for lay, w in ref.VIAS.items():
         rep.check("%s width" % lay, "published", float(val[lay, "width_min"]["value"]), w, w, "um", 1)
-    gaps = [k for k, r in val.items() if r["status"] == "gap"]
     expect = {(m, q) for m in ref.METALS for q in ref.GAP_QUANTITIES} | {(v, q) for v in ref.VIAS for q in ref.GAP_VIA_QUANTITIES}
-    # A value appearing where the documents print none must come with a source
-    # added to reference.py, so a gap turning into a number fails here.
-    rep.check("unpublished quantities stay explicit gaps (%d)" % len(gaps), "derived",
-              float(set(gaps) == expect), 1, 1, "", 1)
-    data["interconnect_gaps"] = sorted("%s.%s" % k for k in gaps)
+    gap_check(rep, data, val, expect)
     print()
-    require_wire_w(ng, wire_inc, work)
-    for n in ref.ELMORE_SEGMENTS:
-        sim, closed = elmore(ng, wire_inc, work, n, ref.ELMORE, ref.ELMORE_RSH, ref.ELMORE_L, ref.ELMORE_W, ref.ELMORE_CPL,
-                           ref.ELMORE_RS, ref.ELMORE_CL)
-        data["wire_elmore_%d" % n] = dict(simulated=sim, closed_form=closed)
-        rep.check("wire ladder Elmore delay, %d segment%s" % (n, "" if n == 1 else "s"), "derived", sim,
-                  closed * (1 - ref.ELMORE_TOL), closed * (1 + ref.ELMORE_TOL), "ps", 1e12,
-                  "(closed form %.3f ps)" % (closed * 1e12))
+    elmore_ladder(rep, data, ng, wire_inc, work, ref.ELMORE_SEGMENTS, ref.ELMORE, ref.ELMORE_RSH,
+                  ref.ELMORE_L, ref.ELMORE_W, ref.ELMORE_CPL, ref.ELMORE_RS, ref.ELMORE_CL, ref.ELMORE_TOL)
     print()
 
 

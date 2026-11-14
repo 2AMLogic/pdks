@@ -3,7 +3,6 @@ the 1.8 V nFET and pFET (plus the LVT nFET and LVT/HVT pFET) against SkyWater's 
 and definitions: reference.py. Run via sanity/run.py --pdk sky130.
 """
 
-import csv
 import math
 import glob
 import os
@@ -11,7 +10,8 @@ import re
 import tempfile
 
 import reference as ref
-from common import Report, at, elmore, mos_sweeps, ngspice, render, require_wire_w, results, vt_max_gm
+from common import (Report, at, elmore_ladder, gap_check, load_interconnect, mos_sweeps, ngspice, render,
+                    results, vt_max_gm)
 
 SPICEINIT = "set ngbehavior=hsa\nset ng_nomodcheck\n"
 DECKS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "ngspice", "sky130")
@@ -155,15 +155,7 @@ def mismatch_and_noise(rep, data, prefix, ng, work):
 
 
 def interconnect(rep, ngdir, ng, work, data):
-    table = os.path.join(ngdir, "interconnect.csv")
-    wire_inc = os.path.join(ngdir, "wire.inc")
-    for f in (table, wire_inc):
-        if not os.path.exists(f):
-            raise SystemExit("not found: %s (run bootstrap.sh --pdk sky130)" % f)
-    with open(table) as f:
-        rows = list(csv.DictReader(f))
-    val = {(r["layer"], r["quantity"]): r for r in rows}
-    num = lambda lay, q: float(val[lay, q]["value"])  # noqa: E731
+    _, val, num, wire_inc = load_interconnect(ngdir, "sky130")
     print("\nInterconnect: layer table vs [SKYR], [SKYRES], [SKYC] (reference.py)\n")
     for lay, (w, s) in ref.METALS.items():
         rep.check("%s width" % lay, "published", num(lay, "width_min"), w, w, "nm", 1)
@@ -190,25 +182,13 @@ def interconnect(rep, ngdir, ng, work, data):
             c = [num(lo, pre + up) for up in layers[i + 1:]]
             mono &= all(a > b for a, b in zip(c, c[1:]))
         rep.check("%s capacitance falls with separation" % label, "derived", float(mono), 1, 1, "", 1)
-    gaps = [k for k, r in val.items() if r["status"] == "gap"]
     expect = {(m, q) for m in ref.METALS for q in ref.GAP_QUANTITIES} | {(v, q) for v in ref.CUTS for q in ref.GAP_CUT_QUANTITIES}
-    # A value appearing where the documents publish none must come with a
-    # source added to reference.py, so a gap turning into a number fails here.
-    rep.check("unpublished quantities stay explicit gaps (%d)" % len(gaps), "derived",
-              float(set(gaps) == expect), 1, 1, "", 1)
-    data["interconnect_gaps"] = sorted("%s.%s" % k for k in gaps)
+    gap_check(rep, data, val, expect)
     print()
     lay = ref.ELMORE_LAYER
     rsh, w = num(lay, "rsheet"), num(lay, "width_min") * 1e-9
-    require_wire_w(ng, wire_inc, work)
-    for n in ref.ELMORE_SEGMENTS:
-        e = dict(ref.ELMORE, w=w)
-        sim, closed = elmore(ng, wire_inc, work, n, e, rsh, ref.ELMORE_L, w, ref.ELMORE_CPL,
-                             ref.ELMORE_RS, ref.ELMORE_CL)
-        data["wire_elmore_%d" % n] = dict(simulated=sim, closed_form=closed)
-        rep.check("wire ladder Elmore delay, %d segment%s" % (n, "" if n == 1 else "s"), "derived", sim,
-                  closed * (1 - ref.ELMORE_TOL), closed * (1 + ref.ELMORE_TOL), "ps", 1e12,
-                  "(closed form %.3f ps)" % (closed * 1e12))
+    elmore_ladder(rep, data, ng, wire_inc, work, ref.ELMORE_SEGMENTS, dict(ref.ELMORE, w=w), rsh,
+                  ref.ELMORE_L, w, ref.ELMORE_CPL, ref.ELMORE_RS, ref.ELMORE_CL, ref.ELMORE_TOL)
     print()
 
 

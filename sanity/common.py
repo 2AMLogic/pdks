@@ -3,6 +3,7 @@
 Python 3.8+, stdlib only.
 """
 
+import csv
 import math
 import os
 import re
@@ -200,3 +201,48 @@ def elmore(ng, wire_inc, work, nseg, e, rsh, L, W, cpl, rs, cl):
     R = rsh * L / W
     C = cpl * L
     return r["elmore"], rs * (C + cl) + R * (C / 2 + cl)
+
+
+def load_interconnect(ngdir, pdk, extra=()):
+    """The installed interconnect table of one PDK, with the existence guard
+    every caller needs. `extra` names further required files (a design-rule
+    table, an interconnect.inc) that are checked for but not read here.
+    Returns (rows, val, num, wire_inc): `rows` the CSV rows in file order,
+    `val` them keyed {(layer, quantity): row}, and `num(layer, quantity)` one
+    row's value as a float."""
+    table = os.path.join(ngdir, "interconnect.csv")
+    wire_inc = os.path.join(ngdir, "wire.inc")
+    for f in (table, wire_inc) + tuple(extra):
+        if not os.path.exists(f):
+            raise SystemExit("not found: %s (run bootstrap.sh --pdk %s)" % (f, pdk))
+    with open(table) as f:
+        rows = list(csv.DictReader(f))
+    val = {(r["layer"], r["quantity"]): r for r in rows}
+    return rows, val, lambda lay, q: float(val[lay, q]["value"]), wire_inc
+
+
+def gap_check(rep, data, val, expect):
+    """A value appearing where the PDK's sources publish none must come with a
+    source added to its reference constants, so a gap turning into a number
+    fails here. `expect` is the set of (layer, quantity) the caller's own
+    reference constants say are gaps, so no citation moves out of the PDK.
+    Records the gaps in `data` and returns them."""
+    gaps = {k for k, r in val.items() if r["status"] == "gap"}
+    rep.check("unpublished quantities stay explicit gaps (%d)" % len(gaps), "derived",
+              float(gaps == set(expect)), 1, 1, "", 1)
+    data["interconnect_gaps"] = sorted("%s.%s" % k for k in gaps)
+    return gaps
+
+
+def elmore_ladder(rep, data, ng, wire_inc, work, segments, e, rsh, L, W, cpl, rs, cl, tol):
+    """The wire.inc ladder check: require_wire_w, then simulated against
+    closed-form Elmore delay at each segment count in `segments`, each within
+    the fractional window `tol`. `e` and the numeric quantities are elmore()'s
+    arguments, from the caller's reference constants and layer table."""
+    require_wire_w(ng, wire_inc, work)
+    for n in segments:
+        sim, closed = elmore(ng, wire_inc, work, n, e, rsh, L, W, cpl, rs, cl)
+        data["wire_elmore_%d" % n] = dict(simulated=sim, closed_form=closed)
+        rep.check("wire ladder Elmore delay, %d segment%s" % (n, "" if n == 1 else "s"), "derived", sim,
+                  closed * (1 - tol), closed * (1 + tol), "ps", 1e12,
+                  "(closed form %.3f ps)" % (closed * 1e12))
