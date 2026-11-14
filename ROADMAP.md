@@ -38,35 +38,38 @@ What landed to get here, all merged:
 - **Upstream reports** filed for three deviations, with the maintainers'
   replies recorded in the README ("Related work and explanations").
 
-The tracker has no open feature work; see "Blocked and waiting".
+The tracker's open feature work is #68 to #71, the issues for Now 1 to 4
+below; see also "Blocked and waiting".
 
 ## Now
 
-Each item can start today and fits one pull request. None has an issue yet.
-Items 1 to 3 extend coverage the repository's own files list as "not covered"
-or "not exercised"; every new reference value is cited, never fitted.
+Each item can start today and fits one pull request. Items 1 to 4 are filed as
+#68 to #71; item 5 has no issue yet. Items 1 to 3 extend coverage the
+repository's own files list as "not covered" or "not exercised"; every new
+reference value is cited, never fitted.
 
-1. **GF180MCU: `pfet_03v3` mismatch check.** `pdks/gf180mcu/README.md` lists
-   pFET mismatch as not covered, and GF's Model Reference Guide 9.4 plots the
-   3.3 V PMOS lines next to the NMOS ones already used. Done when
+1. **GF180MCU: `pfet_03v3` mismatch check** (#68). `pdks/gf180mcu/README.md`
+   lists pFET mismatch as not covered, and GF's Model Reference Guide 9.4
+   plots the 3.3 V PMOS lines next to the NMOS ones already used. Done when
    `sanity/gf180mcu` runs the area-scaling check on `pfet_03v3`, compares it
    with the digitised PMOS lines, and the README count and "Not covered" row
    are updated.
-2. **IHP: pMOS mismatch and noise checks, 1.2 V and 3.3 V.** The pMOS
+2. **IHP: pMOS mismatch and noise checks, 1.2 V and 3.3 V** (#69). The pMOS
    coefficients sit in lines 25-28 of `sg13g2_mos{lv,hv}_mismatch.lib`;
    `sanity/ihp_spec.py` lists pMOS as "not exercised". Done when both IHP
    PDKs run the same area-scaling, floor and noise checks on `sg13_lv_pmos`
    and `sg13_hv_pmos`, and that gap line is narrowed to the passives.
-3. **SKY130: `pfet_01v8` mismatch check.** `pfet_01v8` carries the mismatch
-   switch (`pdks/sky130/README.md`), but only `nfet_01v8` is checked. Done
-   when the pFET passes the area-scaling and `vth0_slope` floor checks, with
-   the slope values cited by file and line, and the added run time is stated
-   in the README.
-4. **ASAP7: test the DIBL normalisation guess.** The README records "one
-   untested guess": that the paper's DIBL column is normalised to a 0.9 V
-   supply. Done when `sanity/asap7/reference.py` records the result for all
-   eight devices, and DIBL either becomes a checked quantity with a stated
-   tolerance or stays information-only with the guess marked as refuted.
+3. **SKY130: `pfet_01v8` mismatch check** (#70). `pfet_01v8` carries the
+   mismatch switch (`pdks/sky130/README.md`), but only `nfet_01v8` is
+   checked. Done when the pFET passes the area-scaling and `vth0_slope` floor
+   checks, with the slope values cited by file and line, and the added run
+   time is stated in the README.
+4. **ASAP7: test the DIBL normalisation guess** (#71). The README records
+   "one untested guess": that the paper's DIBL column is normalised to a
+   0.9 V supply. Done when `sanity/asap7/reference.py` records the result for
+   all eight devices, and DIBL either becomes a checked quantity with a
+   stated tolerance or stays information-only with the guess marked as
+   refuted.
 5. **README "Repository layout" names a deleted file.** It lists
    `renovate.json`, which was removed in PR #15; `.github/dependabot.yml`
    replaced it. Done when the layout block matches `git ls-files` at the top
@@ -118,8 +121,8 @@ or "not exercised"; every new reference value is cited, never fitted.
   noise levels and Pelgrom coefficients everywhere. They stay marked `gap` in
   `interconnect.csv` and the reference files until a source prints a value.
 
-There are no open pull requests, and nothing is dispatchable from the tracker
-today: the Now items above need issues first.
+The one open pull request is #67, this roadmap. Now 1 to 4 have issues (#68 to
+#71), so the tracker has feature work to pick up; Now 5 still needs one.
 
 ## Not planned
 
