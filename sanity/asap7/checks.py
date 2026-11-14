@@ -38,7 +38,9 @@ def characterise(ng, models, osdi, work, device, tag=None):
         vtlin=vtlin,
         vtsat=vtsat,
         ss=ss_decade(*sat, ref.ICC),
-        dibl=1000 * (vtlin - vtsat) / (vdd - 0.05),
+        # the 0.85 V span is an assumed extraction definition, not the paper's
+        # own bias points; reference.py documents how it was recovered
+        dibl=1000 * (vtlin - vtsat) / ref.DIBL_VDS_SPAN,
         idsat_over_idlin=at(*vd_full, vdd) / at(*vd_full, 0.05),
         # the Id-Vg and Id-Vd sweeps must agree where they meet, (VDD, VDD)
         sweep_mismatch=abs(at(*vd_full, vdd) - idsat) / idsat,
@@ -90,7 +92,8 @@ def run(prefix, ng):
             rep.check(dev + " Vtsat", "published", m["vtsat"], pub["vtsat"] - t["vt"], pub["vtsat"] + t["vt"], "V", 1)
             rep.check(dev + " SS", "published", m["ss"], pub["ss"] - t["ss"], pub["ss"] + t["ss"], "mV/dec", 1)
             rep.check(dev + " Id-Vg/Id-Vd agree", "derived", m["sweep_mismatch"], 0, 1e-3, "", 1)
-            rep.info(dev + " DIBL", m["dibl"], "mV/V", 1, "(paper prints %.2f; see reference.py)" % pub["dibl"])
+            rep.check(dev + " DIBL", "published", m["dibl"], pub["dibl"] - t["dibl"], pub["dibl"] + t["dibl"], "mV/V", 1,
+                      "(/ %.2f V assumed, not stated: see reference.py)" % ref.DIBL_VDS_SPAN)
             rep.info(dev + " Idsat/Idlin", m["idsat_over_idlin"], "", 1, "(paper's design target ~%.1f)" % ref.IDSAT_OVER_IDLIN)
             print()
 

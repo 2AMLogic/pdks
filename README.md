@@ -8,7 +8,7 @@ results are checked against each foundry's or author's published values.
 
 | `--pdk` | Process | Models | Fetched | Sanity checks | Mismatch (Monte Carlo) | Noise |
 |---|---|---|---|---|---|---|
-| `asap7` | ASAP7 r1p7: 7 nm predictive FinFET (ASU / Arm) | BSIM-CMG 107, compiled to OSDI | 9 MB | 126/126: 73 device checks against the PDK paper, 48 interconnect, 5 derived card and noise checks | not modelled: predictive, cards carry no statistical parameters (authors recommend none) | `noise.sp` example; Nyquist thermal and flicker exponent checked (BSIM-CMG defaults, no extracted level: gap) |
+| `asap7` | ASAP7 r1p7: 7 nm predictive FinFET (ASU / Arm) | BSIM-CMG 107, compiled to OSDI | 9 MB | 134/134: 81 device checks against the PDK paper, 48 interconnect, 5 derived card and noise checks | not modelled: predictive, cards carry no statistical parameters (authors recommend none) | `noise.sp` example; Nyquist thermal and flicker exponent checked (BSIM-CMG defaults, no extracted level: gap) |
 | `asap5` | ASAP5 r0p4: 5 nm predictive gate-all-around nanowire FET (ASU) | BSIM-CMG 107, compiled to OSDI | 0.3 MB | 116/116: 47 device checks against the PDK paper, 64 interconnect, 5 derived card and noise checks, plus 1 known deviation | not modelled: predictive, cards carry no statistical parameters (authors recommend none) | `noise.sp` example; Nyquist thermal and flicker exponent checked (BSIM-CMG defaults, no extracted level: gap) |
 | `sky130` | SkyWater SKY130 (`sky130A`; `sky130B`'s ngspice libraries are identical in this release) | BSIM4, built in | 21 MB | 105/105 against SkyWater's e-test windows, device tables (continuous models) and corner tables, the derived mismatch and noise checks, and the interconnect table (44 interconnect) below, plus 8 known deviations | `mc_mm_switch` via the `*_mm` corners; `mismatch.sp` example; Pelgrom area scaling checked (derived; SkyWater publishes no coefficient) | `noise.sp` example; flicker exponent and thermal noise checked (no published level: gap) |
 | `gf180mcu` | GlobalFoundries GF180MCU | BSIM4, built in | 1.4 MB | 120/120 against GF's slow/typical/fast EP targets and spec limits, incl. passives and their temperature coefficients, the derived mismatch and noise checks below, and the interconnect table (49 interconnect), plus 3 known deviations | `sw_stat_mismatch` (default 0) with the `X` subcircuits of `fets_mm`; `mismatch.sp` example; Pelgrom area scaling checked (derived), nFET compared with GF's plotted fit lines (digitised; known deviations) | `noise.sp` example; flicker exponent and thermal noise checked (GF publishes only the measurement conditions, no level: gap) |
@@ -89,8 +89,17 @@ definition used is documented next to the reference values.
   - The paper doesn't state its extraction methods. The definitions that
     reproduce its tables for every device at once are: Ioff is channel
     current, which excludes GIDL; Vt is taken at 10 nA per fin; SS is the
-    10–100 nA decade. DIBL is printed for information only, because ours
-    is a uniform 1.32× the paper's column.
+    10–100 nA decade; DIBL divides Vtlin − Vtsat by 0.85 V, not by the
+    0.65 V its own two drain biases span.
+  - That 0.85 V span was recovered by solving the printed column for the
+    denominator it implies, device by device: the eight come out between
+    0.8424 and 0.8629 V (mean 0.8543 V), and 0.9 − 0.05 V is the only
+    round value inside that range. DIBL is now checked within 1.0 mV/V,
+    the assumption stated next to the reference values. Two things it
+    doesn't settle are recorded in `sanity/asap7/reference.py`: the
+    paper's own prose targets "around 30 mV/V", which our *un*-normalised
+    numbers match and its table doesn't, and ASAP5 uses the
+    un-normalised span.
   - Interconnect: the layer table (`interconnect.csv`) is checked against
     the paper's Table 1 (width, pitch; spacing and thickness derived from
     them and the stated 2:1 aspect ratio), and the `wire.inc` RC ladder
@@ -371,8 +380,15 @@ The same search explained several deviations:
   - SKY130's narrow-nFET Vt;
   - why SkyWater's FS/SF columns are transposed in two rows (the models
     themselves are consistent);
-  - ASAP7's DIBL column (one untested guess: normalising to a 0.9 V
-    supply gives the 1.31× factor);
+  - why ASAP7's DIBL column is normalised to a 0.85 V drain-bias span
+    when the paper's own biases span 0.65 V and its supply is 0.7 V. The
+    0.9 V guess listed here before has now been tested and confirmed as
+    the arithmetic (above, and `sanity/asap7/reference.py`), so DIBL is a
+    check; what is still unexplained is why, given that the paper's prose
+    targets "around 30 mV/V" — which the un-normalised numbers match and
+    the printed column does not — and that ASAP5 needs no normalisation.
+    A residual scatter about the 0.85 V span also remains, −0.9 % to
+    +1.5 %, which is 5× looser than ASAP5's agreement;
   - ASAP5's SS offset.
 
 ## Licences
