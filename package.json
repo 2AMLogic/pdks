@@ -1,11 +1,8 @@
 {
-  "name": "loom-workspace",
-  "description": "Loom-managed workspace with AI development orchestration",
+  "name": "pdks",
   "private": true,
   "scripts": {
-    "check:ci": "echo 'No CI checks configured. Customize this script for your project.' && exit 0",
-    "check:all": "echo 'No checks configured. Customize this script for your project.' && exit 0",
-    "test": "echo 'No tests configured. Customize this script for your project.' && exit 0",
-    "lint": "echo 'No linter configured. Customize this script for your project.' && exit 0"
+    "test": "echo 'Tests run via: ./bootstrap.sh --pdk <name> --prefix <scratch dir> (see CLAUDE.md)' && exit 1",
+    "check:ci": "echo 'CI is .github/workflows/ci.yml: ./bootstrap.sh --pdk <pdk> --prefix <dir>' && exit 1"
   }
 }
