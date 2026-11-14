@@ -60,15 +60,27 @@ entry.
 GF publishes the 3.3 V mismatch only as plotted fit lines (Spice Model
 Reference Guide 9.4) and, for noise, only the measurement conditions (2.3),
 so the checks (`sanity/gf180mcu/reference.py`) are derived from the model
-files plus a comparison with the digitised nFET lines; the gaps are listed
-there. Line numbers are in `models/ngspice/sm141064.spice` at the pin.
+files plus a comparison with the digitised 3.3 V nFET and pFET lines; the
+gaps are listed there. Line numbers are in `models/ngspice/sm141064.spice`
+at the pin.
+
+Of the two devices' Vtlin comparisons with the plotted lines only the nFET's
+is a recorded known deviation, but that asymmetry is a statement about the two
+extractions and not about model-versus-plot agreement: `par_vth` sits about
+20 % below GF's own plotted fit line for both 3.3 V devices, by the same
+factor to within 0.1 % (7.148/8.9 nFET, 6.66/8.3 pFET), with the same geometry
+factor for each. The constant-current Vtlin extraction is what differs,
+running about 1 % below `par_vth` for the nFET and about 6 % above it for the
+pFET; that 7 % swing is what carries the pFET inside the ±15 %
+digitisation-plus-sampling window. It is not traced.
 
 | | |
 |---|---|
 | Mismatch switch | `.param sw_stat_mismatch=0` in `design.spice` (line 63); set it to 1 after the include. `sw_stat_global` is process variation, not mismatch. |
 | Where | `.lib fets_mm` (included by `.lib typical`, line 134; defined from line 46930): X-prefix subcircuits `nfet_03v3`, `pfet_03v3`, `nfet_05v0`, `nfet_06v0`, `pfet_05v0`, `pfet_06v0`. An `M` card has no mismatch. No mismatch in `nfet_06v0_nvt`. |
-| Model | `delvto = agauss(0,var_vth,1)`, `mulu0 = 1 - agauss(0,var_k,1)`, `var = 0.7071*par/sqrt((l-par_l)*par*(w-par_w))`, sizes in µm; nfet_03v3 `par_vth` 7.148 mV µm, `par_k` 0.70 % µm (lines 46932-46943) |
+| Model | `delvto = agauss(0,var_vth,1)`, `mulu0 = 1 - agauss(0,var_k,1)`, `var = 0.7071*par/sqrt((l-par_l)*par*(w-par_w))`, sizes in µm; nfet_03v3 `par_vth` 7.148 mV µm, `par_k` 0.70 % µm (lines 46932-46943), pfet_03v3 `par_vth` 6.66 mV µm, `par_k` 0.28 % µm (lines 46946-46957). The two subcircuits are otherwise identical, `par_l` and `par_w` included. |
+| Polarity | Guide 9.4.1 states the biases with "positive sign for NMOS, negative for PMOS" and `Vbulk = 0 V`, so the pFET deck negates the gate and drain drives, leaves source and bulk at 0 V, and reports magnitudes |
 | `par` | Multiplies the width in the spread only (the nominal device is unchanged) |
-| Not covered | Resistors, BJTs and MIM capacitors (own statistical hooks), pFET and 5 V/6 V mismatch checks |
-| Examples | `gf180mcu/ngspice/mismatch.sp` (100 pairs, one process, `setseed` + `reset`) and `noise.sp` (`.noise` with per-source spectra) |
+| Not covered | Resistors, BJTs and MIM capacitors (own statistical hooks), 5 V/6 V mismatch checks |
+| Examples | `gf180mcu/ngspice/mismatch.sp` (the nFET, 100 pairs, one process, `setseed` + `reset`; the template it is rendered from also serves the pFET, and the sanity checks render both) and `noise.sp` (`.noise` with per-source spectra) |
 | Noise model | BSIM4 `fnoimod=1` (`noia`, `noib`, `noic` from `.lib noise_corner`, `ef` 0.95 for nfet_03v3) and `tnoimod=0` (`ntnoi=1`); `fnoicor=0` selects the as-extracted flicker level. 2 of 198 MOS models (pfet_06v0) lack `ntnoi` |

@@ -28,10 +28,7 @@ setup_sky130() {
   for t in spiceinit example.sp; do
     render "$REPO/ngspice/sky130/$t.in" "$ng/$t" "PDK_DIR=$root/sky130A" "NGSPICE=$NGSPICE"
   done
-  # Every @PLACEHOLDER@ the template carries must be supplied here: bootstrap's
-  # render() is a plain sed with no unresolved-placeholder check, so a missing
-  # one is copied into the installed deck literally and fails only at ngspice
-  # parse time. POL/VDD/VDS/VSTEP are device-terms magnitudes and a polarity
+  # POL/VDD/VDS/VSTEP are device-terms magnitudes and a polarity
   # (+1 nFET, -1 pFET), the convention sanity/decks/mos_iv.sp uses.
   render "$REPO/ngspice/sky130/mismatch.sp.in" "$ng/mismatch.sp" "PDK_DIR=$root/sky130A" "NGSPICE=$NGSPICE" \
     DEV=sky130_fd_pr__nfet_01v8 "CLASS=1.8 V nFET" POL=1 VDD=1.8 VDS=0.05 VSTEP=0.002 \

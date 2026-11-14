@@ -37,8 +37,7 @@ ihp_glue() {
   # templates serve both PDKs (their MOS models are the same PSP 103 cards).
   # Both templates take a polarity (POL): the sanity checks render them for
   # the pMOS too, the installed examples stay nMOS-only, so POL is 1 here and
-  # every bias is positive. POL and VGSTEP must be passed: bootstrap.sh's
-  # render() is a bare sed and would leave an unfilled @POL@ in the deck.
+  # every bias is positive.
   local c sfx lt dev vdd vds vg vglo vghi
   for c in LV HV; do
     if [ "$c" = LV ]; then

@@ -70,16 +70,16 @@ def checks(rep, data, ref, card_files, ngdir, osdi, ng, work):
 
 
 def interconnect(ref, pdk, citation, rep, ngdir, ng, work, data):
-    _, val, _, wire_inc = load_interconnect(ngdir, pdk)
+    _, val, num, wire_inc = load_interconnect(ngdir, pdk)
     print("Interconnect: layer table vs %s (reference.py)\n" % citation)
     for lay, (w, p) in ref.METALS.items():
-        rep.check("%s width" % lay, "published", float(val[lay, "width_min"]["value"]), w, w, "nm", 1)
-        rep.check("%s pitch" % lay, "published", float(val[lay, "pitch"]["value"]), p, p, "nm", 1)
-        sp, th = float(val[lay, "spacing_min"]["value"]), float(val[lay, "thickness"]["value"])
+        rep.check("%s width" % lay, "published", num(lay, "width_min"), w, w, "nm", 1)
+        rep.check("%s pitch" % lay, "published", num(lay, "pitch"), p, p, "nm", 1)
+        sp, th = num(lay, "spacing_min"), num(lay, "thickness")
         rep.check("%s spacing = pitch - width" % lay, "derived", sp, p - w, p - w, "nm", 1)
         rep.check("%s thickness = %.0f x width" % (lay, ref.ASPECT), "derived", th, ref.ASPECT * w, ref.ASPECT * w, "nm", 1)
     for lay, w in ref.VIAS.items():
-        rep.check("%s width" % lay, "published", float(val[lay, "width_min"]["value"]), w, w, "nm", 1)
+        rep.check("%s width" % lay, "published", num(lay, "width_min"), w, w, "nm", 1)
     expect = {(m, q) for m in ref.METALS for q in ref.GAP_QUANTITIES} | {(v, q) for v in ref.VIAS for q in ref.GAP_VIA_QUANTITIES}
     gap_check(rep, data, val, expect)
     print()
