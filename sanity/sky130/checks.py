@@ -13,11 +13,10 @@ import reference as ref
 from common import (Report, at, elmore_ladder, gap_check, load_interconnect, mos_sweeps, ngspice, render,
                     results, vt_max_gm)
 
-SPICEINIT = "set ngbehavior=hsa\nset ng_nomodcheck\n"
 DECKS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "ngspice", "sky130")
 
 
-def mismatch_deck(ng, work, prefix, name, dev, corner, w, l, m, n, seed):
+def mismatch_deck(ng, work, prefix, spiceinit, name, dev, corner, w, l, m, n, seed):
     """One Monte Carlo run of ngspice/sky130/mismatch.sp.in for `dev`. Bias and
     sweep voltages go in as device-terms magnitudes plus a polarity, as
     mos_sweeps does for decks/mos_iv.sp; the deck signs them with POL."""
@@ -26,13 +25,13 @@ def mismatch_deck(ng, work, prefix, name, dev, corner, w, l, m, n, seed):
                   NGSPICE=ng, DEV="sky130_fd_pr__" + dev, CLASS=ref.MISMATCH_LABEL[dev], POL=pol,
                   VDD=ref.MISMATCH_VDD, VDS=ref.MISMATCH_VDS, VSTEP=ref.MISMATCH_VSTEP,
                   CORNER=corner, W=w, L=l, M=m, N=n, SEED=seed)
-    return results(ngspice(ng, deck, cwd=work, spiceinit=SPICEINIT))
+    return results(ngspice(ng, deck, cwd=work, spiceinit=spiceinit))
 
 
-def noise_deck(ng, work, prefix, name, bias):
+def noise_deck(ng, work, prefix, spiceinit, name, bias):
     deck = render(os.path.join(DECKS, "noise.sp.in"), work, name, PDK_DIR=os.path.join(prefix, "sky130", "sky130A"),
                   NGSPICE=ng, VGLO=bias["VG"] - 0.002, VGHI=bias["VG"] + 0.002, **bias)
-    return results(ngspice(ng, deck, cwd=work, spiceinit=SPICEINIT))
+    return results(ngspice(ng, deck, cwd=work, spiceinit=spiceinit))
 
 
 def noise_scan(prefix):
@@ -57,7 +56,7 @@ def noise_scan(prefix):
     return len(files), models, zero, absent, ef
 
 
-def mismatch(rep, data, prefix, ng, work, dev):
+def mismatch(rep, data, prefix, ng, work, spiceinit, dev):
     """Pelgrom area scaling, the sigma(Vt) floor and the switch/seed controls
     for one device. Everything is derived: SkyWater publishes no coefficient."""
     label, slopes = ref.MISMATCH_LABEL[dev], ref.MISMATCH_SLOPES[dev]
@@ -69,7 +68,7 @@ def mismatch(rep, data, prefix, ng, work, dev):
     n = ref.MISMATCH_N
     runs = []
     for w, l, m, seed in ref.MISMATCH_AREAS[dev]:
-        r = mismatch_deck(ng, work, prefix, "mm_%s_%g_%g_%g" % (dev, w, l, m), dev, "tt_mm", w, l, m, n, seed)
+        r = mismatch_deck(ng, work, prefix, spiceinit, "mm_%s_%g_%g_%g" % (dev, w, l, m), dev, "tt_mm", w, l, m, n, seed)
         runs.append(("%g/%g x%g" % (w, l, m), r))
         data["mismatch %s %g/%g x%g" % (dev, w, l, m)] = r
         rep.info("sigma(dVgs) %s %g/%g x%g" % (dev, w, l, m), r["sigma_dvgs_V"], "mV", 1e3)
@@ -99,11 +98,11 @@ def mismatch(rep, data, prefix, ng, work, dev):
                   "(model vth0_slope %.3f mV um; measured/slope %.2f)" % (vt_floor, r["avt_mVum"] / vt_floor))
     rep.info("ABeta vs model toxe_slope", sum(r["abeta_pcum"] for _, r in runs) / len(runs), "%um", 1,
              "(model toxe_slope %.3f %%um; beta ~ 1/tox)" % (slopes["toxe"] * 100))
-    off = mismatch_deck(ng, work, prefix, "mm_off_%s" % dev, dev, "tt", 1, 0.5, 1, 3, 1)
+    off = mismatch_deck(ng, work, prefix, spiceinit, "mm_off_%s" % dev, dev, "tt", 1, 0.5, 1, 3, 1)
     rep.check("mismatch off (corner tt): sigma(dVgs) %s" % dev, "derived", off["sigma_dvgs_V"], 0, 1e-9, "V", 1,
               "(mc_mm_switch=0)")
-    a = mismatch_deck(ng, work, prefix, "mm_rep1_%s" % dev, dev, "tt_mm", 1, 0.5, 1, 3, 5)
-    b = mismatch_deck(ng, work, prefix, "mm_rep2_%s" % dev, dev, "tt_mm", 1, 0.5, 1, 3, 5)
+    a = mismatch_deck(ng, work, prefix, spiceinit, "mm_rep1_%s" % dev, dev, "tt_mm", 1, 0.5, 1, 3, 5)
+    b = mismatch_deck(ng, work, prefix, spiceinit, "mm_rep2_%s" % dev, dev, "tt_mm", 1, 0.5, 1, 3, 5)
     rep.check("same seed, same result %s" % dev, "derived",
               abs(a["sigma_dvgs_V"] - b["sigma_dvgs_V"]) + abs(a["sigma_vt_V"] - b["sigma_vt_V"]),
               0, 0, "V", 1, "(setseed + reset)")
@@ -124,12 +123,12 @@ def installed_decks_rendered(rep, ngdir):
                         else "checked %d deck(s)" % len(glob.glob(os.path.join(ngdir, "*.sp")))))
 
 
-def mismatch_and_noise(rep, data, prefix, ng, work):
+def mismatch_and_noise(rep, data, prefix, ng, work, spiceinit):
     for dev in ref.MISMATCH_DEVS:
-        mismatch(rep, data, prefix, ng, work, dev)
+        mismatch(rep, data, prefix, ng, work, spiceinit, dev)
 
     print("\nNoise, 1.8 V nFET %(W)g/%(L)g um, Vg %(VG)g V, Vd %(VD)g V (ngspice .noise, 27 C)\n" % ref.NOISE_BIAS)
-    r = noise_deck(ng, work, prefix, "noise_long", ref.NOISE_BIAS)
+    r = noise_deck(ng, work, prefix, spiceinit, "noise_long", ref.NOISE_BIAS)
     data["noise long"] = r
     lo, hi = ref.GAMMA_LONG
     rep.known("thermal gamma (4kT*gamma*gm) 7/8", r["gamma_thermal"], lo, hi, "", 1, ref.NOISE_KNOWN["gamma"])
@@ -139,7 +138,7 @@ def mismatch_and_noise(rep, data, prefix, ng, work):
     rep.check("flicker slope 1..100 Hz = -ef", "derived", sl, -ref.EF - ref.FLICKER_SLOPE_TOL, -ref.EF + ref.FLICKER_SLOPE_TOL, "", 1,
               "(model ef %.2f)" % ref.EF)
     rep.info("flicker level at 1 Hz (input, V^2/Hz)", r["sv_flicker_1Hz_V2"], "V2/Hz", 1, "(no published value: gap)")
-    short = noise_deck(ng, work, prefix, "noise_short", ref.NOISE_BIAS_SHORT)
+    short = noise_deck(ng, work, prefix, spiceinit, "noise_short", ref.NOISE_BIAS_SHORT)
     data["noise short"] = short
     rep.info("thermal gamma 7/0.15", short["gamma_thermal"], "", 1, "(information; no long-channel claim)")
 
@@ -196,6 +195,14 @@ def run(prefix, ng):
     lib = os.path.join(prefix, "sky130", "sky130A", "libs.tech", "ngspice", "sky130.lib.spice")
     if not os.path.exists(lib):
         raise SystemExit("not found: %s (run bootstrap.sh --pdk sky130)" % lib)
+    # Simulate under the settings bootstrap installs (ngspice/ADAPTATIONS.md)
+    # rather than a second copy of them here, as sanity/ihp_spec.py does. The
+    # file's leading * lines are ngspice comments and are inert.
+    init = os.path.join(prefix, "sky130", "ngspice", "spiceinit")
+    if not os.path.exists(init):
+        raise SystemExit("not found: %s (run bootstrap.sh --pdk sky130)" % init)
+    with open(init) as f:
+        spiceinit = f.read()
     header = '.lib "%s" tt' % lib
     rep, data = Report(), {}
     print("SKY130 TT, %d C, VDD %.1f V. Sources and definitions: sanity/sky130/reference.py\n" % (ref.TEMP, ref.VDD))
@@ -208,7 +215,7 @@ def run(prefix, ng):
                 inst = "X1 d g s 0 sky130_fd_pr__%s w=%g l=%g" % (dev, w, l)
                 tag = "%s_%g_%g" % (dev, w, l)
                 sweeps[key] = mos_sweeps(ng, work, tag.replace(".", "p"), header, inst, pol, ref.VDD,
-                                         0.05, 0.05, ref.VDD, ref.TEMP, imeas="i(vs)", spiceinit=SPICEINIT)
+                                         0.05, 0.05, ref.VDD, ref.TEMP, imeas="i(vs)", spiceinit=spiceinit)
             sw = sweeps[key]
             label = "%s %s %g/%g" % (name, dev, w, l)
             if qty == "vt":
@@ -232,7 +239,7 @@ def run(prefix, ng):
             pol = -1 if dev.startswith("p") else 1
             sw = mos_sweeps(ng, work, "%s_combined" % dev, '.lib "%s" tt' % clib,
                             "X1 d g s 0 sky130_fd_pr__%s w=7 l=0.15" % dev, pol, ref.VDD, 0.05, 0.05,
-                            ref.VDD, ref.TEMP, imeas="i(vs)", spiceinit=SPICEINIT)
+                            ref.VDD, ref.TEMP, imeas="i(vs)", spiceinit=spiceinit)
             v = at(*sw["vg_sat"], ref.VDD)
             data[name + " combined"] = v
             rep.check("%s %s Idsat (continuous)" % (name, dev), "published", v,
@@ -246,7 +253,7 @@ def run(prefix, ng):
                 pol = -1 if dev.startswith("p") else 1
                 sw = mos_sweeps(ng, work, "%s_%s_corner" % (dev, corner), '.lib "%s" %s' % (lib, corner),
                                 "X1 d g s 0 sky130_fd_pr__%s w=7 l=0.15" % dev, pol, ref.VDD, 0.05, 0.05,
-                                ref.VDD, ref.TEMP, imeas="i(vs)", spiceinit=SPICEINIT)
+                                ref.VDD, ref.TEMP, imeas="i(vs)", spiceinit=spiceinit)
                 base[(dev, corner)] = dict(vt=vt_max_gm(*sw["vg_lin"], 0.05), idsat=at(*sw["vg_sat"], ref.VDD))
         t = ref.CORNER_TOL
         for name, dev, qty, tt, corners in ref.CORNER_ROWS:
@@ -264,7 +271,7 @@ def run(prefix, ng):
                 else:
                     rep.check(label, "published", v, lo, hi, unit, 1, "(table %+.3f)" % want if qty == "vt" else "(table %.3f)" % want)
         print("")
-        mismatch_and_noise(rep, data, prefix, ng, work)
+        mismatch_and_noise(rep, data, prefix, ng, work, spiceinit)
         ngdir = os.path.join(prefix, "sky130", "ngspice")
         print("\nInstalled examples\n")
         installed_decks_rendered(rep, ngdir)
