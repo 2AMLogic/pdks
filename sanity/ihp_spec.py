@@ -465,13 +465,15 @@ def hbt_checks(rep, ng, work, models, spiceinit):
 MISMATCH_DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "ngspice", "ihp", "mismatch.sp.in")
 NOISE_DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "ngspice", "ihp", "noise.sp.in")
 MM_CLASSES = {
-    "lv": dict(vdd=1.2, vds=0.05, tag="LV"),
-    "hv": dict(vdd=3.3, vds=0.1, tag="HV"),
+    "lv": dict(vds=0.05),
+    "hv": dict(vds=0.1),
 }
 # The checks run over (class, polarity): +1 nFET, -1 pFET. The subcircuit and
 # the PSP card of a pair come from CLASSES[cls]["n"/"p"], so the four devices
-# are sg13_{lv,hv}_{n,p}mos. Every bias below is a device-terms magnitude; the
-# decks take it multiplied by the polarity, as sanity/decks/mos_iv.sp does.
+# are sg13_{lv,hv}_{n,p}mos; the supply and the report tag of a pair come from
+# CLASSES[cls]["vdd"] and cls.upper(). Every bias below is a device-terms
+# magnitude; the decks take it multiplied by the polarity, as
+# sanity/decks/mos_iv.sp does.
 MM_POLS = (1, -1)
 MM_AREAS = [(2.0, 2.0, 11), (4.0, 4.0, 12), (8.0, 8.0, 13)]   # (W, L um, seed); W*L = 4, 16, 64 um^2
 MM_N = 200            # pairs per area; 2N single devices
@@ -551,7 +553,7 @@ def _mm_card(cls, pol):
 
 def _mm_tag(cls, pol):
     """Report tag of one (class, polarity): "LV nMOS", "HV pMOS", ..."""
-    return "%s %sMOS" % (MM_CLASSES[cls]["tag"], "n" if pol > 0 else "p")
+    return "%s %sMOS" % (cls.upper(), "n" if pol > 0 else "p")
 
 
 def _mm_key(cls, pol):
@@ -560,17 +562,15 @@ def _mm_key(cls, pol):
 
 
 def _mismatch_run(ng, work, models, spiceinit, pdk, cls, pol, name, w, l, n, mm, seed, m=1):
-    c = MM_CLASSES[cls]
-    deck = render(MISMATCH_DECK, work, name, PDK=pdk, CLASS=c["tag"], DECK=name + ".sp", MODELS_DIR=models,
-                  NGSPICE=ng, LIBTAG=cls, DEV=_mm_dev(cls, pol), POL=pol, VDD=pol * c["vdd"],
-                  VDS=pol * c["vds"], VGSTEP=pol * 0.002, W=w, L=l, M=m, N=n, MM=mm, SEED=seed)
+    deck = render(MISMATCH_DECK, work, name, PDK=pdk, CLASS=cls.upper(), DECK=name + ".sp", MODELS_DIR=models,
+                  NGSPICE=ng, LIBTAG=cls, DEV=_mm_dev(cls, pol), POL=pol, VDD=pol * CLASSES[cls]["vdd"],
+                  VDS=pol * MM_CLASSES[cls]["vds"], VGSTEP=pol * 0.002, W=w, L=l, M=m, N=n, MM=mm, SEED=seed)
     return results(ngspice(ng, deck, cwd=work, spiceinit=spiceinit))
 
 
 def _noise_run(ng, work, models, spiceinit, pdk, cls, pol, name, bias):
-    c = MM_CLASSES[cls]
     vg = pol * bias["VG"]
-    deck = render(NOISE_DECK, work, name, PDK=pdk, CLASS=c["tag"], DECK=name + ".sp", MODELS_DIR=models,
+    deck = render(NOISE_DECK, work, name, PDK=pdk, CLASS=cls.upper(), DECK=name + ".sp", MODELS_DIR=models,
                   NGSPICE=ng, LIBTAG=cls, DEV=_mm_dev(cls, pol), POL=pol, W=bias["W"], L=bias["L"],
                   VG=vg, VD=pol * bias["VD"], VGLO=vg - 0.002, VGHI=vg + 0.002)
     return results(ngspice(ng, deck, cwd=work, spiceinit=spiceinit))
