@@ -259,6 +259,30 @@ def gap_check(rep, data, val, expect):
     return gaps
 
 
+def area_scaling(rep, items, tol, name, unit, scale=1, note="(area scaling; mean %.3g, +-%.0f %%)"):
+    """Pelgrom area scaling: sigma * sqrt(A) constant across the simulated
+    areas, each within `tol` of their mean (the derived definition documented
+    at README.md:278-282). `items` is a sequence of (tag, value), one per
+    simulated area; `tol` the fractional sampling allowance (mc_tol at the
+    caller's own sample count); `name` a format string with one %s for the
+    tag. Emits one derived check per item against mean * (1 - tol) /
+    mean * (1 + tol). Every number comes from the caller, so no citation
+    moves out of the PDK."""
+    vals = [v for _, v in items]
+    mean = sum(vals) / len(vals)
+    for tag, v in items:
+        rep.check(name % tag, "derived", v, mean * (1 - tol), mean * (1 + tol), unit, scale,
+                  note % (mean, 100 * tol))
+
+
+def same_seed(rep, name, a, b, keys, unit="V", scale=1, note="(setseed + reset)"):
+    """Same-seed repeatability: two runs at one seed must agree exactly, so
+    the total absolute difference over `keys` is checked against the exact
+    [0, 0] window (sum starts from 0 and every term is non-negative, so this
+    is the same number a hand-summed abs() + abs() gives)."""
+    rep.check(name, "derived", sum(abs(a[k] - b[k]) for k in keys), 0, 0, unit, scale, note)
+
+
 def elmore_ladder(rep, data, ng, wire_inc, work, segments, e, rsh, L, W, cpl, rs, cl, tol):
     """The wire.inc ladder check: require_wire_w, then simulated against
     closed-form Elmore delay at each segment count in `segments`, each within

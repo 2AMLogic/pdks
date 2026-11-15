@@ -9,8 +9,8 @@ import tempfile
 import re
 
 import reference as ref
-from common import (Report, at, elmore_ladder, gap_check, load_interconnect, mc_tol, mos_sweeps, ngspice,
-                    noise_deck, render, results, ss_min, tc_fit, vt_max_gm)
+from common import (Report, area_scaling, at, elmore_ladder, gap_check, load_interconnect, mc_tol, mos_sweeps,
+                    ngspice, noise_deck, render, results, same_seed, ss_min, tc_fit, vt_max_gm)
 
 DECKS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "ngspice", "gf180mcu")
 PASSIVE_DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "decks", "passive_t.sp")
@@ -124,12 +124,8 @@ def mismatch_device(rep, data, models, ng, work, dev):
     rep.check("%s mean Vtlin magnitude" % dev, "bound", runs[0][1]["mean_vtlin_V"], 0.3, 1.5, "V", 1,
               "(sane |Vtlin| of a 10/1 um device; catches a polarity error leaving the deck's 0 sentinel)")
     for key, label, n_s in (("avt_model_mVum", "AVT", 2 * n), ("aidsat_model_pcum", "AIdsat", n)):
-        vals = [r[key] for _, r in runs]
-        mean = sum(vals) / len(vals)
-        t = mc_tol(n_s)
-        for tag, r in runs:
-            rep.check("%s %s*sqrt(Aeff) %s" % (dev, label, tag), "derived", r[key], mean * (1 - t), mean * (1 + t),
-                      "mV um" if key.startswith("avt") else "%um", 1, "(area scaling; mean %.3g, +-%.0f %%)" % (mean, 100 * t))
+        area_scaling(rep, [(tag, r[key]) for tag, r in runs], mc_tol(n_s), "%s %s*sqrt(Aeff) %%s" % (dev, label),
+                     "mV um" if key.startswith("avt") else "%um")
     mean_avt = sum(r["avt_model_mVum"] for _, r in runs) / len(runs)
     t = mc_tol(6 * n)
     rep.check("%s AVT vs model par_vth" % dev, "derived", mean_avt, p["par_vth"] * (1 - t), p["par_vth"] * (1 + t), "mV um", 1,
@@ -157,9 +153,7 @@ def mismatch_device(rep, data, models, ng, work, dev):
               "(sw_stat_mismatch=0; 0.1 uV allows for the solver noise of the interpolated Vtlin, 1e4 below the spread)")
     a = mismatch_deck(ng, work, models, "mm_rep1_" + dev, dev, 1, 10, 1, 1, 3, p["rep_seed"])
     b = mismatch_deck(ng, work, models, "mm_rep2_" + dev, dev, 1, 10, 1, 1, 3, p["rep_seed"])
-    rep.check("%s same seed, same result" % dev, "derived",
-              abs(a["sigma_vtlin_V"] - b["sigma_vtlin_V"]) + abs(a["sigma_didsat_rel"] - b["sigma_didsat_rel"]),
-              0, 0, "V", 1, "(setseed + reset)")
+    same_seed(rep, "%s same seed, same result" % dev, a, b, ("sigma_vtlin_V", "sigma_didsat_rel"))
 
 
 def mismatch_and_noise(rep, data, models, ng, work):
