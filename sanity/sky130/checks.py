@@ -10,8 +10,8 @@ import re
 import tempfile
 
 import reference as ref
-from common import (Report, at, elmore_ladder, gap_check, load_interconnect, mc_tol, mos_sweeps, ngspice,
-                    render, results, vt_max_gm)
+from common import (Report, area_scaling, at, elmore_ladder, gap_check, load_interconnect, mc_tol, mos_sweeps,
+                    ngspice, render, results, same_seed, vt_max_gm)
 
 DECKS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "ngspice", "sky130")
 
@@ -85,12 +85,8 @@ def mismatch(rep, data, prefix, ng, work, spiceinit, dev):
         rep.check("mean Vt, device terms %s" % tag, "bound", r["mean_vt_V"], lo, hi, "V", 1,
                   "(polarity control; derived span, not a published window)")
     for key, label_s, n_s in (("avt_dvgs_mVum", "AVT(dVgs)", n), ("avt_mVum", "AVT(Vt)", 2 * n), ("abeta_pcum", "ABeta", 2 * n)):
-        vals = [r[key] for _, r in runs]
-        mean = sum(vals) / len(vals)
-        t = mc_tol(n_s)
-        for (tag, r) in runs:
-            rep.check("%s*sqrt(A) %s" % (label_s, tag), "derived", r[key], mean * (1 - t), mean * (1 + t),
-                      "%s" % ("%um" if key == "abeta_pcum" else "mV um"), 1, "(area scaling; mean %.3g, +-%.0f %%)" % (mean, 100 * t))
+        area_scaling(rep, [(tag, r[key]) for tag, r in runs], mc_tol(n_s), "%s*sqrt(A) %%s" % label_s,
+                     "%um" if key == "abeta_pcum" else "mV um")
     vt_floor = slopes["vth0"] * 1e3
     t = mc_tol(2 * n)
     for (tag, r) in runs:
@@ -103,9 +99,7 @@ def mismatch(rep, data, prefix, ng, work, spiceinit, dev):
               "(mc_mm_switch=0)")
     a = mismatch_deck(ng, work, prefix, spiceinit, "mm_rep1_%s" % dev, dev, "tt_mm", 1, 0.5, 1, 3, 5)
     b = mismatch_deck(ng, work, prefix, spiceinit, "mm_rep2_%s" % dev, dev, "tt_mm", 1, 0.5, 1, 3, 5)
-    rep.check("same seed, same result %s" % dev, "derived",
-              abs(a["sigma_dvgs_V"] - b["sigma_dvgs_V"]) + abs(a["sigma_vt_V"] - b["sigma_vt_V"]),
-              0, 0, "V", 1, "(setseed + reset)")
+    same_seed(rep, "same seed, same result %s" % dev, a, b, ("sigma_dvgs_V", "sigma_vt_V"))
 
 
 def installed_decks_rendered(rep, ngdir):

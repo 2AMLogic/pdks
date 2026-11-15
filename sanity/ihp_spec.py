@@ -138,8 +138,8 @@ import os
 import re
 import tempfile
 
-from common import (Report, at, elmore_ladder, gap_check, load_interconnect, mc_tol, mos_sweeps, ngspice,
-                    render, results, tc_fit, vt_cc, vt_max_gm)
+from common import (Report, area_scaling, at, elmore_ladder, gap_check, load_interconnect, mc_tol, mos_sweeps,
+                    ngspice, render, results, same_seed, tc_fit, vt_cc, vt_max_gm)
 
 TEMP = 27
 VDD = 1.2
@@ -621,20 +621,15 @@ def mismatch_checks(rep, ng, work, models, spiceinit, pdk, cls, pol):
         exp = math.sqrt((abeta / 100) ** 2 / area + (dw / w) ** 2 + (dl / l) ** 2)
         rep.check("sigma(beta) %s" % tag, "derived", r["sigma_beta_rel"], exp * (1 - t_s), exp * (1 + t_s), "%", 100,
                   "(sqrt((factuo_mm)^2/A + (dw/W)^2 + (dl/L)^2) = %.3g %%, +-%.0f %%)" % (exp * 100, 100 * t_s))
-    vals = [data["mismatch %s %g/%g" % (dtag, w, l)]["avt_mVum"] for w, l, _ in MM_AREAS]
-    mean = sum(vals) / len(vals)
-    for (w, l, _), v in zip(MM_AREAS, vals):
-        rep.check("AVT(Vt)*sqrt(A) area scaling %s %g/%g" % (dtag, w, l), "derived", v, mean * (1 - t_s), mean * (1 + t_s),
-                  "mV um", 1, "(1/sqrt(WL) scaling; mean %.3g, +-%.0f %%)" % (mean, 100 * t_s))
+    area_scaling(rep, [("%s %g/%g" % (dtag, w, l), data["mismatch %s %g/%g" % (dtag, w, l)]["avt_mVum"])
+                       for w, l, _ in MM_AREAS], t_s, "AVT(Vt)*sqrt(A) area scaling %s", "mV um")
     off = _mismatch_run(ng, work, models, spiceinit, pdk, cls, pol, "mm_off_" + key, 4, 4, 3, 0, 1)
     rep.check("mismatch off (mm_ok = 0) %s: sigma(Vt)" % dtag, "derived", off["sigma_vt_V"], 0, 1e-6, "V", 1,
               "(numerical floor)")
     rep.check("mismatch off (mm_ok = 0) %s: sigma(dVt)" % dtag, "derived", off["sigma_dvt_V"], 0, 1e-9, "V", 1)
     a = _mismatch_run(ng, work, models, spiceinit, pdk, cls, pol, "mm_rep1_" + key, 4, 4, 3, 1, 5)
     b = _mismatch_run(ng, work, models, spiceinit, pdk, cls, pol, "mm_rep2_" + key, 4, 4, 3, 1, 5)
-    rep.check("same seed, same result %s" % dtag, "derived",
-              abs(a["sigma_vt_V"] - b["sigma_vt_V"]) + abs(a["sigma_dvt_V"] - b["sigma_dvt_V"]), 0, 0, "V", 1,
-              "(setseed + reset)")
+    same_seed(rep, "same seed, same result %s" % dtag, a, b, ("sigma_vt_V", "sigma_dvt_V"))
     return data
 
 
