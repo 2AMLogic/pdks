@@ -276,10 +276,11 @@ def area_scaling(rep, items, tol, name, unit, scale=1, note="(area scaling; mean
 
 
 def same_seed(rep, name, a, b, keys, unit="V", scale=1, note="(setseed + reset)"):
-    """Same-seed repeatability: two runs at one seed must agree exactly, so
-    the total absolute difference over `keys` is checked against the exact
-    [0, 0] window (sum starts from 0 and every term is non-negative, so this
-    is the same number a hand-summed abs() + abs() gives)."""
+    """Same-seed repeatability: two runs at one seed must agree exactly (the
+    derived definition documented at README.md:278-282), so the total
+    absolute difference over `keys` is checked against the exact [0, 0]
+    window (sum starts from 0 and every term is non-negative, so this is the
+    same number a hand-summed abs() + abs() gives)."""
     rep.check(name, "derived", sum(abs(a[k] - b[k]) for k in keys), 0, 0, unit, scale, note)
 
 
