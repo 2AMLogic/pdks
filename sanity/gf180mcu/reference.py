@@ -203,7 +203,17 @@ ELMORE_TOL = 1e-3
 # same delvto/mulu0 wiring, same d g s b node order and par=1 default.
 PAR_L = 0.15        # um, par_l, nfet_03v3 line 46934, pfet_03v3 line 46948
 PAR_W = -0.1        # um, par_w, nfet_03v3 line 46935, pfet_03v3 line 46949
-PUB_TOL = 0.15      # digitisation (5 %) plus the sampling error of 100 pairs (7 %)
+# Window for the "vs plotted line" checks below (checks.py gates avt_dvt_mVum
+# and aidsat_pcum over runs[0], the single 10/1 um par-1 area). Two indicative
+# terms, not a traced sum: the +-5 % digitisation of the hand-read fit lines
+# (above; the independent least-squares refit confirms it to about 2 %), and
+# the one-sigma sampling error of each gated sigma: 5.0 % for the AVT
+# estimator, a sigma over 2N = 200 single devices with divisor n2-1 = 199
+# (1/sqrt(2*199); checks.py's 2 * n), and 7.1 % for the AIdsat estimator, a
+# sigma over the N = 100 pairs with divisor nrun-1 = 99 (1/sqrt(2*99)).
+# 0.15 is a round, deliberately generous allowance covering both terms even
+# taken together (their straight sum is about 12 %).
+PUB_TOL = 0.15      # generous window about the digitised published lines
 # Per device: the model's own coefficients (the derived reference), the
 # digitised published fit lines, the bias polarity ("positive sign for NMOS,
 # negative for PMOS", LV_9_4.rst 9.4.1), and the seeds of the three areas.
