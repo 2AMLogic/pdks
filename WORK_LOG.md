@@ -5,8 +5,33 @@ Maintained by the Guide role's document-maintenance phase; entries are appended
 from the tracker, never rewritten. The tracker remains authoritative for
 anything still open — see WORK_PLAN.md for current state.
 
+### 2026-11-17
+
+- **PR #103**: docs: list every top-level file in README's Repository layout block
+- **Issue #102** (closed): README "Repository layout" block does not list WORK_LOG.md and WORK_PLAN.md
+
+### 2026-11-15
+
+- **PR #100**: docs(gf180mcu): state PUB_TOL's real window terms, not a sum that misses it
+- **PR #101**: refactor(sanity): share the mismatch area-scaling and same-seed check emitters
+- **Issue #91** (closed): Dedupe the triplicated mismatch area-scaling and same-seed checks into sanity/common.py
+- **Issue #99** (closed): gf180mcu PUB_TOL comment: the sampling term names 100 pairs (7 %), but the window gates a 200-device sigma (5.0 %)
+
 ### 2026-11-14
 
+- **PR #98**: docs: give the gf180mcu mismatch notes their sampling-error terms
+- **PR #97**: refactor: take the IHP mismatch supply and tag from CLASSES
+- **PR #96**: chore: make root package.json scripts honest — point at bootstrap.sh, exit 1
+- **PR #92**: docs: record that both gf180mcu 3.3 V par_vth sit ~20 % below their plotted line
+- **PR #87**: refactor(sanity): share mc_tol and noise_deck from sanity/common.py
+- **PR #82**: fix: fail bootstrap's render() on unfilled @KEY@ placeholders
+- **PR #67**: docs: roadmap as of 2026-11-13
+- **Issue #94** (closed): gf180mcu mismatch note: the ~7 % Vtlin swing is pooled, the verdict is one area's sample
+- **Issue #90** (closed): Remove or make honest the Loom-scaffold package.json: four npm scripts that exit 0 saying this repo has no tests
+- **Issue #89** (closed): Fold MM_CLASSES's duplicated vdd and derivable tag into CLASSES, finishing PR #75's dedup
+- **Issue #85** (closed): gf180mcu mismatch: record that both 3.3 V par_vth sit ~20 % below their plotted fit line
+- **Issue #84** (closed): Dedupe two shared sanity helpers: three identical mc_tol copies and a one-token-apart noise_deck pair
+- **Issue #79** (closed): bootstrap.sh's render() ships unfilled @KEY@ placeholders silently, unlike sanity/common.py's
 - **PR #86**: refactor: read SKY130's installed spiceinit instead of a hardcoded copy
 - **PR #83**: refactor: call the num accessor in tr1um and predictive interconnect checks
 - **PR #77**: feat(sky130): check pfet_01v8 mismatch, parameterising the deck by device
