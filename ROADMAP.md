@@ -48,18 +48,11 @@ What landed to get here, all merged:
 The tracker carries the open issues and pull requests for the items below; see
 also "Blocked and waiting".
 
-## Now
+## Next
 
 Each item fits one pull request. Check the tracker before starting one: it is
 authoritative for whether an item is already filed, in review or merged, and
 this file does not track that.
-
-1. **README's "Repository layout" block does not name this roadmap.** The
-   block lists the files a reader starts from, and `ROADMAP.md` is a new
-   top-level document it does not mention. Done when the block names
-   `ROADMAP.md`.
-
-## Next
 
 - **Mismatch for the remaining MOS devices**: GF180MCU 5 V and 6 V FETs, and
   SKY130's LVT, HVT, 3.3 V and 5 V devices that carry the switch. Follows the
