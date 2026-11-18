@@ -29,8 +29,8 @@ _None._
 
 `loom:important`; taken before unlabelled work.
 
-- **#24**: CI: intermittent 'example deck failed' in bootstrap smoke test on ubuntu runners (asap5/asap7)
-- **#88**: Follow-on: Work identified in PR #76
+- **#24**: CI: intermittent 'example deck failed' in bootstrap smoke test on ubuntu runners (asap5/asap7) *(held)*
+- **#88**: Follow-on: Work identified in PR #76 *(held)*
 
 ## Ready
 
@@ -42,36 +42,29 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-- **#79**: bootstrap.sh's render() ships unfilled @KEY@ placeholders silently, unlike sanity/common.py's
-- **#84**: Dedupe two shared sanity helpers: three identical mc_tol copies and a one-token-apart noise_deck pair
-- **#85**: gf180mcu mismatch: record that both 3.3 V par_vth sit ~20 % below their plotted fit line
+_None._
 
 ## PRs Awaiting Review
 
 PRs waiting on Judge (`loom:review-requested`).
 
-- **#87**: refactor(sanity): share mc_tol and noise_deck from sanity/common.py
-- **#92**: docs: record that both gf180mcu 3.3 V par_vth sit ~20 % below their plotted line
+_None._
 
 ## Approved (Awaiting Merge)
 
 PRs that passed review and are queued for Champion auto-merge (`loom:pr`).
 
-- **#82**: fix: fail bootstrap's render() on unfilled @KEY@ placeholders
+_None._
 
 ## Proposed
 
 Issues carrying `loom:curated`.
 
-- **#24**: CI: intermittent 'example deck failed' in bootstrap smoke test on ubuntu runners (asap5/asap7) *(curated)*
-- **#79**: bootstrap.sh's render() ships unfilled @KEY@ placeholders silently, unlike sanity/common.py's *(curated)*
-- **#85**: gf180mcu mismatch: record that both 3.3 V par_vth sit ~20 % below their plotted fit line *(curated)*
+- **#24**: CI: intermittent 'example deck failed' in bootstrap smoke test on ubuntu runners (asap5/asap7) *(curated)* *(held)*
 
 ## Proposed (Architect / Hermit)
 
-- **#89**: Fold MM_CLASSES's duplicated vdd and derivable tag into CLASSES, finishing PR #75's dedup *(hermit)*
-- **#90**: Remove or make honest the Loom-scaffold package.json: four npm scripts that exit 0 saying this repo has no tests *(hermit)*
-- **#91**: Dedupe the triplicated mismatch area-scaling and same-seed checks into sanity/common.py *(hermit)*
+_None._
 
 ## Epics
 
@@ -85,10 +78,10 @@ _None._
 | Very important | 0 |
 | Important | 2 |
 | Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 3 |
-| PRs awaiting review | 2 |
-| Approved PRs awaiting merge | 1 |
-| Curated | 3 |
-| Architect / Hermit proposals | 3 |
+| In Progress (`loom:building`) | 0 |
+| PRs awaiting review | 0 |
+| Approved PRs awaiting merge | 0 |
+| Curated | 1 |
+| Architect / Hermit proposals | 0 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->
