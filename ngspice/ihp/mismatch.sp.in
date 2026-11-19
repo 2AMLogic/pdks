@@ -3,11 +3,14 @@
 * models:   @NGSPICE@ -b @DECK@
 *
 * The deck serves either polarity: POL = @POL@ (+1 for an nFET, -1 for a
-* pFET). Every bias is given in circuit terms, already multiplied by it, as
-* sanity/decks/mos_iv.sp does -- @VDD@, @VDS@ and the gate step @VGSTEP@ are
-* negative for a pFET -- and the drain current, transconductance and Vt are
-* multiplied back by it, so every quantity reported below is positive for
-* either polarity (Vt, Id and gm in device terms).
+* pFET). The gate supply @VDD@ and the gate step @VGSTEP@ are given in
+* circuit terms, already multiplied by it (negative for a pFET), as
+* sanity/decks/mos_iv.sp does; the matching drain bias is a magnitude
+* (@MMVDS@ V) that this deck itself multiplies by the polarity (.param
+* mmpol below), so both drain sources follow the one definition. The drain
+* current, transconductance and Vt are multiplied back by the polarity, so
+* every quantity reported below is positive for either polarity (Vt, Id and
+* gm in device terms).
 *
 * Mismatch comes from the library corner mos_tt_mismatch (cornerMOS@LIBTAG@.lib),
 * which includes sg13g2_mos@LIBTAG@_mismatch.lib and sg13g2_mos@LIBTAG@_mod_mismatch.lib.
@@ -25,30 +28,38 @@
 *
 * What it reports, for N = @N@ samples of W/L = @W@/@L@ um, m = @M@:
 *  - sigma_vt_V: standard deviation of Vt over 2N single devices, Vt being
-*    |Vgs| at |Id| = 2 uA * W/L, Vds = @VDS@ V (the conditions of IHP's
-*    matching coefficient, process specification Attachment A.am).
+*    |Vgs| at |Id| = 2 uA * W/L, Vds = @MMVDS@ V -- the conditions of IHP's
+*    matching coefficient, process specification Attachment A.am ("VDS=0.1 V;
+*    ID=2 uA W/L", p. 24 of the pinned SG13G2 Process Specification Rev. 1.2).
+*    A.am states one condition for every MOS device, with no LV/HV split or
+*    reference to A.a1/A.a2; those two attachments govern the separate
+*    threshold-voltage extraction instead (|Vds| = 0.05 V LV, 0.1 V HV).
 *  - sigma_dvt_V: standard deviation of the Vt difference of the two devices
 *    of a sample (a matched pair).
-*  - sigma_beta_rel: spread of beta = peak gm / |Vds|, relative, over 2N
-*    devices.
+*  - sigma_beta_rel: spread of beta = peak gm / |Vds|, the A.am magnitude
+*    @MMVDS@ V, relative, over 2N devices.
 *  - the Pelgrom products sigma * sqrt(W*L*m).
 * The relative standard error of a standard deviation from n samples is
 * 1/sqrt(2(n-1)).
 .lib "@MODELS_DIR@/cornerMOS@LIBTAG@.lib" mos_tt_mismatch
 .temp 27
 .options reltol=1e-6 vntol=1e-9 abstol=1e-13
+* Matching bias, both devices: A.am's magnitude, polarised here.
+.param mmpol=@POL@ mmvds=@MMVDS@
 vg gs 0 0
-vd3 d3 0 @VDS@
-vd4 d4 0 @VDS@
+vd3 d3 0 'mmpol*mmvds'
+vd4 d4 0 'mmpol*mmvds'
 X3 d3 gs 0 0 @DEV@ w=@W@u l=@L@u ng=1 m=@M@ mm_ok=@MM@
 X4 d4 gs 0 0 @DEV@ w=@W@u l=@L@u ng=1 m=@M@ mm_ok=@MM@
 .control
 setplot const
 let nrun=@N@
-* polarity (+1 nFET, -1 pFET) and |Vds|; both live in the const plot, so they
-* survive the `reset` at the end of every Monte Carlo sample.
+* polarity (+1 nFET, -1 pFET) and the magnitude of the matching Vds; both
+* live in the const plot, so they survive the `reset` at the end of every
+* Monte Carlo sample. vdsm reads the drain source itself, so beta's
+* denominator cannot drift from the bias the devices actually see.
 let pol=@POL@
-let vdsm=pol*(@VDS@)
+let vdsm=abs(@vd3[dc])
 let area=@W@*@L@*@M@
 let icc=2e-6*@W@/@L@*@M@
 let ds2=0

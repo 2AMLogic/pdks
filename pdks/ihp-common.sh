@@ -37,17 +37,21 @@ ihp_glue() {
   # templates serve both PDKs (their MOS models are the same PSP 103 cards).
   # Both templates take a polarity (POL): the sanity checks render them for
   # the pMOS too, the installed examples stay nMOS-only, so POL is 1 here and
-  # every bias is positive.
-  local c sfx lt dev vdd vds vg vglo vghi
+  # every gate bias is positive. The mismatch decks also take the matching
+  # bias of SG13G2 process specification Attachment A.am as one
+  # class-independent magnitude (MMVDS = 0.1 V; "VDS=0.1 V; ID=2 uA W/L",
+  # p. 24 of the pinned Rev. 1.2 specification) and apply the polarity to it
+  # themselves -- there is no per-class mismatch drain bias here.
+  local c sfx lt dev vdd vg vglo vghi
   for c in LV HV; do
     if [ "$c" = LV ]; then
-      sfx="" lt=lv dev=sg13_lv_nmos vdd=1.2 vds=0.05 vg=0.7 vglo=0.698 vghi=0.702
+      sfx="" lt=lv dev=sg13_lv_nmos vdd=1.2 vg=0.7 vglo=0.698 vghi=0.702
     else
-      sfx="_hv" lt=hv dev=sg13_hv_nmos vdd=3.3 vds=0.1 vg=1.5 vglo=1.498 vghi=1.502
+      sfx="_hv" lt=hv dev=sg13_hv_nmos vdd=3.3 vg=1.5 vglo=1.498 vghi=1.502
     fi
     render "$REPO/ngspice/ihp/mismatch.sp.in" "$ng/mismatch$sfx.sp" "PDK=$pdk" "CLASS=$c" \
       "DECK=mismatch$sfx.sp" "MODELS_DIR=$models" "NGSPICE=$NGSPICE" "LIBTAG=$lt" "DEV=$dev" \
-      POL=1 "VDD=$vdd" "VDS=$vds" VGSTEP=0.002 W=4 L=4 M=1 N=100 MM=1 SEED=1
+      POL=1 "VDD=$vdd" MMVDS=0.1 VGSTEP=0.002 W=4 L=4 M=1 N=100 MM=1 SEED=1
     render "$REPO/ngspice/ihp/noise.sp.in" "$ng/noise$sfx.sp" "PDK=$pdk" "CLASS=$c" \
       "DECK=noise$sfx.sp" "MODELS_DIR=$models" "NGSPICE=$NGSPICE" "LIBTAG=$lt" "DEV=$dev" \
       POL=1 W=10 L=10 "VG=$vg" "VD=$vdd" "VGLO=$vglo" "VGHI=$vghi"
