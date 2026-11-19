@@ -13,6 +13,7 @@ Every stage takes higher levels first. Priority sets order only: it never
 approves work and never exempts an issue from a gate.
 
 <!-- guide:plan-body:start -->
+_Generated: 2026-11-19T00:44:24Z (snapshot; compare against live labels)_
 ## Operator Attention: Merge-Risk-Hold Pileup
 
 Judge-approved PRs under a hold (`loom:blocked` or `loom:operator`) — only a human merge decision is missing.
@@ -30,7 +31,6 @@ _None._
 `loom:important`; taken before unlabelled work.
 
 - **#24**: CI: intermittent 'example deck failed' in bootstrap smoke test on ubuntu runners (asap5/asap7) *(held)*
-- **#88**: Follow-on: Work identified in PR #76 *(held)*
 
 ## Ready
 
@@ -76,7 +76,7 @@ _None._
 |------|-------|
 | Operator merge-risk holds | 0 |
 | Very important | 0 |
-| Important | 2 |
+| Important | 1 |
 | Ready (`loom:issue`) | 0 |
 | In Progress (`loom:building`) | 0 |
 | PRs awaiting review | 0 |
