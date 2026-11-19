@@ -104,6 +104,15 @@ No changes to PDK files. Two differences from the PDKs' own setup:
 | I1 | OSDI models are compiled into `<pdk>/ngspice/osdi/` with the flags of the PDK's `openvaf-compile-va.sh` (`-D__NGSPICE__`), instead of running that script. | The script writes into the PDK's tracked tree. For SG13CMOS5L that tree holds prebuilt `cap_cmom*.osdi`, which are Linux x86-64 binaries and would be overwritten (and don't load on macOS). |
 | I2 | Our spiceinit loads each `.osdi` by absolute path; the PDKs' `.spiceinit` uses `$PDK_ROOT/$PDK`. | Works without setting environment variables, and from any directory. |
 
+The mismatch example deck (`ngspice/ihp/mismatch.sp.in`) is repo-authored —
+bootstrap renders it; it adapts no upstream file, so there is no upstream
+diff and no `adapted.sha256` entry. It is recorded here because it carries a
+cited spec condition:
+
+| # | Change | Reason |
+|---|---|---|
+| I3 | The mismatch deck's drain bias is one class-independent magnitude (0.1 V, applied to both devices with the deck multiplying by the device polarity), where the LV render passed 0.05 V. | The deck cites SG13G2 process specification Attachment A.am, which states a single matching condition for every MOS device ("VDS=0.1 V; ID=2µA W/L", p. 24 of the pinned Rev. 1.2 PDF) — no LV/HV split, no reference to A.a1/A.a2. The LV deck was pairing A.am's current criterion with A.a1's 0.05 V threshold-extraction bias. The LV simulation therefore changes operating point: a behaviour change for the LV devices only (the HV ones were already at 0.1 V); the derived mismatch bounds stay the model cards' own `delvto_mm`/`factuo_mm`, and the A.a1/A.a2 threshold extraction keeps |Vds| = 0.05 V LV / 0.1 V HV. |
+
 For SG13CMOS5L, both `ihp-sg13cmos5l/` and `ihp-sg13g2/` are fetched from
 the one pinned IHP-Open-PDK dev commit, because SG13CMOS5L's MOS models
 and Verilog-A are symlinks into `../ihp-sg13g2`.

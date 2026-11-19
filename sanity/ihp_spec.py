@@ -30,6 +30,10 @@ _pmos, [G2] 2.4-2.5; the [C5L] HV rows have the same values).
                    ISS = 1 nA (n), 0.4 nA (p).
   A.e  SS:         |Vds| = 0.1 V; gate swing between Id = JSS1 * W/L and
                    JSS2 * W/L, one decade: 0.5 / 5 nA (n), 0.1 / 1 nA (p).
+  A.am Matching:   Vds = 0.1 V, Id = 2 uA W/L, for every MOS device: one
+                   condition, no LV/HV split and no reference to A.a1/A.a2
+                   (the least-squares fit of s(dVT) against A^-0.5 that
+                   defines the matching coefficient k).
   A.n  BETA:  Ic / Ib at VBE = 0.7 V, VCB = 0 (npn13G2, one emitter).
   A.ai IC07:  Ic at VBE = 0.7 V, VCB = 0 (one emitter).
   A.s  fT:    |h21| at 40 GHz times 40 GHz (a -20 dB/decade extrapolation),
@@ -78,9 +82,14 @@ Mismatch and noise (derived from the model cards; IHP publishes no value):
   sg13g2_mos{lv,hv}_mod_mismatch.lib and 0 in SG13CMOS5L's (lines 67, 156),
   so the decks pass mm_ok explicitly.
   Definitions (ngspice/ihp/mismatch.sp.in, noise.sp.in):
-    Vt (mismatch)  Vgs at Id = 2 uA * W/L (m multiplies both), Vds = 0.05 V
-                   (LV) / 0.1 V (HV), linear interpolation on a 2 mV sweep.
-    beta           peak gm / Vds, relative spread.
+    Vt (mismatch)  Vgs at Id = 2 uA * W/L (m multiplies both), Vds = 0.1 V
+                   (A.am, every device), linear interpolation on a 2 mV
+                   sweep. This is the matching measurement, not the A.a1/
+                   A.a2 threshold extraction: that one keeps its own
+                   class-specific bias, |Vds| = 0.05 V LV / 0.1 V HV (the
+                   vt rows of the mos checks above).
+    beta           peak gm / |Vds|, the 0.1 V A.am magnitude, relative
+                   spread.
     sigma(dVt)     standard deviation of Vt1 - Vt2 for the two devices of one
                    Monte Carlo sample.
     gamma          S_id = 4kT*gamma*gm, S_id from the channel thermal source
@@ -464,10 +473,13 @@ def hbt_checks(rep, ng, work, models, spiceinit):
 # Mismatch (Monte Carlo) and noise: see the module docstring.
 MISMATCH_DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "ngspice", "ihp", "mismatch.sp.in")
 NOISE_DECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "ngspice", "ihp", "noise.sp.in")
-MM_CLASSES = {
-    "lv": dict(vds=0.05),
-    "hv": dict(vds=0.1),
-}
+# The matching bias of [G2] Attachment A.am ("VDS=0.1 V; ID=2 uA W/L", p. 24
+# of the pinned Rev. 1.2 specification), in device-terms magnitude. A.am
+# states one condition for all four MOS devices, so this is class-independent;
+# the decks multiply it by the polarity. It is not the A.a1/A.a2
+# threshold-extraction bias, which stays class-specific
+# (CLASSES[cls]["vt_vds"]: 0.05 V LV, 0.1 V HV).
+MM_VDS = 0.1
 # The checks run over (class, polarity): +1 nFET, -1 pFET. The subcircuit and
 # the PSP card of a pair come from CLASSES[cls]["n"/"p"], so the four devices
 # are sg13_{lv,hv}_{n,p}mos; the supply and the report tag of a pair come from
@@ -564,7 +576,7 @@ def _mm_key(cls, pol):
 def _mismatch_run(ng, work, models, spiceinit, pdk, cls, pol, name, w, l, n, mm, seed, m=1):
     deck = render(MISMATCH_DECK, work, name, PDK=pdk, CLASS=cls.upper(), DECK=name + ".sp", MODELS_DIR=models,
                   NGSPICE=ng, LIBTAG=cls, DEV=_mm_dev(cls, pol), POL=pol, VDD=pol * CLASSES[cls]["vdd"],
-                  VDS=pol * MM_CLASSES[cls]["vds"], VGSTEP=pol * 0.002, W=w, L=l, M=m, N=n, MM=mm, SEED=seed)
+                  MMVDS=MM_VDS, VGSTEP=pol * 0.002, W=w, L=l, M=m, N=n, MM=mm, SEED=seed)
     return results(ngspice(ng, deck, cwd=work, spiceinit=spiceinit))
 
 
