@@ -5,6 +5,10 @@ Maintained by the Guide role's document-maintenance phase; entries are appended
 from the tracker, never rewritten. The tracker remains authoritative for
 anything still open — see WORK_PLAN.md for current state.
 
+### 2026-11-19
+
+- **Issue #88** (closed): Follow-on: Work identified in PR #76
+
 ### 2026-11-17
 
 - **PR #103**: docs: list every top-level file in README's Repository layout block
