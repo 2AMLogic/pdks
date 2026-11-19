@@ -7,6 +7,8 @@ anything still open — see WORK_PLAN.md for current state.
 
 ### 2026-11-19
 
+- **PR #107**: fix(ngspice): bias the IHP mismatch deck at A.am's 0.1 V for every device
+- **Issue #95** (closed): Use the 0.1 V Attachment A.am bias for IHP MOS mismatch decks
 - **Issue #88** (closed): Follow-on: Work identified in PR #76
 
 ### 2026-11-17
