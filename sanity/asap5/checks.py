@@ -63,6 +63,9 @@ def run(prefix, ng):
             pol = -1 if dev.startswith("p") else 1
             ids = {}
             for c in ("ss", "sf", "tt", "fs", "ff"):
+                if c == "tt":
+                    ids[c] = data[dev]["idsat"]
+                    continue
                 sw = mos_sweeps(ng, work, "%s_%s" % (dev, c), '.lib "%s" %s' % (models, c),
                                 "N1 d g s 0 %s nfin=2" % dev, pol, ref.VDD, 0.05, 0.05, ref.VDD, ref.TEMP,
                                 pre="pre_osdi " + osdi)
