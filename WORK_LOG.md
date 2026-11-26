@@ -5,6 +5,11 @@ Maintained by the Guide role's document-maintenance phase; entries are appended
 from the tracker, never rewritten. The tracker remains authoritative for
 anything still open — see WORK_PLAN.md for current state.
 
+### 2026-11-26
+
+- **PR #113**: perf(asap5): reuse TT saturation current in corner checks
+- **Issue #111** (closed): Reuse ASAP5 typical-corner Idsat to skip eight duplicate ngspice runs
+
 ### 2026-11-19
 
 - **PR #107**: fix(ngspice): bias the IHP mismatch deck at A.am's 0.1 V for every device
