@@ -13,7 +13,6 @@ Every stage takes higher levels first. Priority sets order only: it never
 approves work and never exempts an issue from a gate.
 
 <!-- guide:plan-body:start -->
-_Generated: 2026-11-21T00:58:00Z (snapshot; compare against live labels)_
 ## Operator Attention: Merge-Risk-Hold Pileup
 
 Judge-approved PRs under a hold (`loom:blocked` or `loom:operator`) — only a human merge decision is missing.
@@ -30,11 +29,11 @@ _None._
 
 `loom:important`; taken before unlabelled work.
 
-- **#24**: CI: intermittent 'example deck failed' in bootstrap smoke test on ubuntu runners (asap5/asap7) *(held)*
+- **#24**: CI: intermittent 'example deck failed' in bootstrap smoke test on ubuntu runners (asap5/asap7)
 
 ## Ready
 
-Human-approved issues (`loom:issue`) ready for implementation — excluding held (`loom:blocked`/`loom:operator`/`loom:frozen`), `loom:building`, and issues closed by an open `loom:pr` PR (listed under Approved).
+Human-approved issues ready for implementation (`loom:issue`).
 
 _None._
 
@@ -60,7 +59,7 @@ _None._
 
 Issues carrying `loom:curated`.
 
-- **#24**: CI: intermittent 'example deck failed' in bootstrap smoke test on ubuntu runners (asap5/asap7) *(curated)* *(held)*
+- **#24**: CI: intermittent 'example deck failed' in bootstrap smoke test on ubuntu runners (asap5/asap7) *(curated)*
 
 ## Proposed (Architect / Hermit)
 
@@ -77,7 +76,7 @@ _None._
 | Operator merge-risk holds | 0 |
 | Very important | 0 |
 | Important | 1 |
-| Ready (`loom:issue`, net of holds/building/merge-pending) | 0 |
+| Ready (`loom:issue`) | 0 |
 | In Progress (`loom:building`) | 0 |
 | PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 0 |
