@@ -35,7 +35,7 @@ _None._
 
 Human-approved issues ready for implementation (`loom:issue`).
 
-- **#111**: Reuse ASAP5 typical-corner Idsat to skip eight duplicate ngspice runs
+_None._
 
 ## In Progress
 
@@ -76,7 +76,7 @@ _None._
 | Operator merge-risk holds | 0 |
 | Very important | 0 |
 | Important | 1 |
-| Ready (`loom:issue`) | 1 |
+| Ready (`loom:issue`) | 0 |
 | In Progress (`loom:building`) | 0 |
 | PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 0 |
